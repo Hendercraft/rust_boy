@@ -46,10 +46,10 @@ mod hardware {
         fn get_flags (&self) -> Flags{
             let output : Flags;
             let temp = self.f >> 4;         
-            output.Z = temp & 1000 > 0; //get upper
-            output.N = temp & 0100 > 0;
-            output.H = temp & 0010 > 0;
-            output.C = temp & 0001 > 0;
+            output.Z = temp & 0b1000 > 0; //get upper
+            output.N = temp & 0b0100 > 0;
+            output.H = temp & 0b0010 > 0;
+            output.C = temp & 0b0001 > 0;
             return output;
         }
 
