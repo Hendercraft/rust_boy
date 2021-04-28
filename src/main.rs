@@ -1,8 +1,6 @@
 fn main(){}
 mod hardware {
     
-    
-
     struct Flags{
         Z : bool,
         N : bool,
@@ -10,8 +8,7 @@ mod hardware {
         C : bool,
     }
     
-
-    struct Cpu {
+    struct Cpu{ 
         a : u8,
         f : u8,
         b : u8,
@@ -25,6 +22,12 @@ mod hardware {
         //flags : Flags,
         instruc : [Instruc;256],
     }
+    
+    struct Gpu{
+        screen : [[u8;160];144], 
+        matrix : [[u8;160];144],    
+    }    
+
 
     struct Instruc {
         n : u16,
@@ -35,7 +38,6 @@ mod hardware {
         exec : fn(&mut Cpu),
     }
     
-
 
     impl Cpu {
         
@@ -55,7 +57,7 @@ mod hardware {
 
         fn set_flags (f: u8){}
         
-        fn fetch<'a>(&self,i: u16) -> Option<&'a Instruc> {return self.instruc[i];}
+        fn fetch<'a>(&self,i: u8) -> Option<&'a Instruc> {return self.instruc[i];}
 
         fn exec<'a>(i :&Instruc){}
 
