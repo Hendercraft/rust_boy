@@ -1,3 +1,8 @@
+#![allow(non_snake_case)]
+#![allow(non_camel_case_types)]
+#![allow(unused_variables)]
+#![allow(unused_imports)]
+
 struct Flags{
     Z : bool,
     N : bool,
@@ -19,21 +24,6 @@ pub struct Cpu{
     //flags : Flags,
     instruc : Vec<Instruc>
 }
-
-pub struct Gpu{
-    screen : [[u8;160];144],
-    matrix : [[u8;160];144],
-}
-
-pub struct Instruc {
-    pub n : u16,
-    pub name : String,
-    pub desc : String,
-    pub argc : u8,
-    pub tics : u8,
-    pub exec : fn(&mut Cpu),
-}
-
 
 impl Cpu {
 
@@ -59,4 +49,36 @@ impl Cpu {
     fn exec<'a>(i :&Instruc){}
 
 
+}
+
+pub struct Gpu{
+    screen : [[u8;160];144],
+    matrix : [[u8;255];255],
+    line : u8
+}
+
+impl Gpu{
+    fn pushToScreen(&mut self){
+        //push matrix to SDL2
+        self.line = 0
+    }
+
+    fn fetchLine(&mut self, ram: &mut[u8]){
+        //fetch the BG and window's content from RAM
+        self.line += 1;
+        if self.line > 144 {
+            self.pushToScreen();
+            self.line = 0;
+        }
+    }
+
+}
+
+pub struct Instruc {
+    pub n : u16,
+    pub name : String,
+    pub desc : String,
+    pub argc : u8,
+    pub tics : u8,
+    pub exec : fn(&mut Cpu),
 }
