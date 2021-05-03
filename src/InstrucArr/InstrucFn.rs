@@ -3,7 +3,6 @@
 #![allow(unused_variables)]
 #![allow(unused_imports)]
 
-mod Hardware;
-mod InstrucArr;
+use crate::Hardware;
 
-fn main(){}
+pub fn nop(cpu : &mut Hardware::Cpu){}
