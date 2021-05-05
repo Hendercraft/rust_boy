@@ -17,5 +17,7 @@ struct Gui{
 }
 
 impl Gui{
-    fn init() -> Gui {/*Constructeur du gui ici*/}
+    fn init(&mut self) -> Gui {
+        let self.context = sdl2::init().unwrap();
+    }
 }
