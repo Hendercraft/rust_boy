@@ -7,8 +7,20 @@ mod Hardware;
 mod InstrucArr;
 mod Gui;
 use rand::Rng;
-
+use std::fs;
 fn main(){
+
+    let contents = fs::read("dump.dmp")
+        .expect("Something went wrong reading the file");
+    let contents_iter = contents.iter();
+    for val in contents_iter{
+        print!(" {:#02x} ",val);
+
+    }
+
+
+
+
     let mut rng = rand::thread_rng();
     let mut window: Gui::Gui = Gui::Gui::new();
     let mut maxiMatrix: [[u8;255];255] = [[0;255];255];
@@ -22,4 +34,8 @@ fn main(){
         window.clear();
         window.pushMatrix(&maxiMatrix);
     }
+
+
+
+
 }
