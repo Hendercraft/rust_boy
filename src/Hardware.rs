@@ -22,7 +22,7 @@ pub struct Cpu{
     sp : u16,
     pc : u16,
     //flags : Flags,
-    instruc : Vec<Instruc>
+    instruc : Vec<Instruct>
 }
 
 impl Cpu {
@@ -44,9 +44,9 @@ impl Cpu {
 
     fn set_flags (f: u8){}
 
-    fn fetch(&self,i: u8) -> &Instruc {&self.instruc.get(i as usize).unwrap()}
+    fn fetch(&self,i: u8) -> &Instruct {&self.instruc.get(i as usize).unwrap()}
 
-    fn exec<'a>(i :&Instruc){}
+    fn exec<'a>(i :&Instruct){}
 
 
 }
@@ -105,11 +105,24 @@ impl Gpu{
 
 }
 
-pub struct Instruc {
+pub struct Instruct {
     pub n : u16,
     pub name : String,
     pub desc : String,
     pub argc : u8,
     pub tics : u8,
     pub exec : fn(&mut Cpu),
+}
+
+impl Instruct {
+
+    pub fn build_instruct(n: u16, name : String, desc : String, argc : u8, tics : u8, exec : fn(&mut Cpu)) -> Instruct {
+        Instruct {n,name,desc,argc,tics,exec}
+    }
+
+
+
+
+
+
 }
