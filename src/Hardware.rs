@@ -26,10 +26,14 @@ pub struct Cpu{
 }
 
 impl Cpu {
+    fn get_u16 (h: &u8 ,l: &u8) -> u16{
+        ((*h as u16) << 8) | *l as u16
+    }
 
-    fn get_u16 (h: u8 ,l: u8) -> u16{return 8;}
-
-    fn set_u16 (h: u8,l: u8,n: u16){}
+    fn set_u16 (h: &mut u8, l: &mut u8, n: u16){
+        *h = (n >> 8) as u8;
+        *l = n as u8;
+    }
 
     fn get_flags (&self) -> Flags{
         let temp = self.f >> 4;
@@ -105,20 +109,29 @@ impl Gpu{
 
 }
 
+pub enum Op{
+    no(fn(&mut Cpu)),
+    u8toCpu(fn(&mut Cpu,u8)),
+    u16toCpu(fn(&mut Cpu,u8,u8)),//High, low
+}
+
 pub struct Instruct {
     pub n : u16,
     pub name : String,
     pub desc : String,
     pub argc : u8,
     pub tics : u8,
-    pub exec : fn(&mut Cpu),
+    pub exec : Op,
 }
+
+
 
 impl Instruct {
 
-    pub fn build_instruct(n: u16, name : String, desc : String, argc : u8, tics : u8, exec : fn(&mut Cpu)) -> Instruct {
+    pub fn build_instruct(n: u16, name : String, desc : String, argc : u8, tics : u8, exec : Op) -> Instruct {
         Instruct {n,name,desc,argc,tics,exec}
     }
+
 
 
 

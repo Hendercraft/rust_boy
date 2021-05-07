@@ -5,6 +5,8 @@
 
 use crate::Hardware;
 use crate::Hardware::Instruct;
+use Hardware::Op as Op;
+
 
 mod InstrucFn;
 
@@ -17,10 +19,10 @@ fn createOperations() -> Vec<Hardware::Instruct>{
             desc : String::from("Aussi inutile que les cours de GE00"),
             argc : 1,
             tics : 4,
-            exec : InstrucFn::nop,
+            exec : Op::no(InstrucFn::nop),
         })
     }
 
-    out[2] = Hardware::Instruct::build_instruct(2, String::from("LD BC,d16"), String::from("Load the d16 given in the operhand in BC"), 2, 12, InstrucFn::nop);
+    out[2] = Hardware::Instruct::build_instruct(2, String::from("LD BC,d16"), String::from("Load the d16 given in the operhand in BC"), 2, 12, Op::no(InstrucFn::nop));
     return out;
 }
