@@ -24,7 +24,7 @@ impl Gui{
         let video_subsystem = sdl_context.video().unwrap();
 
 
-        let window = video_subsystem.window("Rustboy", 255, 255)
+        let window = video_subsystem.window("Rustboy", 512, 512)
             .position_centered()
             .opengl()
             .build()
@@ -32,6 +32,7 @@ impl Gui{
 
         let mut canvas = window.into_canvas().accelerated().build()
             .expect("could not make a canvas");
+        canvas.set_scale(2.0,2.0);
         canvas.set_draw_color((255,255,255));
         canvas.clear();
 
@@ -60,9 +61,10 @@ impl Gui{
         return true;
     }
 
-    pub fn pushMatrix(&mut self, mat: &[[u8;255];255]){
-        for i in 0..255{
-            for j in 0..255{
+    pub fn pushMatrix(&mut self, mat: &[[u8;256];256]){
+        for i in 0..256{
+            for j in 0..256{
+                //println!("{}",mat[i][j]);
                 match mat[i][j]{
                     0 => {self.canvas.set_draw_color((255,255,255))},
                     1 => {self.canvas.set_draw_color((170,170,170))},

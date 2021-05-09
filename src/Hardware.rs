@@ -56,9 +56,9 @@ impl Cpu {
 }
 
 pub struct Gpu{
-    screen : [[u8;160];144],
-    matrix : [[u8;255];255],
-    line : u8
+    pub screen : [[u8;160];144],
+    pub matrix : [[u8;256];256],
+    pub line : u8
 }
 
 impl Gpu{
@@ -67,45 +67,73 @@ impl Gpu{
         self.line = 0
     }
 
-    fn fetchLine(&mut self, ram: &mut[u8]){
-        //fetch the BG and window's content from RAM
-        let tileLine: u8 = self.line / 8;
-        let lineOffset: u8 = self.line % 8;
-        let mut bgTileStart:u16;
-        if ram[0xFF40] & 0b00001000 > 0 {
-            bgTileStart = 0x9C00 + 32*(tileLine as u16);
+
+    fn getTileMethod(&self, ram: &[u8;0xffff]) -> u16{
+        if ram[0xff40] & 0b00010000 > 0{
+            println!("0x8000");
+            return 0x8000;
         }else{
-            bgTileStart = 0x9800 + 32*(tileLine as u16);
-        }
-        let mut tileAdress:u16;
-        let mut lineAdress:u16;
-        for i in 0..32 {
-            tileAdress = bgTileStart + i*32;
-            lineAdress = tileAdress + (lineOffset as u16) *2;
-            //TODO: transformation via les palettes
-            for j in 0..2{
-                self.matrix[(32*i + j*4) as usize][self.line as usize] = ram[(lineAdress + j) as usize] & 0b11000000 >> 6;
-                self.matrix[(32*i + j*4 + 1) as usize][self.line as usize] = ram[(lineAdress + j) as usize] & 0b00110000 >> 4;
-                self.matrix[(32*i + j*4 + 2) as usize][self.line as usize] = ram[(lineAdress + j) as usize] & 0b00001100 >> 2;
-                self.matrix[(32*i + j*4 + 3) as usize][self.line as usize] = ram[(lineAdress + j) as usize] & 0b00000011;
-            }
-        }
-        self.line += 1;
-        if self.line > 255 {
-            self.pushToScreen();
-            self.line = 0;
+            println!("0x8800");
+            return 0x8800;
         }
     }
 
-    fn getBgWinTile(n:u8, ram: &[u8]) -> u8{//return the adress of the tile in the memory
-        let startIndex:u16;
-        if ram[0xF40] & 0b00010000 > 0 {
-            startIndex = 0x8000;
+    fn getBgMapIndex(&self, ram: &[u8;0xffff]) -> u16{
+        if ram[0xff40] & 0b00001000 > 0{
+            println!("0x9c00");
+            return 0x9c00;
         }else{
-            startIndex = 0x8800;
+            println!("0x9800");
+            return 0x9800;
         }
-        ram[(startIndex + 16*(n as u16)) as usize]
     }
+
+    fn getTile(&self, method:u16, mut index:u8, ram: &[u8;0xffff]) -> u16{
+        if method == 0x8000{
+            return 0x8000 + (index as u16)*16;
+        }else{
+            if index > 127{
+                index -= 128;
+                return 0x8800 + (index as u16)*16;
+            }else{
+                return 0x9000 + (index as u16)*16;
+            }
+        }
+    }
+
+    fn displayTile(&mut self, x:u16, y:u16, location:u16,ram: &[u8;0xffff]){
+        let origin_x = x*8;
+        let origin_y = y*8;
+        for i in 0..8{
+            let mut value:u8 = 0b10000000;
+            for j in 0..7{
+                self.matrix[(origin_x+j) as usize][(origin_y+i) as usize] = (ram[(location + 2*(i as u16)) as usize] & value) >> 7-j | (ram[(location + 2*(i as u16) + 1) as usize] & value) >> 6-j;
+                value = value >> 1;
+            }
+            self.matrix[(origin_x+7) as usize][(origin_y+i) as usize] = (ram[(location + 2*(i as u16)) as usize] & value) | (ram[(location + 2*(i as u16) + 1) as usize] & value) << 1;
+
+        }
+        println!("Tile adress: 0x{:x}",location);
+        println!("Tile coords: x={} y={}",x,y);
+        println!("__________________________");
+    }
+
+    pub fn buildBG(&mut self, ram: &[u8;0xffff]){
+        let mut n:u16 = 0;
+
+        let index = self.getBgMapIndex(&ram);
+        let method:u16 = self.getTileMethod(&ram);
+
+        for i in 0..32{
+            for j in 0..32{
+                println!("Map adress: 0x{:x}",index+n);
+                self.displayTile(j as u16, i as u16, self.getTile(method, ram[(index+n) as usize], &ram), &ram);
+                n += 1;
+            }
+        }
+
+    }
+
 
 }
 

@@ -6,33 +6,31 @@
 mod Hardware;
 mod InstrucArr;
 mod Gui;
-use rand::Rng;
 use std::fs;
 fn main(){
 
     let contents = fs::read("dump.dmp")
         .expect("Something went wrong reading the file");
-    let contents_iter = contents.iter();
-    for val in contents_iter{
-        print!(" {:#02x} ",val);
-
+    let mut ram : [u8;0xffff] = [0;0xffff];
+    for i in 0..0xffff{
+        ram[i] = contents[i];
     }
 
 
 
 
-    let mut rng = rand::thread_rng();
-    let mut window: Gui::Gui = Gui::Gui::new();
-    let mut maxiMatrix: [[u8;255];255] = [[0;255];255];
-    while window.update(){
-        for i in 0..255{
-            for j in 0..255{
-                maxiMatrix[i][j] = rng.gen_range(0..4);
 
-            }
-        }
+    let mut window: Gui::Gui = Gui::Gui::new();
+    let mut gpu:Hardware::Gpu = Hardware::Gpu{
+        screen : [[0;160];144],
+        matrix : [[0;256];256],
+        line : 0
+    };
+
+    while window.update(){
         window.clear();
-        window.pushMatrix(&maxiMatrix);
+        gpu.buildBG(&ram);
+        window.pushMatrix(&gpu.matrix);
     }
 
 
