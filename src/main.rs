@@ -22,15 +22,23 @@ fn main(){
 
     let mut window: Gui::Gui = Gui::Gui::new();
     let mut gpu:Hardware::Gpu = Hardware::Gpu{
-        screen : [[0;160];144],
-        matrix : [[0;256];256],
+        screen : [[0;144];160],
+        bgMatrix : [[0;256];256],
+        windowMatrix : [[0;256];256],
         line : 0
     };
+    gpu.buildBG(&ram);
+    gpu.buildWindow(&ram);
+    for i in 0..160{
+        
+    }
 
     while window.update(){
+        gpu.pushLine(&ram);
         window.clear();
-        gpu.buildBG(&ram);
-        window.pushMatrix(&gpu.matrix);
+
+
+        window.pushMatrix(&gpu.screen);
     }
 
 

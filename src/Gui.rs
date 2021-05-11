@@ -61,15 +61,15 @@ impl Gui{
         return true;
     }
 
-    pub fn pushMatrix(&mut self, mat: &[[u8;256];256]){
-        for i in 0..256{
-            for j in 0..256{
+    pub fn pushMatrix(&mut self, mat: &[[u8;144];160]){
+        for i in 0..mat.len(){
+            for j in 0..mat[i].len(){
                 //println!("{}",mat[i][j]);
                 match mat[i][j]{
                     0 => {self.canvas.set_draw_color((255,255,255))},
                     1 => {self.canvas.set_draw_color((170,170,170))},
                     2 => {self.canvas.set_draw_color((84,84,84))},
-                    _ => {self.canvas.set_draw_color((0,0,0))},
+                    _ => {self.canvas.set_draw_color((0,0,0))}
                 }
                 self.canvas.draw_point(Point::new(i as i32,j as i32));
             }
