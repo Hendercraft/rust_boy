@@ -22,18 +22,61 @@ pub struct Cpu{
     sp : u16,
     pc : u16,
     //flags : Flags,
-    instruc : Vec<Instruct>
+    instructs: Vec<Instruct>
 }
 
 impl Cpu {
+    //getter u8
+    pub fn get_a (&self) -> u8 {self.a}
+    pub fn get_f (&self) -> u8 {self.f}
+    pub fn get_b (&self) -> u8 {self.b}
+    pub fn get_c (&self) -> u8 {self.c}
+    pub fn get_d (&self) -> u8 {self.d}
+    pub fn get_e (&self) -> u8 {self.e}
+    pub fn get_h (&self) -> u8 {self.h}
+    pub fn get_l (&self) -> u8 {self.l}
+    //getter u16
+    pub fn get_af (&self) ->u16 {Cpu::get_u16(&self.a,&self.f)}
+    pub fn get_bc (&self) ->u16 {Cpu::get_u16(&self.b,&self.c)}
+    pub fn get_de (&self) ->u16 {Cpu::get_u16(&self.d,&self.e)}
+    pub fn get_hl (&self) ->u16 {Cpu::get_u16(&self.h,&self.l)}
+    pub fn get_sp (&self) ->u16 {self.sp}
+    pub fn get_pc (&self) ->u16 {self.pc}
+
     fn get_u16 (h: &u8 ,l: &u8) -> u16{
         ((*h as u16) << 8) | *l as u16
     }
+
+    //setter u8
+    pub fn set_a (&mut self, n: u8){self.a = n;}
+    pub fn set_f (&mut self, n: u8){self.f = n;}
+    pub fn set_b (&mut self, n: u8){self.b = n;}
+    pub fn set_c (&mut self, n: u8){self.c = n;}
+    pub fn set_d (&mut self, n: u8){self.d = n;}
+    pub fn set_e (&mut self, n: u8){self.e = n;}
+    pub fn set_h (&mut self, n: u8){self.h = n;}
+    pub fn set_l (&mut self, n: u8){self.l = n;}
+
+    //setter u16
+    pub fn set_af (&mut self, n : u16) {Cpu::set_u16(&mut self.a,&mut self.f,n);}
+    pub fn set_bc (&mut self, n : u16) {Cpu::set_u16(&mut self.b,&mut self.c,n);}
+    pub fn set_de (&mut self, n : u16) {Cpu::set_u16(&mut self.d,&mut self.e,n);}
+    pub fn set_hl (&mut self, n : u16) {Cpu::set_u16(&mut self.h, &mut self.l,n);}
+    pub fn set_sp (&mut self, n : u16) {self.sp = n;}
+    pub fn set_pc (&mut self, n : u16) {self.pc = n;}
 
     fn set_u16 (h: &mut u8, l: &mut u8, n: u16){
         *h = (n >> 8) as u8;
         *l = n as u8;
     }
+
+
+    pub(crate) fn inc_u16(h : &mut u8, l: &mut u8){
+        let n = Cpu::get_u16(h,l) + 1;
+        Cpu::set_u16(h,l,n);
+    }
+
+
 
     fn get_flags (&self) -> Flags{
         let temp = self.f >> 4;
@@ -48,7 +91,7 @@ impl Cpu {
 
     fn set_flags (f: u8){}
 
-    fn fetch(&self,i: u8) -> &Instruct {&self.instruc.get(i as usize).unwrap()}
+    fn fetch(&self,i: u8) -> &Instruct {&self.instructs.get(i as usize).unwrap()}
 
     fn exec<'a>(i :&Instruct){}
 
