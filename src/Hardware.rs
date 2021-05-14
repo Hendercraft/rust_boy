@@ -88,7 +88,24 @@ impl Cpu {
         return output;
     }
 
-    fn set_flags (f: u8){}
+    //Flags
+    pub fn set_flag (&mut self, f: Flag){
+        match f{
+            Flag::Z => self.set_f(self.get_f() | 0b10000000),
+            Flag::N => self.set_f(self.get_f() | 0b01000000),
+            Flag::H => self.set_f(self.get_f() | 0b00100000),
+            Flag::C => self.set_f(self.get_f() | 0b00010000)
+        }
+    }
+    pub fn clear_flag (&mut self ,f: Flag){
+        match f{
+            Flag::Z => self.set_f(self.get_f() & 0b01111111),
+            Flag::N => self.set_f(self.get_f() | 0b10111111),
+            Flag::H => self.set_f(self.get_f() | 0b11011111),
+            Flag::C => self.set_f(self.get_f() | 0b11101111)
+        }
+    }
+
 
     fn fetch(&self,i: u8) -> &Instruct {&self.instructs.get(i as usize).unwrap()}
 
@@ -96,6 +113,8 @@ impl Cpu {
 
 
 }
+
+pub enum Flag {Z,N,H,C}
 
 pub struct Gpu{
     pub screen : [[u8;144];160],
