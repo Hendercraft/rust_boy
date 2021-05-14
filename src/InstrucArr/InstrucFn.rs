@@ -20,6 +20,6 @@ pub fn ld_bcp_a(cpu : &mut Cpu, ram : &mut Vec<u8>){
 }
 //x04 //A VERIFIER PAS SUR DUTOUT
 pub fn inc_bc(cpu : &mut Cpu){
-    Cpu::inc_u16(&mut cpu.get_b(), &mut cpu.get_c());
+    cpu.set_bc(cpu.get_bc() + 0b1);
 
 }

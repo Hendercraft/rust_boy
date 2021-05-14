@@ -77,13 +77,6 @@ impl Cpu {
     }
 
 
-    pub(crate) fn inc_u16(h : &mut u8, l: &mut u8){
-        let n = Cpu::get_u16(h,l) + 1;
-        Cpu::set_u16(h,l,n);
-    }
-
-
-
     fn get_flags (&self) -> Flags{
         let temp = self.f >> 4;
         let mut output : Flags = Flags{
