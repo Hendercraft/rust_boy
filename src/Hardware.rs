@@ -4,6 +4,9 @@
 #![allow(unused_imports)]
 
 use std::num::Wrapping;
+const BG: u8 = 1;
+const WINDOW: u8 = 2;
+const SCREEN: u8 = 1;
 
 struct Flags{
     Z : bool,
@@ -158,11 +161,11 @@ impl Gpu{
         }
     }
 
-    fn displayTile(&mut self, isWin:bool, x:u16, y:u16, location:u16,ram: &[u8;0xffff]){
+    fn displayTile(&mut self, dest:u8, x:u16, y:u16, location:u16,ram: &[u8;0xffff]){
         let &mut mat;
-        if isWin{
+        if dest == WINDOW{
             mat = &mut self.windowMatrix;
-        }else{
+        }else {
             mat = &mut self.bgMatrix;
         }
         let origin_x = x*8;
@@ -190,7 +193,7 @@ impl Gpu{
         for i in 0..32{
             for j in 0..32{
                 println!("Map adress: 0x{:x}",index+n);
-                self.displayTile(false, j as u16, i as u16, self.getTile(method, ram[(index+n) as usize], &ram), &ram);
+                self.displayTile(BG, j as u16, i as u16, self.getTile(method, ram[(index+n) as usize], &ram), &ram);
                 n += 1;
             }
         }
@@ -206,21 +209,72 @@ impl Gpu{
         for i in 0..32{
             for j in 0..32{
                 println!("Map adress: 0x{:x}",index+n);
-                self.displayTile(true, j as u16, i as u16, self.getTile(method, ram[(index+n) as usize], &ram), &ram);
+                self.displayTile(WINDOW, j as u16, i as u16, self.getTile(method, ram[(index+n) as usize], &ram), &ram);
                 n += 1;
             }
         }
 
     }
 
+    fn displaySprites(&mut self,ram: &[u8;0xffff]){
+        let tilesAdr:u16 = 0x8000;
+        let oamAdr:u16 = 0xfe00;
+        let mut sprX:u8;
+        let mut realX:i16;
+        let mut realY:i16;
+        let mut sprY:u8;
+        let mut tileAdr:u16;
+        let mut buffer:u8;
+
+
+        for i in 0..40{
+            sprX = ram[(oamAdr+(i*4)+1)as usize];
+            sprY = ram[(oamAdr+(i*4))as usize];
+            if !(sprX == 0 || sprX >= 168 || sprY == 0 || sprY >= 160){
+                tileAdr = self.getTile(0x8000,ram[(oamAdr+(i*4)+2)as usize],&ram);
+                println!("Tile n°{}: number={} Adr=0x{:x}",i,ram[(oamAdr+(i*4)+2)as usize],tileAdr);
+
+                for j in 0..8{
+                    let mut value:u8 = 0b10000000;
+                    realY = (sprY - 16 + j) as i16;
+                    for k in 0..7{
+                        realX = (sprX - 8 + k) as i16;
+                        if realX > 0 && realX < 159{
+                            buffer = (ram[(tileAdr + 2*(j as u16)) as usize] & value) >> 7-k | (ram[(tileAdr + 2*(j as u16) + 1) as usize] & value) >> 6-k;
+                            if buffer != 0{
+                                self.screen[(realX) as usize][(realY) as usize] = buffer
+                            }
+                        }
+                        value = value >> 1;
+                    }
+                    realX = (sprX - 1) as i16;
+                    if realX > 0 && realX < 159{
+                        buffer = (ram[(tileAdr + 2*(j as u16)) as usize] & value)| (ram[(tileAdr + 2*(j as u16) + 1) as usize] & value) << 1;
+                        if buffer != 0{
+                            self.screen[(realX) as usize][(realY) as usize] = buffer
+                        }
+                    }
+                }
+            }
+        }
+    }
+
     pub fn pushLine(&mut self, ram: &[u8;0xffff]){
         let scrollX:u8 = ram[0xff43];
         let scrollY:u8 = ram[0xff42];
+        let winX:u8 = ram[0xff4b] - 7;
+        let winY:u8 = ram[0xff4a];
+
         for i in 0..160{
-            self.screen[i as usize][self.line as usize] = self.bgMatrix[(scrollX.wrapping_add(i)) as usize][(scrollY.wrapping_add(self.line)) as usize];
+            if winX <= i && winY <= self.line{// && false{
+                self.screen[i as usize][self.line as usize] = self.windowMatrix[(i-winX) as usize][(self.line - winY) as usize];
+            }else{
+                self.screen[i as usize][self.line as usize] = self.bgMatrix[(scrollX.wrapping_add(i)) as usize][(scrollY.wrapping_add(self.line)) as usize];
+            }
         }
         self.line += 1;
         if self.line == 144{
+            self.displaySprites(&ram);
 
             self.line = 0;
         }

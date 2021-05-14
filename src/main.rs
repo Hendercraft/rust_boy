@@ -30,14 +30,11 @@ fn main(){
     gpu.buildBG(&ram);
     gpu.buildWindow(&ram);
     for i in 0..160{
-        
+        gpu.pushLine(&ram);
     }
 
     while window.update(){
-        gpu.pushLine(&ram);
         window.clear();
-
-
         window.pushMatrix(&gpu.screen);
     }
 
