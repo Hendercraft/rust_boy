@@ -100,9 +100,9 @@ impl Cpu {
     pub fn clear_flag (&mut self ,f: Flag){
         match f{
             Flag::Z => self.set_f(self.get_f() & 0b01111111),
-            Flag::N => self.set_f(self.get_f() | 0b10111111),
-            Flag::H => self.set_f(self.get_f() | 0b11011111),
-            Flag::C => self.set_f(self.get_f() | 0b11101111)
+            Flag::N => self.set_f(self.get_f() & 0b10111111),
+            Flag::H => self.set_f(self.get_f() & 0b11011111),
+            Flag::C => self.set_f(self.get_f() & 0b11101111)
         }
     }
 
