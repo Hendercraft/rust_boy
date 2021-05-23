@@ -8,6 +8,9 @@ const BG: u8 = 1;
 const WINDOW: u8 = 2;
 const SCREEN: u8 = 1;
 
+
+
+
 struct Flags{
     Z : bool,
     N : bool,
@@ -48,6 +51,7 @@ impl Cpu {
     pub fn get_hl (&self) ->u16 {Cpu::get_u16(&self.h,&self.l)}
     pub fn get_sp (&self) ->u16 {self.sp}
     pub fn get_pc (&self) ->u16 {self.pc}
+    pub fn get_mie (&self) ->bool {self.mie}
 
     fn get_u16 (h: &u8 ,l: &u8) -> u16{
         ((*h as u16) << 8) | *l as u16
@@ -75,6 +79,7 @@ impl Cpu {
         *h = (n >> 8) as u8;
         *l = n as u8;
     }
+    pub fn set_mie (&mut self, b : bool){self.mie = b;}
 
 
     fn get_flags (&self) -> Flags{
@@ -111,6 +116,24 @@ impl Cpu {
 
     fn exec<'a>(i :&Instruct){}
 
+
+
+
+    //memory manipulation
+
+    pub fn write_u16_to_stack(&mut self,n : u16,ram : &mut Vec<u8>){
+        self.set_sp(self.get_sp() - 2);
+        ram[self.get_sp() as usize] = n as u8;
+        ram[(self.get_sp() + 1) as usize] = (n >> 8) as u8 ;
+    }
+
+    pub fn read_u16_from_stack(&mut self,ram : & Vec<u8>) -> u16{
+        let h : u8 = ram[(self.get_sp() + 1) as usize];
+        let l : u8 = ram[self.get_sp() as usize];
+        let value : u16 = ((h as u16) << 8) | l as u16;
+        self.set_sp(self.get_sp() +2);
+        return value;
+    }
 
 }
 
