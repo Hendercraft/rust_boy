@@ -61,3 +61,13 @@ pub fn dec_b(cpu : &mut Cpu) {
     cpu.set_flag(N); //setting N flag
 }
 
+//0xF3 (4tics)
+pub fn di(cpu : &mut Cpu){
+    cpu.set_mie(false);
+}
+
+//0xFB (4tics)
+pub fn ei(cpu : &mut Cpu){
+    cpu.set_mie(true);
+}
+

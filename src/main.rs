@@ -7,6 +7,8 @@ mod Hardware;
 mod InstrucArr;
 mod Gui;
 mod Controls;
+mod Interrupts;
+
 use std::fs;
 fn main(){
 
