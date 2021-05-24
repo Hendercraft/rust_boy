@@ -44,8 +44,10 @@ fn main(){
     }
 
     while window.update(){
+        ram[0xff00] = 0b00010000;
         window.clear();
         controls.getKeyboard(&mut window);
+        controls.updateRam(&mut ram);
         window.pushMatrix(&gpu.screen);
     }
 
