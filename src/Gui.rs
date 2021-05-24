@@ -14,8 +14,8 @@ use sdl2::rect::{Rect, Point};
 pub struct Gui{
     //context : Sdl,
     //video : VideoSubsystem,
-    canvas : WindowCanvas,
-    events : EventPump
+    pub canvas : WindowCanvas,
+    pub events : EventPump
 }
 
 impl Gui{

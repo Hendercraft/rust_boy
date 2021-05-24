@@ -6,8 +6,10 @@
 mod Hardware;
 mod InstrucArr;
 mod Gui;
+mod Controls;
 use std::fs;
 fn main(){
+
 
     let contents = fs::read("dump.dmp")
         .expect("Something went wrong reading the file");
@@ -16,10 +18,16 @@ fn main(){
         ram[i] = contents[i];
     }
 
-
-
-
-
+    let mut controls: Controls::Controls = Controls::Controls{
+        up: 0,
+        down: 0,
+        left: 0,
+        right: 0,
+        a: 0,
+        b: 0,
+        select: 0,
+        start: 0,
+    };
     let mut window: Gui::Gui = Gui::Gui::new();
     let mut gpu:Hardware::Gpu = Hardware::Gpu{
         screen : [[0;144];160],
@@ -35,6 +43,7 @@ fn main(){
 
     while window.update(){
         window.clear();
+        controls.getKeyboard(&mut window);
         window.pushMatrix(&gpu.screen);
     }
 
