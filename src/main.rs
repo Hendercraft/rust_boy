@@ -68,8 +68,8 @@ fn main(){
 
     let mut master: Master::Master = Master::Master{
         tick: 0,
-        step_by_step: false,
-        screen_by_screen: true,
+        step_by_step: true,
+        screen_by_screen: false,
     };
     gpu.buildBG(&ram);
     gpu.buildWindow(&ram);

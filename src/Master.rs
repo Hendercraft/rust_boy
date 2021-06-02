@@ -17,6 +17,8 @@ impl Master{
 
         self.maxi_debug_print(&cpu,&gpu,&ram,&instruc);
 
+        cpu.exec(&instruc);
+
         self.tick = self.tick.wrapping_add(instruc.ticks);
         if self.step_by_step{
             wait();
