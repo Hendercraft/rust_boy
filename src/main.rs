@@ -8,17 +8,26 @@ mod InstrucArr;
 mod Gui;
 mod Controls;
 mod Interrupts;
+mod Clock;
+mod Master;
 
 use std::fs;
-fn main(){
 
 
-    let contents = fs::read("dump.dmp")
+fn load(path: String) -> [u8;0x10000]{
+    let contents = fs::read(path)
         .expect("Something went wrong reading the file");
-    let mut ram : [u8;0xffff] = [0;0xffff];
-    for i in 0..0xffff{
+    let mut ram : [u8;0x10000] = [0;0x10000];
+    for i in 0..contents.len(){
         ram[i] = contents[i];
     }
+    return ram;
+}
+
+fn main(){
+
+    let mut ram = load(String::from("dump.dmp"));
+
 
     let mut controls: Controls::Controls = Controls::Controls{
         up: 0,
@@ -30,12 +39,37 @@ fn main(){
         select: 0,
         start: 0,
     };
+
     let mut window: Gui::Gui = Gui::Gui::new();
+
     let mut gpu:Hardware::Gpu = Hardware::Gpu{
         screen : [[0;144];160],
         bgMatrix : [[0;256];256],
         windowMatrix : [[0;256];256],
         line : 0
+    };
+
+    let mut cpu:Hardware::Cpu = Hardware::Cpu{
+        a : 0,
+        f : 0,
+        b : 0,
+        c : 0,
+        d : 0,
+        e : 0,
+        h : 0,
+        l : 0,
+        sp : 0,
+        pc : 0,
+        mie : true,
+        //flags : Flags,
+        instructs: InstrucArr::createOperations(),
+    };
+
+
+    let mut master: Master::Master = Master::Master{
+        op_count: 0,
+        step_by_step: false,
+        screen_by_screen: false,
     };
     gpu.buildBG(&ram);
     gpu.buildWindow(&ram);
@@ -49,9 +83,9 @@ fn main(){
         controls.getKeyboard(&mut window);
         controls.updateRam(&mut ram);
         window.pushMatrix(&gpu.screen);
+        master.screen(&mut cpu, &mut gpu, &mut ram);
+
     }
-
-
 
 
 }

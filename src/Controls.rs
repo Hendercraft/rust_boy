@@ -63,7 +63,7 @@ impl Controls{
         }
     }
 
-    pub fn updateRam(&self, ram: &mut [u8;0xffff]){
+    pub fn updateRam(&self, ram: &mut [u8;0x10000]){
         let mut n = ram[0xff00];
         if n & 0b00100000 > 0{
             //cross
@@ -80,7 +80,6 @@ impl Controls{
             (self.b << 1) +
             (self.a);
         }
-        println!("{:b}",n);
         ram[0xff00] = n;
     }
 }

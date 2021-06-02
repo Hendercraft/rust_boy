@@ -11,27 +11,27 @@ const SCREEN: u8 = 1;
 
 
 
-struct Flags{
-    Z : bool,
-    N : bool,
-    H : bool,
-    C : bool,
+pub struct Flags{
+    pub Z : bool,
+    pub N : bool,
+    pub H : bool,
+    pub C : bool,
 }
 
 pub struct Cpu{
-    a : u8,
-    f : u8,
-    b : u8,
-    c : u8,
-    d : u8,
-    e : u8,
-    h : u8,
-    l : u8,
-    sp : u16,
-    pc : u16,
-    mie : bool,
-    //flags : Flags,
-    instructs: Vec<Instruct>
+    pub a : u8,
+    pub f : u8,
+    pub b : u8,
+    pub c : u8,
+    pub d : u8,
+    pub e : u8,
+    pub h : u8,
+    pub l : u8,
+    pub sp : u16,
+    pub pc : u16,
+    pub mie : bool,
+    //pub flags : Flags,
+    pub instructs: Vec<Instruct>
 }
 
 impl Cpu {
@@ -82,7 +82,7 @@ impl Cpu {
     pub fn set_mie (&mut self, b : bool){self.mie = b;}
 
 
-    fn get_flags (&self) -> Flags{
+    pub fn get_flags (&self) -> Flags{
         let temp = self.f >> 4;
         let mut output : Flags = Flags{
             Z : temp & 0b1000 > 0, //get upper
@@ -112,22 +112,22 @@ impl Cpu {
     }
 
 
-    fn fetch(&self,i: u8) -> &Instruct {&self.instructs.get(i as usize).unwrap()}
+    pub fn fetch(&self,i: u8) -> &Instruct {&self.instructs.get(i as usize).unwrap()}
 
-    fn exec<'a>(i :&Instruct){}
+    pub fn exec<'a>(i :&Instruct){}
 
 
 
 
     //memory manipulation
 
-    pub fn write_u16_to_stack(&mut self,n : u16,ram : &mut Vec<u8>){
+    pub fn write_u16_to_stack(&mut self,n : u16,ram : &mut [u8;0x10000]){
         self.set_sp(self.get_sp() - 2);
         ram[self.get_sp() as usize] = n as u8;
         ram[(self.get_sp() + 1) as usize] = (n >> 8) as u8 ;
     }
 
-    pub fn read_u16_from_stack(&mut self,ram : & Vec<u8>) -> u16{
+    pub fn read_u16_from_stack(&mut self,ram : &[u8;0x10000]) -> u16{
         let h : u8 = ram[(self.get_sp() + 1) as usize];
         let l : u8 = ram[self.get_sp() as usize];
         let value : u16 = ((h as u16) << 8) | l as u16;
@@ -153,7 +153,7 @@ impl Gpu{
     }
 
 
-    fn getTileMethod(&self, ram: &[u8;0xffff]) -> u16{
+    fn getTileMethod(&self, ram: &[u8;0x10000]) -> u16{
         if ram[0xff40] & 0b00010000 > 0{
             println!("0x8000");
             return 0x8000;
@@ -163,7 +163,7 @@ impl Gpu{
         }
     }
 
-    fn getBgMapIndex(&self, ram: &[u8;0xffff]) -> u16{
+    fn getBgMapIndex(&self, ram: &[u8;0x10000]) -> u16{
         if ram[0xff40] & 0b00001000 > 0{
             println!("0x9c00");
             return 0x9c00;
@@ -173,7 +173,7 @@ impl Gpu{
         }
     }
 
-    fn getWindowMapIndex(&self, ram: &[u8;0xffff]) -> u16{
+    fn getWindowMapIndex(&self, ram: &[u8;0x10000]) -> u16{
         if ram[0xff40] & 0b01000000 > 0{
             println!("0x9c00");
             return 0x9c00;
@@ -183,7 +183,7 @@ impl Gpu{
         }
     }
 
-    fn getTile(&self, method:u16, mut index:u8, ram: &[u8;0xffff]) -> u16{
+    fn getTile(&self, method:u16, mut index:u8, ram: &[u8;0x10000]) -> u16{
         if method == 0x8000{
             return 0x8000 + (index as u16)*16;
         }else{
@@ -196,7 +196,7 @@ impl Gpu{
         }
     }
 
-    fn displayTile(&mut self, dest:u8, x:u16, y:u16, location:u16,ram: &[u8;0xffff]){
+    fn displayTile(&mut self, dest:u8, x:u16, y:u16, location:u16,ram: &[u8;0x10000]){
         let &mut mat;
         if dest == WINDOW{
             mat = &mut self.windowMatrix;
@@ -219,7 +219,7 @@ impl Gpu{
         println!("__________________________");
     }
 
-    pub fn buildBG(&mut self, ram: &[u8;0xffff]){
+    pub fn buildBG(&mut self, ram: &[u8;0x10000]){
         let mut n:u16 = 0;
 
         let index = self.getBgMapIndex(&ram);
@@ -235,7 +235,7 @@ impl Gpu{
 
     }
 
-    pub fn buildWindow(&mut self, ram: &[u8;0xffff]){
+    pub fn buildWindow(&mut self, ram: &[u8;0x10000]){
         let mut n:u16 = 0;
 
         let index = self.getWindowMapIndex(&ram);
@@ -251,7 +251,7 @@ impl Gpu{
 
     }
 
-    fn displaySprites(&mut self,ram: &[u8;0xffff]){
+    fn displaySprites(&mut self,ram: &[u8;0x10000]){
         let tilesAdr:u16 = 0x8000;
         let oamAdr:u16 = 0xfe00;
         let mut sprX:u8;
@@ -294,10 +294,10 @@ impl Gpu{
         }
     }
 
-    pub fn pushLine(&mut self, ram: &[u8;0xffff]){
+    pub fn pushLine(&mut self, ram: &[u8;0x10000]){
         let scrollX:u8 = ram[0xff43];
         let scrollY:u8 = ram[0xff42];
-        let winX:u8 = ram[0xff4b] - 7;
+        let winX:u8 = ram[0xff4b].wrapping_sub(7);
         let winY:u8 = ram[0xff4a];
 
         for i in 0..160{

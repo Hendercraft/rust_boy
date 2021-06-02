@@ -10,9 +10,9 @@ use Hardware::Op as Op;
 
 mod InstrucFn;
 
-fn createOperations() -> Vec<Hardware::Instruct>{
+pub fn createOperations() -> Vec<Hardware::Instruct>{
     let mut out = Vec::new();
-    for i in 0..255{
+    for i in 0..256{
         out.push(Hardware::Instruct {
             n : i,
             name : String::from("NOP"),

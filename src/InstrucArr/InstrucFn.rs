@@ -70,4 +70,3 @@ pub fn di(cpu : &mut Cpu){
 pub fn ei(cpu : &mut Cpu){
     cpu.set_mie(true);
 }
-
