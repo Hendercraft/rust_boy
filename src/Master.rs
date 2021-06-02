@@ -4,7 +4,9 @@ use std::io::{stdin, stdout, Read, Write};
 pub struct Master{
 pub tick: u64,
 pub step_by_step: bool,
+pub line_by_line: bool,
 pub screen_by_screen: bool,
+
 }
 
 impl Master{
@@ -13,16 +15,19 @@ impl Master{
         if !Interrupts::interrupt_check(cpu,ram){
             cpu.set_pc(cpu.get_pc().wrapping_add(1));
         }
-        let mut instruc : &Hardware::Instruct = cpu.fetch(ram[cpu.get_pc() as usize]);
+        let instruc : &Hardware::Instruct = cpu.fetch(ram[cpu.get_pc() as usize]);
 
         self.maxi_debug_print(&cpu,&gpu,&ram,&instruc);
 
-        cpu.exec(&instruc);
 
-        self.tick = self.tick.wrapping_add(instruc.ticks);
+
+        self.tick = self.tick.wrapping_add(instruc.ticks as u64);
+
+        cpu.exec(ram[cpu.get_pc() as usize],ram);
         if self.step_by_step{
             wait();
         }
+        cpu.set_pc(cpu.pc + cpu.fetch(ram[cpu.get_pc() as usize]).argc as u16)
 
     }
 
@@ -39,23 +44,26 @@ impl Master{
             }
             self.tick = 0;
             gpu.pushLine(ram);
-            if self.screen_by_screen{
+            if self.line_by_line {
                 wait();
             }
         }
-
         ram[0xFFFF] += 0b00000001;
+        ram[0xFF0F] += 0b00000001;
+        if self.screen_by_screen {
+            wait();
+        }
 
         for i in 0..10{
             while self.tick < 114{
-                self.step(cpu, gpu,ram);
                 print!("{esc}c", esc = 27 as char);
                 println!("SCREEN STATE__________________________________");
                 println!("State: V-Blank");
                 println!(" ");
+                self.step(cpu, gpu,ram);
             }
             self.tick = 0;
-            if self.screen_by_screen{
+            if self.line_by_line {
                 wait();
             }
         }
@@ -82,6 +90,9 @@ impl Master{
         println!("h:{}",cpu.get_h());
         println!("l:{}",cpu.get_l());
         println!("sp:{}",cpu.get_sp());
+        println!("mie: {}",cpu.get_mie());
+        println!("0xFFFF: {:b}",ram[0xFFFF]);
+        println!("0xFF0F: {:b}",ram[0xFF0F]);
         println!("");
         println!("FLAGS STATE__________________________________");
         let flags = cpu.get_flags();

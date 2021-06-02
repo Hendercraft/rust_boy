@@ -9,7 +9,11 @@ const WINDOW: u8 = 2;
 const SCREEN: u8 = 1;
 
 
-
+pub enum Op{
+    no(fn(&mut Cpu)),
+    u8toCpu(fn(&mut Cpu,u8)),
+    u16toCpu(fn(&mut Cpu,u8,u8)),//High, low
+}
 
 pub struct Flags{
     pub Z : bool,
@@ -112,13 +116,13 @@ impl Cpu {
     }
 
 
-    pub fn fetch(&self,i: u8) -> &Instruct {&self.instructs.get(i as usize).unwrap()}
+    pub fn fetch(&self, i: u8) -> &Instruct {self.instructs.get(i as usize).unwrap()}
 
-    pub fn exec(&mut self,i: &Instruct,ram: &mut [u8;0x10000]){
-        match i.exec {
-            Op::no(_) => {i.exec(self)}
-            Op::u8toCpu(_) => {i.exec(self,ram[self.pc+1])}
-            Op::u16toCpu(_) => {i.exec((self,ram[self.pc+1],ram[self.pc+2]))}
+    pub fn exec(&mut self,i: u8,ram: &mut [u8;0x10000]){
+        match self.fetch(i).exec {
+            Op::no(S) => {S(self)}
+            Op::u8toCpu(U) => {U(self,ram[(self.pc+1) as usize])}
+            Op::u16toCpu(S) => {S(self,ram[(self.pc+1) as usize],ram[(self.pc+2) as usize])}
         }
     }
 
@@ -325,18 +329,14 @@ impl Gpu{
 
 }
 
-pub enum Op{
-    no(fn(&mut Cpu)),
-    u8toCpu(fn(&mut Cpu,u8)),
-    u16toCpu(fn(&mut Cpu,u8,u8)),//High, low
-}
+
 
 pub struct Instruct {
     pub n : u16,
     pub name : String,
     pub desc : String,
     pub argc : u8,
-    pub tics : u8,
+    pub ticks: u8,
     pub exec : Op,
 }
 
@@ -345,7 +345,7 @@ pub struct Instruct {
 impl Instruct {
 
     pub fn build_instruct(n: u16, name : String, desc : String, argc : u8, tics : u8, exec : Op) -> Instruct {
-        Instruct {n,name,desc,argc,tics,exec}
+        Instruct {n,name,desc,argc, ticks: tics,exec}
     }
 
 

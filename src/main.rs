@@ -58,7 +58,7 @@ fn main(){
         e : 0,
         h : 0,
         l : 0,
-        sp : 0,
+        sp : 0x6969,
         pc : 0,
         mie : true,
         //flags : Flags,
@@ -68,8 +68,8 @@ fn main(){
 
     let mut master: Master::Master = Master::Master{
         tick: 0,
-        step_by_step: true,
-        screen_by_screen: false,
+        step_by_step: false,
+        line_by_line: true,
     };
     gpu.buildBG(&ram);
     gpu.buildWindow(&ram);

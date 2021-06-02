@@ -17,12 +17,12 @@ pub fn createOperations() -> Vec<Hardware::Instruct>{
             n : i,
             name : String::from("NOP"),
             desc : String::from("Aussi inutile que les cours de GE00"),
-            argc : 1,
-            tics : 4,
+            argc : 0,
+            ticks: 4,
             exec : Op::no(InstrucFn::nop),
         })
     }
 
-    out[2] = Hardware::Instruct::build_instruct(2, String::from("LD BC,d16"), String::from("Load the d16 given in the operhand in BC"), 2, 12, Op::no(InstrucFn::nop));
+    out[1] = Hardware::Instruct::build_instruct(2, String::from("LD BC,d16"), String::from("Load the d16 given in the operhand in BC"), 2, 12, Op::u16toCpu(InstrucFn::ld_bc_d16));
     return out;
 }
