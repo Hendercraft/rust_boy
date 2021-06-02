@@ -2,7 +2,7 @@ use crate::{Hardware, Interrupts, Controls, Clock, InstrucArr};
 use std::io::{stdin, stdout, Read, Write};
 
 pub struct Master{
-pub op_count: u64,
+pub tick: u64,
 pub step_by_step: bool,
 pub screen_by_screen: bool,
 }
@@ -11,34 +11,64 @@ impl Master{
     pub fn step(&mut self, cpu: &mut Hardware::Cpu, gpu: &mut Hardware::Gpu, ram: &mut [u8;0x10000]){
         //Check for interrupts, if none juste add 1 to PC
         if !Interrupts::interrupt_check(cpu,ram){
-            cpu.set_pc(cpu.get_pc() + 1);
+            cpu.set_pc(cpu.get_pc().wrapping_add(1));
         }
         let mut instruc : &Hardware::Instruct = cpu.fetch(ram[cpu.get_pc() as usize]);
 
-        //self.maxi_debug_print(&cpu,&gpu,&ram,&instruc);
+        self.maxi_debug_print(&cpu,&gpu,&ram,&instruc);
 
-        self.op_count = self.op_count.wrapping_add(1);
+        self.tick = self.tick.wrapping_add(instruc.ticks);
         if self.step_by_step{
-            let mut stdout = stdout();
-            stdout.write(b"Press Enter to continue...").unwrap();
-            stdout.flush().unwrap();
-            stdin().read(&mut [0]).unwrap();
+            wait();
         }
 
     }
 
     pub fn screen(&mut self, cpu: &mut Hardware::Cpu, gpu: &mut Hardware::Gpu, ram: &mut [u8;0x10000]){
-        self.step(cpu, gpu,ram);
+        for i in 0..144{
+            while self.tick < 114{
+                print!("{esc}c", esc = 27 as char);
+                println!("SCREEN STATE__________________________________");
+                println!("State: Printing");
+                println!("Line: {}",i);
+                println!(" ");
+                self.step(cpu, gpu,ram);
+
+            }
+            self.tick = 0;
+            gpu.pushLine(ram);
+            if self.screen_by_screen{
+                wait();
+            }
+        }
+
+        ram[0xFFFF] += 0b00000001;
+
+        for i in 0..10{
+            while self.tick < 114{
+                self.step(cpu, gpu,ram);
+                print!("{esc}c", esc = 27 as char);
+                println!("SCREEN STATE__________________________________");
+                println!("State: V-Blank");
+                println!(" ");
+            }
+            self.tick = 0;
+            if self.screen_by_screen{
+                wait();
+            }
+        }
+
+
     }
 
     pub fn maxi_debug_print(&self, cpu: &Hardware::Cpu, gpu: &Hardware::Gpu, ram: &[u8;0x10000],instruc : &Hardware::Instruct){
-        print!("{esc}c", esc = 27 as char);
         println!("OPERATION____________________________________");
-        println!("Count:{}",self.op_count * 4);
+        println!("Count:{}",self.tick);
         println!("Pc: 0x{:x}", cpu.get_pc());
         println!("Ram value: 0x{:x}", ram[cpu.get_pc() as usize]);
         println!("Name:{}",&instruc.name);
         println!("Instruction: {}", &instruc.desc);
+        println!("Ticks: {}", &instruc.ticks);
         println!("");
         println!("CPU STATE____________________________________");
         println!("a:{}",cpu.get_a());
@@ -59,8 +89,13 @@ impl Master{
         println!("C:{}",flags.C);
         println!("");
         println!("CONTROLS STATE_______________________________");
-        println!("");
-        println!("TIMER STATE__________________________________");
-
     }
+}
+
+pub fn wait(){
+    let mut stdout = stdout();
+    stdout.write(b"Press Enter to continue...").unwrap();
+    stdout.flush().unwrap();
+    stdin().read(&mut [0]).unwrap();
+    print!("{esc}c", esc = 27 as char);
 }
