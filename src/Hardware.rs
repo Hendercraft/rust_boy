@@ -114,7 +114,13 @@ impl Cpu {
 
     pub fn fetch(&self,i: u8) -> &Instruct {&self.instructs.get(i as usize).unwrap()}
 
-    pub fn exec<'a>(i :&Instruct){}
+    pub fn exec(&mut self,i: &Instruct,ram: &mut [u8;0x10000]){
+        match i.exec {
+            Op::no(_) => {i.exec(self)}
+            Op::u8toCpu(_) => {i.exec(self,ram[self.pc+1])}
+            Op::u16toCpu(_) => {i.exec((self,ram[self.pc+1],ram[self.pc+2]))}
+        }
+    }
 
 
 
