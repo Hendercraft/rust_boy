@@ -128,6 +128,13 @@ impl Cpu {
         }
     }
 
+    pub fn write(&mut self, ram:ram: &mut [u8;0x10000], n: u8, adr: u16){
+        ram[adr as usize] = n;
+        match adr{
+            0xff04 => {ram[0xff04] = 0;},
+        }
+    }
+
 
 
 

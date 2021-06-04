@@ -89,7 +89,6 @@ fn main(){
     //ram[0xffff] = ram[0xffff] | 0b100;
 
     while window.update(){
-        ram[0xff00] = 0b00010000;
         window.clear();
         controls.getKeyboard(&mut window);
         controls.updateRam(&mut ram);
