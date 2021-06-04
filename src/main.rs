@@ -8,8 +8,9 @@ mod InstrucArr;
 mod Gui;
 mod Controls;
 mod Interrupts;
-mod Clock;
+mod Timer;
 mod Master;
+
 
 use std::fs;
 
@@ -65,17 +66,26 @@ fn main(){
         instructs: InstrucArr::createOperations(),
     };
 
+    let mut timer: Timer::Timer = Timer::Timer{
+        divider_ticks : 0,//update every 256
+        division : 0,
+        timer_ticks : 0, //Update every division
+        timer_enb : false
+    };
+
 
     let mut master: Master::Master = Master::Master{
         tick: 0,
-        step_by_step: false,
-        line_by_line: true,
+        step_by_step: true,
+        line_by_line: false,
+        screen_by_screen: false,
     };
     gpu.buildBG(&ram);
     gpu.buildWindow(&ram);
     for i in 0..160{
         gpu.pushLine(&ram);
     }
+    ram[0xff05] = 255;
 
     while window.update(){
         ram[0xff00] = 0b00010000;
@@ -83,7 +93,7 @@ fn main(){
         controls.getKeyboard(&mut window);
         controls.updateRam(&mut ram);
         window.pushMatrix(&gpu.screen);
-        master.screen(&mut cpu, &mut gpu, &mut ram);
+        master.screen(&mut cpu, &mut gpu, &mut timer, &mut ram);
 
     }
 

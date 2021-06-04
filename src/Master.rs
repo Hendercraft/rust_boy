@@ -1,4 +1,4 @@
-use crate::{Hardware, Interrupts, Controls, Clock, InstrucArr};
+use crate::{Hardware, Interrupts, Controls, InstrucArr, Timer};
 use std::io::{stdin, stdout, Read, Write};
 
 pub struct Master{
@@ -10,28 +10,26 @@ pub screen_by_screen: bool,
 }
 
 impl Master{
-    pub fn step(&mut self, cpu: &mut Hardware::Cpu, gpu: &mut Hardware::Gpu, ram: &mut [u8;0x10000]){
+    pub fn step(&mut self, cpu: &mut Hardware::Cpu, gpu: &mut Hardware::Gpu, timer: &mut Timer::Timer, ram: &mut [u8;0x10000]){
         //Check for interrupts, if none juste add 1 to PC
         if !Interrupts::interrupt_check(cpu,ram){
             cpu.set_pc(cpu.get_pc().wrapping_add(1));
         }
         let instruc : &Hardware::Instruct = cpu.fetch(ram[cpu.get_pc() as usize]);
 
-        self.maxi_debug_print(&cpu,&gpu,&ram,&instruc);
+        self.maxi_debug_print(&cpu,&gpu,&timer,&ram,&instruc);
 
-
+        timer.update(instruc.ticks, ram);
 
         self.tick = self.tick.wrapping_add(instruc.ticks as u64);
 
         cpu.exec(ram[cpu.get_pc() as usize],ram);
-        if self.step_by_step{
-            wait();
-        }
+
         cpu.set_pc(cpu.pc + cpu.fetch(ram[cpu.get_pc() as usize]).argc as u16)
 
     }
 
-    pub fn screen(&mut self, cpu: &mut Hardware::Cpu, gpu: &mut Hardware::Gpu, ram: &mut [u8;0x10000]){
+    pub fn screen(&mut self, cpu: &mut Hardware::Cpu, gpu: &mut Hardware::Gpu, timer: &mut Timer::Timer, ram: &mut [u8;0x10000]){
         for i in 0..144{
             while self.tick < 114{
                 print!("{esc}c", esc = 27 as char);
@@ -39,7 +37,10 @@ impl Master{
                 println!("State: Printing");
                 println!("Line: {}",i);
                 println!(" ");
-                self.step(cpu, gpu,ram);
+                self.step(cpu, gpu, timer, ram);
+                if self.step_by_step{
+                    wait();
+                }
 
             }
             self.tick = 0;
@@ -48,19 +49,17 @@ impl Master{
                 wait();
             }
         }
-        ram[0xFFFF] += 0b00000001;
-        ram[0xFF0F] += 0b00000001;
-        if self.screen_by_screen {
-            wait();
-        }
 
-        for i in 0..10{
+        for j in 0..10{
             while self.tick < 114{
                 print!("{esc}c", esc = 27 as char);
                 println!("SCREEN STATE__________________________________");
                 println!("State: V-Blank");
                 println!(" ");
-                self.step(cpu, gpu,ram);
+                self.step(cpu, gpu, timer, ram);
+                if self.step_by_step {
+                    wait();
+                }
             }
             self.tick = 0;
             if self.line_by_line {
@@ -68,14 +67,17 @@ impl Master{
             }
         }
 
-
+        if self.screen_by_screen {
+            wait();
+        }
     }
 
-    pub fn maxi_debug_print(&self, cpu: &Hardware::Cpu, gpu: &Hardware::Gpu, ram: &[u8;0x10000],instruc : &Hardware::Instruct){
+
+    pub fn maxi_debug_print(&self, cpu: &Hardware::Cpu, gpu: &Hardware::Gpu, timer: &Timer::Timer, ram: &[u8;0x10000],instruc : &Hardware::Instruct){
         println!("OPERATION____________________________________");
         println!("Count:{}",self.tick);
-        println!("Pc: 0x{:x}", cpu.get_pc());
-        println!("Ram value: 0x{:x}", ram[cpu.get_pc() as usize]);
+        println!("Pc: {:#06x}", cpu.get_pc());
+        println!("Ram value: {:#04x}", ram[cpu.get_pc() as usize]);
         println!("Name:{}",&instruc.name);
         println!("Instruction: {}", &instruc.desc);
         println!("Ticks: {}", &instruc.ticks);
@@ -91,8 +93,8 @@ impl Master{
         println!("l:{}",cpu.get_l());
         println!("sp:{}",cpu.get_sp());
         println!("mie: {}",cpu.get_mie());
-        println!("0xFFFF: {:b}",ram[0xFFFF]);
-        println!("0xFF0F: {:b}",ram[0xFF0F]);
+        println!("0xFFFF: {:#010b}",ram[0xFFFF]);
+        println!("0xFF0F: {:#010b}",ram[0xFF0F]);
         println!("");
         println!("FLAGS STATE__________________________________");
         let flags = cpu.get_flags();
@@ -101,7 +103,14 @@ impl Master{
         println!("H:{}",flags.H);
         println!("C:{}",flags.C);
         println!("");
-        println!("CONTROLS STATE_______________________________");
+        println!("TIMER STATE__________________________________");
+        println!("Divider:{:#04x}",ram[0xff04]);
+        println!("Divider ticks:{}",timer.divider_ticks);
+        println!("Timer enable:{}",timer.timer_enb);
+        println!("Timer division:{}",timer.division);
+        println!("Timer:{:#04x}",ram[0xff05]);
+        println!("Timer ticks:{}",timer.timer_ticks);
+        println!("");
     }
 }
 
