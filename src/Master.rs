@@ -15,15 +15,17 @@ impl Master{
         if !Interrupts::interrupt_check(cpu,ram){
             cpu.set_pc(cpu.get_pc().wrapping_add(1));
         }
-        let instruc : &Hardware::Instruct = cpu.fetch(ram[cpu.get_pc() as usize]);
+        let instruct : &Hardware::Instruct = cpu.fetch(ram[cpu.get_pc() as usize]);
 
-        self.maxi_debug_print(&cpu,&gpu,&timer,&ram,&instruc);
+        self.maxi_debug_print(&cpu,&gpu,&timer,&ram,&instruct);
 
-        timer.update(instruc.ticks, ram);
 
-        self.tick = self.tick.wrapping_add(instruc.ticks as u64);
 
-        cpu.exec(ram[cpu.get_pc() as usize],ram);
+        self.tick = self.tick.wrapping_add(instruct.ticks as u64);
+
+        timer.update(instruct.ticks, ram);
+
+        cpu.exec(instruct.n,ram);
 
         cpu.set_pc(cpu.pc + cpu.fetch(ram[cpu.get_pc() as usize]).argc as u16)
 

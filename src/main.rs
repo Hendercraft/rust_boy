@@ -85,7 +85,8 @@ fn main(){
     for i in 0..160{
         gpu.pushLine(&ram);
     }
-    ram[0xff05] = 255;
+    //ram[0xff05] = 255;
+    //ram[0xffff] = ram[0xffff] | 0b100;
 
     while window.update(){
         ram[0xff00] = 0b00010000;

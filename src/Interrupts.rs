@@ -79,9 +79,4 @@ pub fn joypad(cpu: &mut Cpu, ram: &mut [u8;0x10000]){
     cpu.set_pc(0x60); // + 12 ticks
 }
 
-//0xD9
-pub fn return_from_int (cpu: &mut Cpu, ram: &mut [u8;0x10000]){
-    cpu.set_mie(true);
-    let pc : u16 = cpu.read_u16_from_stack(&ram);
-    cpu.set_pc(pc);
-}
+

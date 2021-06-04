@@ -13,6 +13,7 @@ pub enum Op{
     no(fn(&mut Cpu)),
     u8toCpu(fn(&mut Cpu,u8)),
     u16toCpu(fn(&mut Cpu,u8,u8)),//High, low
+    ram(fn(&mut Cpu,&mut [u8;0x10000]))
 }
 
 pub struct Flags{
@@ -118,11 +119,12 @@ impl Cpu {
 
     pub fn fetch(&self, i: u8) -> &Instruct {self.instructs.get(i as usize).unwrap()}
 
-    pub fn exec(&mut self,i: u8,ram: &mut [u8;0x10000]){
-        match self.fetch(i).exec {
-            Op::no(S) => {S(self)}
-            Op::u8toCpu(U) => {U(self,ram[(self.pc+1) as usize])}
-            Op::u16toCpu(S) => {S(self,ram[(self.pc+1) as usize],ram[(self.pc+2) as usize])}
+    pub fn exec(&mut self,i: u16,ram: &mut [u8;0x10000]){
+        match self.instructs[i as usize].exec {
+            Op::no(instruct) => {instruct(self)}
+            Op::u8toCpu(instruct) => { instruct(self, ram[(self.pc+1) as usize])}
+            Op::u16toCpu(instruct) => { instruct(self, ram[(self.pc+1) as usize], ram[(self.pc+2) as usize])}
+            Op::ram(instruct) => { instruct(self,ram)}
         }
     }
 

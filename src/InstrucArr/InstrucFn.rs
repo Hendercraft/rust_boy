@@ -11,12 +11,12 @@ use crate::Hardware::Flag::*;
 pub fn nop(cpu : &mut Cpu){}
 
 //0x01
-pub fn ld_bc_d16(cpu : &mut Cpu, h : u8, l: u8){
+pub fn ld_bc_u16(cpu : &mut Cpu, h : u8, l: u8){
     cpu.set_b(h);
     cpu.set_c(l);
 }
 //0x02
-pub fn ld_bcp_a(cpu : &mut Cpu, ram : &mut Vec<u8>){
+pub fn ld_bcp_a(cpu : &mut Cpu, ram : &mut [u8;0x10000]){
     ram[cpu.get_bc() as usize] = cpu.get_a();
 }
 
@@ -61,6 +61,13 @@ pub fn dec_b(cpu : &mut Cpu) {
     cpu.set_flag(N); //setting N flag
 }
 
+//0x06
+pub fn  ld_b_u8(cpu : &mut Cpu, n : u8){
+    cpu.set_b(n);
+}
+
+
+
 //0xF3 (4tics)
 pub fn di(cpu : &mut Cpu){
     cpu.set_mie(false);
@@ -69,4 +76,11 @@ pub fn di(cpu : &mut Cpu){
 //0xFB (4tics)
 pub fn ei(cpu : &mut Cpu){
     cpu.set_mie(true);
+}
+
+//0xD9
+pub fn reti (cpu: &mut Cpu, ram: &mut [u8;0x10000]){
+    cpu.set_mie(true);
+    let pc : u16 = cpu.read_u16_from_stack(&ram);
+    cpu.set_pc(pc);
 }
