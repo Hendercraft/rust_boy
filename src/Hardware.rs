@@ -11,9 +11,10 @@ const SCREEN: u8 = 1;
 
 pub enum Op{
     no(fn(&mut Cpu)),
-    u8toCpu(fn(&mut Cpu,u8)),
-    u16toCpu(fn(&mut Cpu,u8,u8)),//High, low
-    ram(fn(&mut Cpu,&mut [u8;0x10000]))
+    u8(fn(&mut Cpu, u8)),
+    u16(fn(&mut Cpu, u8, u8)),//High, low
+    ram(fn(&mut Cpu,&mut [u8;0x10000])),
+    ramu16(fn(&mut Cpu,u8,u8,&mut [u8;0x10000]))//High, low, ram
 }
 
 pub struct Flags{
@@ -50,16 +51,16 @@ impl Cpu {
     pub fn get_h (&self) -> u8 {self.h}
     pub fn get_l (&self) -> u8 {self.l}
     //getter u16
-    pub fn get_af (&self) ->u16 {Cpu::get_u16(&self.a,&self.f)}
-    pub fn get_bc (&self) ->u16 {Cpu::get_u16(&self.b,&self.c)}
-    pub fn get_de (&self) ->u16 {Cpu::get_u16(&self.d,&self.e)}
-    pub fn get_hl (&self) ->u16 {Cpu::get_u16(&self.h,&self.l)}
+    pub fn get_af (&self) ->u16 {Cpu::get_u16(self.a, self.f)}
+    pub fn get_bc (&self) ->u16 {Cpu::get_u16(self.b,self.c)}
+    pub fn get_de (&self) ->u16 {Cpu::get_u16(self.d,self.e)}
+    pub fn get_hl (&self) ->u16 {Cpu::get_u16(self.h,self.l)}
     pub fn get_sp (&self) ->u16 {self.sp}
     pub fn get_pc (&self) ->u16 {self.pc}
     pub fn get_mie (&self) ->bool {self.mie}
 
-    fn get_u16 (h: &u8 ,l: &u8) -> u16{
-        ((*h as u16) << 8) | *l as u16
+    pub(crate) fn get_u16 (h: u8, l: u8) -> u16{
+        ((h as u16) << 8) | l as u16
     }
 
     //setter u8
@@ -122,9 +123,10 @@ impl Cpu {
     pub fn exec(&mut self,i: u16,ram: &mut [u8;0x10000]){
         match self.instructs[i as usize].exec {
             Op::no(instruct) => {instruct(self)}
-            Op::u8toCpu(instruct) => { instruct(self, ram[(self.pc+1) as usize])}
-            Op::u16toCpu(instruct) => { instruct(self, ram[(self.pc+1) as usize], ram[(self.pc+2) as usize])}
+            Op::u8(instruct) => { instruct(self, ram[(self.pc+1) as usize])}
+            Op::u16(instruct) => { instruct(self, ram[(self.pc+1) as usize], ram[(self.pc+2) as usize])}
             Op::ram(instruct) => { instruct(self,ram)}
+            Op::ramu16(instruct) => { instruct(self,ram[(self.pc+1) as usize], ram[(self.pc+2) as usize],ram)}
         }
     }
 

@@ -25,45 +25,52 @@ pub fn createOperations() -> Vec<Instruct>{
     }
 
     //8 bit direct load
-    out[0x06] = Instruct::build_instruct(0x06, String::from("LD B n /!\\"), String::from("Load n in B"), 1, 8, Op::no(InstrucFn::nop));
-    out[0x0e] = Instruct::build_instruct(0x0e, String::from("LD C n /!\\"), String::from("Load n in C"), 1, 8, Op::no(InstrucFn::nop));
-    out[0x16] = Instruct::build_instruct(0x16, String::from("LD D n /!\\"), String::from("Load n in D"), 1, 8, Op::no(InstrucFn::nop));
-    out[0x1e] = Instruct::build_instruct(0x1e, String::from("LD E n /!\\"), String::from("Load n in E"), 1, 8, Op::no(InstrucFn::nop));
-    out[0x26] = Instruct::build_instruct(0x26, String::from("LD H n /!\\"), String::from("Load n in H"), 1, 8, Op::no(InstrucFn::nop));
-    out[0x2e] = Instruct::build_instruct(0x2e, String::from("LD L n /!\\"), String::from("Load n in L"), 1, 8, Op::no(InstrucFn::nop));
+    out[0x3E] = Instruct::build_instruct(0x3E, String::from("LD A n"), String::from("Load n in A"), 1, 8, Op::u8(InstrucFn::ld_a_u8));
+    out[0x06] = Instruct::build_instruct(0x06, String::from("LD B n"), String::from("Load n in B"), 1, 8, Op::u8(InstrucFn::ld_b_u8));
+    out[0x0e] = Instruct::build_instruct(0x0e, String::from("LD C n"), String::from("Load n in C"), 1, 8, Op::u8(InstrucFn::ld_c_u8));
+    out[0x16] = Instruct::build_instruct(0x16, String::from("LD D n"), String::from("Load n in D"), 1, 8, Op::u8(InstrucFn::ld_d_u8));
+    out[0x1e] = Instruct::build_instruct(0x1e, String::from("LD E n"), String::from("Load n in E"), 1, 8, Op::u8(InstrucFn::ld_e_u8));
+    out[0x26] = Instruct::build_instruct(0x26, String::from("LD H n"), String::from("Load n in H"), 1, 8, Op::u8(InstrucFn::ld_h_u8));
+    out[0x2e] = Instruct::build_instruct(0x2e, String::from("LD L n "), String::from("Load n in L"), 1, 8, Op::u8(InstrucFn::ld_l_u8));
     //Load A
-    out[0x7f] = Instruct::build_instruct(0x7f, String::from("LD A A /!\\"), String::from("Load A in A"), 0, 4, Op::no(InstrucFn::nop));
-    out[0x78] = Instruct::build_instruct(0x78, String::from("LD A B /!\\"), String::from("Load B in A"), 0, 4, Op::no(InstrucFn::nop));
-    out[0x79] = Instruct::build_instruct(0x79, String::from("LD A C /!\\"), String::from("Load C in A"), 0, 4, Op::no(InstrucFn::nop));
-    out[0x7a] = Instruct::build_instruct(0x7a, String::from("LD A D /!\\"), String::from("Load D in A"), 0, 4, Op::no(InstrucFn::nop));
-    out[0x7b] = Instruct::build_instruct(0x7b, String::from("LD A E /!\\"), String::from("Load E in A"), 0, 4, Op::no(InstrucFn::nop));
-    out[0x7C] = Instruct::build_instruct(0x7C, String::from("LD A H /!\\"), String::from("Load H in A"), 0, 4, Op::no(InstrucFn::nop));
-    out[0x7D] = Instruct::build_instruct(0x7D, String::from("LD A L /!\\"), String::from("Load L in A"), 0, 4, Op::no(InstrucFn::nop));
-    out[0x7E] = Instruct::build_instruct(0x7E, String::from("LD A (HL) /!\\"), String::from("Load ram[HL] in A"), 0, 8, Op::no(InstrucFn::nop));
+    out[0x7f] = Instruct::build_instruct(0x7f, String::from("LD A A"), String::from("Load A in A"), 0, 4, Op::no(InstrucFn::ld_a_a));
+    out[0x78] = Instruct::build_instruct(0x78, String::from("LD A B"), String::from("Load B in A"), 0, 4, Op::no(InstrucFn::ld_a_b));
+    out[0x79] = Instruct::build_instruct(0x79, String::from("LD A C"), String::from("Load C in A"), 0, 4, Op::no(InstrucFn::ld_a_c));
+    out[0x7a] = Instruct::build_instruct(0x7a, String::from("LD A D"), String::from("Load D in A"), 0, 4, Op::no(InstrucFn::ld_a_d));
+    out[0x7b] = Instruct::build_instruct(0x7b, String::from("LD A E"), String::from("Load E in A"), 0, 4, Op::no(InstrucFn::ld_a_e));
+    out[0x7C] = Instruct::build_instruct(0x7C, String::from("LD A H"), String::from("Load H in A"), 0, 4, Op::no(InstrucFn::ld_a_h));
+    out[0x7D] = Instruct::build_instruct(0x7D, String::from("LD A L"), String::from("Load L in A"), 0, 4, Op::no(InstrucFn::ld_a_l));
+    out[0x0A] = Instruct::build_instruct(0x0A, String::from("LD A (BC)"), String::from("Load ram[BC] in A"), 0, 8, Op::ram(InstrucFn::ld_a_bcp));
+    out[0x1A] = Instruct::build_instruct(0x1A, String::from("LD A (DE)"), String::from("Load ram[DE] in A"), 0, 8, Op::ram(InstrucFn::ld_a_dep));
+    out[0x7E] = Instruct::build_instruct(0x7E, String::from("LD A (HL)"), String::from("Load ram[HL] in A"), 0, 8, Op::ram(InstrucFn::ld_a_hlp));
+    out[0xFA] = Instruct::build_instruct(0xFA, String::from("LD A (nn)"), String::from("Load ram[nn] in A"), 2, 16, Op::ramu16(InstrucFn::ld_a_u16p));
     //Load B
-    out[0x40] = Instruct::build_instruct(0x40, String::from("LD B B /!\\"), String::from("Load B in B"), 0, 4, Op::no(InstrucFn::nop));
-    out[0x41] = Instruct::build_instruct(0x41, String::from("LD B C /!\\"), String::from("Load C in B"), 0, 4, Op::no(InstrucFn::nop));
-    out[0x42] = Instruct::build_instruct(0x42, String::from("LD B D /!\\"), String::from("Load D in B"), 0, 4, Op::no(InstrucFn::nop));
-    out[0x43] = Instruct::build_instruct(0x43, String::from("LD B E /!\\"), String::from("Load E in B"), 0, 4, Op::no(InstrucFn::nop));
-    out[0x44] = Instruct::build_instruct(0x44, String::from("LD B H /!\\"), String::from("Load H in B"), 0, 4, Op::no(InstrucFn::nop));
-    out[0x45] = Instruct::build_instruct(0x45, String::from("LD B L /!\\"), String::from("Load L in B"), 0, 4, Op::no(InstrucFn::nop));
-    out[0x46] = Instruct::build_instruct(0x46, String::from("LD B (HL) /!\\"), String::from("Load ram[HL] in B"), 0, 8, Op::no(InstrucFn::nop));
+    out[0x40] = Instruct::build_instruct(0x40, String::from("LD B B"), String::from("Load B in B"), 0, 4, Op::no(InstrucFn::ld_b_b));
+    out[0x41] = Instruct::build_instruct(0x41, String::from("LD B C"), String::from("Load C in B"), 0, 4, Op::no(InstrucFn::ld_b_c));
+    out[0x42] = Instruct::build_instruct(0x42, String::from("LD B D"), String::from("Load D in B"), 0, 4, Op::no(InstrucFn::ld_b_d));
+    out[0x43] = Instruct::build_instruct(0x43, String::from("LD B E"), String::from("Load E in B"), 0, 4, Op::no(InstrucFn::ld_b_e));
+    out[0x44] = Instruct::build_instruct(0x44, String::from("LD B H"), String::from("Load H in B"), 0, 4, Op::no(InstrucFn::ld_b_h));
+    out[0x45] = Instruct::build_instruct(0x45, String::from("LD B L"), String::from("Load L in B"), 0, 4, Op::no(InstrucFn::ld_b_l));
+    out[0x46] = Instruct::build_instruct(0x46, String::from("LD B (HL)"), String::from("Load ram[HL] in B"), 0, 8, Op::ram(InstrucFn::ld_b_hlp));
+    out[0x47] = Instruct::build_instruct(0x47, String::from("LD B A"), String::from("Load A in B"), 0, 4, Op::no(InstrucFn::ld_b_a));
     //Load C
-    out[0x48] = Instruct::build_instruct(0x48, String::from("LD C B /!\\"), String::from("Load B in C"), 0, 4, Op::no(InstrucFn::nop));
-    out[0x49] = Instruct::build_instruct(0x49, String::from("LD C C /!\\"), String::from("Load C in C"), 0, 4, Op::no(InstrucFn::nop));
-    out[0x4A] = Instruct::build_instruct(0x4A, String::from("LD C D /!\\"), String::from("Load D in C"), 0, 4, Op::no(InstrucFn::nop));
-    out[0x4B] = Instruct::build_instruct(0x4B, String::from("LD C E /!\\"), String::from("Load E in C"), 0, 4, Op::no(InstrucFn::nop));
-    out[0x4C] = Instruct::build_instruct(0x4C, String::from("LD C H /!\\"), String::from("Load H in C"), 0, 4, Op::no(InstrucFn::nop));
-    out[0x4D] = Instruct::build_instruct(0x4D, String::from("LD C L /!\\"), String::from("Load L in C"), 0, 4, Op::no(InstrucFn::nop));
-    out[0x4E] = Instruct::build_instruct(0x4E, String::from("LD C (HL) /!\\"), String::from("Load ram[HL] in C"), 0, 8, Op::no(InstrucFn::nop));
+    out[0x48] = Instruct::build_instruct(0x48, String::from("LD C B"), String::from("Load B in C"), 0, 4, Op::no(InstrucFn::ld_c_b));
+    out[0x49] = Instruct::build_instruct(0x49, String::from("LD C C"), String::from("Load C in C"), 0, 4, Op::no(InstrucFn::ld_c_c));
+    out[0x4A] = Instruct::build_instruct(0x4A, String::from("LD C D"), String::from("Load D in C"), 0, 4, Op::no(InstrucFn::ld_c_d));
+    out[0x4B] = Instruct::build_instruct(0x4B, String::from("LD C E"), String::from("Load E in C"), 0, 4, Op::no(InstrucFn::ld_c_e));
+    out[0x4C] = Instruct::build_instruct(0x4C, String::from("LD C H"), String::from("Load H in C"), 0, 4, Op::no(InstrucFn::ld_c_h));
+    out[0x4D] = Instruct::build_instruct(0x4D, String::from("LD C L"), String::from("Load L in C"), 0, 4, Op::no(InstrucFn::ld_c_l));
+    out[0x4E] = Instruct::build_instruct(0x4E, String::from("LD C (HL)"), String::from("Load ram[HL] in C"), 0, 8, Op::ram(InstrucFn::ld_c_hlp));
+    out[0x4f] = Instruct::build_instruct(0x4f, String::from("LD C A /!\\"), String::from("Load A in C"), 0, 4, Op::no(InstrucFn::ld_c_a));
     //Load D
-    out[0x50] = Instruct::build_instruct(0x50, String::from("LD D B /!\\"), String::from("Load B in D"), 0, 4, Op::no(InstrucFn::nop));
-    out[0x51] = Instruct::build_instruct(0x51, String::from("LD D C /!\\"), String::from("Load C in D"), 0, 4, Op::no(InstrucFn::nop));
-    out[0x52] = Instruct::build_instruct(0x52, String::from("LD D D /!\\"), String::from("Load D in D"), 0, 4, Op::no(InstrucFn::nop));
-    out[0x53] = Instruct::build_instruct(0x53, String::from("LD D E /!\\"), String::from("Load E in D"), 0, 4, Op::no(InstrucFn::nop));
-    out[0x54] = Instruct::build_instruct(0x54, String::from("LD D H /!\\"), String::from("Load H in D"), 0, 4, Op::no(InstrucFn::nop));
-    out[0x55] = Instruct::build_instruct(0x55, String::from("LD D L /!\\"), String::from("Load L in D"), 0, 4, Op::no(InstrucFn::nop));
-    out[0x56] = Instruct::build_instruct(0x56, String::from("LD D (HL) /!\\"), String::from("Load ram[HL] in D"), 0, 8, Op::no(InstrucFn::nop));
+    out[0x50] = Instruct::build_instruct(0x50, String::from("LD D B /!\\"), String::from("Load B in D"), 0, 4, Op::no(InstrucFn::ld_d_b));
+    out[0x51] = Instruct::build_instruct(0x51, String::from("LD D C /!\\"), String::from("Load C in D"), 0, 4, Op::no(InstrucFn::ld_d_c));
+    out[0x52] = Instruct::build_instruct(0x52, String::from("LD D D /!\\"), String::from("Load D in D"), 0, 4, Op::no(InstrucFn::ld_d_d));
+    out[0x53] = Instruct::build_instruct(0x53, String::from("LD D E /!\\"), String::from("Load E in D"), 0, 4, Op::no(InstrucFn::ld_d_e));
+    out[0x54] = Instruct::build_instruct(0x54, String::from("LD D H /!\\"), String::from("Load H in D"), 0, 4, Op::no(InstrucFn::ld_d_h));
+    out[0x55] = Instruct::build_instruct(0x55, String::from("LD D L /!\\"), String::from("Load L in D"), 0, 4, Op::no(InstrucFn::ld_d_l));
+    out[0x56] = Instruct::build_instruct(0x56, String::from("LD D (HL) /!\\"), String::from("Load ram[HL] in D"), 0, 8, Op::ram(InstrucFn::ld_d_hlp));
+    out[0x57] = Instruct::build_instruct(0x57, String::from("LD D A /!\\"), String::from("Load A in D"), 0, 4, Op::no(InstrucFn::ld_d_a));
     //Load E
     out[0x58] = Instruct::build_instruct(0x58, String::from("LD E B /!\\"), String::from("Load B in E"), 0, 4, Op::no(InstrucFn::nop));
     out[0x59] = Instruct::build_instruct(0x59, String::from("LD E C /!\\"), String::from("Load C in E"), 0, 4, Op::no(InstrucFn::nop));
@@ -96,23 +103,7 @@ pub fn createOperations() -> Vec<Instruct>{
     out[0x74] = Instruct::build_instruct(0x74, String::from("LD (HL) H /!\\"), String::from("Load H in ram[HL]"), 0, 4, Op::no(InstrucFn::nop));
     out[0x75] = Instruct::build_instruct(0x75, String::from("LD (HL) L /!\\"), String::from("Load L in ram[HL]"), 0, 4, Op::no(InstrucFn::nop));
     out[0x36] = Instruct::build_instruct(0x36, String::from("LD (HL) n /!\\"), String::from("Load n in ram[HL]"), 1, 12, Op::no(InstrucFn::nop));
-    //Load A
-    out[0x7f] = Instruct::build_instruct(0x7f, String::from("LD A A /!\\"), String::from("Load A in A"), 0, 4, Op::no(InstrucFn::nop));
-    out[0x78] = Instruct::build_instruct(0x78, String::from("LD A B /!\\"), String::from("Load B in A"), 0, 4, Op::no(InstrucFn::nop));
-    out[0x79] = Instruct::build_instruct(0x79, String::from("LD A C /!\\"), String::from("Load C in A"), 0, 4, Op::no(InstrucFn::nop));
-    out[0x7A] = Instruct::build_instruct(0x7A, String::from("LD A D /!\\"), String::from("Load D in A"), 0, 4, Op::no(InstrucFn::nop));
-    out[0x7B] = Instruct::build_instruct(0x7B, String::from("LD A E /!\\"), String::from("Load E in A"), 0, 4, Op::no(InstrucFn::nop));
-    out[0x7C] = Instruct::build_instruct(0x7C, String::from("LD A H /!\\"), String::from("Load H in A"), 0, 4, Op::no(InstrucFn::nop));
-    out[0x7D] = Instruct::build_instruct(0x7D, String::from("LD A L /!\\"), String::from("Load L in A"), 0, 4, Op::no(InstrucFn::nop));
-    out[0x0A] = Instruct::build_instruct(0x0A, String::from("LD A (BC) /!\\"), String::from("Load ram[BC] in A"), 0, 8, Op::no(InstrucFn::nop));
-    out[0x1A] = Instruct::build_instruct(0x1A, String::from("LD A (DE) /!\\"), String::from("Load ram[DE] in A"), 0, 8, Op::no(InstrucFn::nop));
-    out[0x7E] = Instruct::build_instruct(0x7E, String::from("LD A (HL) /!\\"), String::from("Load ram[HL] in A"), 0, 8, Op::no(InstrucFn::nop));
-    out[0xFA] = Instruct::build_instruct(0xFA, String::from("LD A (nn) /!\\"), String::from("Load ram[nn] in A"), 2, 16, Op::no(InstrucFn::nop));
-    out[0x3E] = Instruct::build_instruct(0x3E, String::from("LD A n /!\\"), String::from("Load n in A"), 1, 8, Op::no(InstrucFn::nop));
     //Load n from A
-    out[0x47] = Instruct::build_instruct(0x47, String::from("LD B A /!\\"), String::from("Load A in B"), 0, 4, Op::no(InstrucFn::nop));
-    out[0x4f] = Instruct::build_instruct(0x4f, String::from("LD C A /!\\"), String::from("Load A in C"), 0, 4, Op::no(InstrucFn::nop));
-    out[0x57] = Instruct::build_instruct(0x57, String::from("LD D A /!\\"), String::from("Load A in D"), 0, 4, Op::no(InstrucFn::nop));
     out[0x5F] = Instruct::build_instruct(0x5F, String::from("LD E A /!\\"), String::from("Load A in E"), 0, 4, Op::no(InstrucFn::nop));
     out[0x67] = Instruct::build_instruct(0x67, String::from("LD H A /!\\"), String::from("Load A in H"), 0, 4, Op::no(InstrucFn::nop));
     out[0x6f] = Instruct::build_instruct(0x6f, String::from("LD L A /!\\"), String::from("Load A in L"), 0, 4, Op::no(InstrucFn::nop));
@@ -132,7 +123,7 @@ pub fn createOperations() -> Vec<Instruct>{
     out[0xF0] = Instruct::build_instruct(0xF0, String::from("LDH A (n) /!\\"), String::from("Load ram[0xff00+n] in A"), 1, 8, Op::no(InstrucFn::nop));
     out[0xE0] = Instruct::build_instruct(0xE0, String::from("LDH (n) A /!\\"), String::from("Load A in ram[0xff00+n]"), 1, 8, Op::no(InstrucFn::nop));
     //16 bits direct loads
-    out[0x01] = Instruct::build_instruct(0x01, String::from("LD BC nn /!\\"), String::from("Load nn in BC"), 2, 12, Op::u16toCpu(InstrucFn::ld_bc_u16));
+    out[0x01] = Instruct::build_instruct(0x01, String::from("LD BC nn /!\\"), String::from("Load nn in BC"), 2, 12, Op::u16(InstrucFn::ld_bc_u16));
     out[0x11] = Instruct::build_instruct(0x11, String::from("LD DE nn /!\\"), String::from("Load nn in DE"), 2, 12, Op::no(InstrucFn::nop));
     out[0x21] = Instruct::build_instruct(0x21, String::from("LD HL nn /!\\"), String::from("Load nn in HL"), 2, 12, Op::no(InstrucFn::nop));
     out[0x31] = Instruct::build_instruct(0x31, String::from("LD SP nn /!\\"), String::from("Load nn in SP"), 2, 12, Op::no(InstrucFn::nop));
@@ -158,7 +149,7 @@ pub fn createOperations() -> Vec<Instruct>{
     out[0x03] = Instruct::build_instruct(3, String::from("INC BC"), String::from("Increase BC "), 0, 8, Op::no(InstrucFn::inc_bc));
     out[0x04] = Instruct::build_instruct(4, String::from("INC B"), String::from("Increase B, manipulate Z,H flag, set N to 0"), 0, 4, Op::no(InstrucFn::inc_b));
     out[0x05] = Instruct::build_instruct(5, String::from("DEC B"), String::from("Decrease B, manipulate Z,H flag, set N to 1"), 0, 4, Op::no(InstrucFn::dec_b));
-    out[0x06] = Instruct::build_instruct(6, String::from("LD B d8"), String::from("Load the d8 given in the operand in B"), 1, 8, Op::u8toCpu(InstrucFn::ld_b_u8));
+    out[0x06] = Instruct::build_instruct(6, String::from("LD B d8"), String::from("Load the d8 given in the operand in B"), 1, 8, Op::u8(InstrucFn::ld_b_u8));
     out[0xD9] = Instruct::build_instruct(0xD9, String::from("RETI"), String::from("Load the sp back to pc (return from interrupt)"), 0, 16, Op::ram(InstrucFn::reti));
     return out;
 
