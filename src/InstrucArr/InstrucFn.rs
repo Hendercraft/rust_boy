@@ -234,6 +234,139 @@ pub fn  ld_d_hlp(cpu : &mut Cpu, ram : &mut [u8;0x10000]){
 pub fn ld_d_a(cpu : &mut Cpu){
     cpu.set_d(cpu.get_a());
 }
+/*****************Load E***********************/
+//0x58
+pub fn ld_e_b(cpu : &mut Cpu){
+    cpu.set_e(cpu.get_b());
+}
+//0x59
+pub fn ld_e_c(cpu : &mut Cpu){
+    cpu.set_e(cpu.get_c());
+}
+//0x5A
+pub fn ld_e_d(cpu : &mut Cpu){
+    cpu.set_e(cpu.get_d());
+}
+//0x5B
+pub fn ld_e_e(cpu : &mut Cpu){
+    cpu.set_e(cpu.get_e());
+}
+//0x5C
+pub fn ld_e_h(cpu : &mut Cpu){
+    cpu.set_e(cpu.get_h());
+}
+//0x5D
+pub fn ld_e_l(cpu : &mut Cpu){
+    cpu.set_e(cpu.get_l());
+}
+//0x5E
+pub fn  ld_e_hlp(cpu : &mut Cpu, ram : &mut [u8;0x10000]){
+    cpu.set_e(ram[cpu.get_hl() as usize]);
+}
+//0x5F
+pub fn ld_e_a(cpu : &mut Cpu){
+    cpu.set_e(cpu.get_a());
+}
+/*****************Load H***********************/
+//0x60
+pub fn ld_h_b(cpu : &mut Cpu){
+    cpu.set_h(cpu.get_b());
+}
+//0x61
+pub fn ld_h_c(cpu : &mut Cpu){
+    cpu.set_h(cpu.get_c());
+}
+//0x62
+pub fn ld_h_d(cpu : &mut Cpu){
+    cpu.set_h(cpu.get_d());
+}
+//0x63
+pub fn ld_h_e(cpu : &mut Cpu){
+    cpu.set_h(cpu.get_e());
+}
+//0x64
+pub fn ld_h_h(cpu : &mut Cpu){
+    cpu.set_h(cpu.get_h());
+}
+//0x65
+pub fn ld_h_l(cpu : &mut Cpu){
+    cpu.set_h(cpu.get_l());
+}
+//0x66
+pub fn  ld_h_hlp(cpu : &mut Cpu, ram : &mut [u8;0x10000]){
+    cpu.set_h(ram[cpu.get_hl() as usize]);
+}
+//0x67
+pub fn ld_h_a(cpu : &mut Cpu){
+    cpu.set_h(cpu.get_a());
+}
+/*****************Load L***********************/
+//0x68
+pub fn ld_l_b(cpu : &mut Cpu){
+    cpu.set_l(cpu.get_b());
+}
+//0x69
+pub fn ld_l_c(cpu : &mut Cpu){
+    cpu.set_l(cpu.get_c());
+}
+//0x6A
+pub fn ld_l_d(cpu : &mut Cpu){
+    cpu.set_l(cpu.get_d());
+}
+//0x6B
+pub fn ld_l_e(cpu : &mut Cpu){
+    cpu.set_l(cpu.get_e());
+}
+//0x6C
+pub fn ld_l_h(cpu : &mut Cpu){
+    cpu.set_l(cpu.get_h());
+}
+//0x6D
+pub fn ld_l_l(cpu : &mut Cpu){
+    cpu.set_l(cpu.get_l());
+}
+//0x6E
+pub fn  ld_l_hlp(cpu : &mut Cpu, ram : &mut [u8;0x10000]){
+    cpu.set_l(ram[cpu.get_hl() as usize]);
+}
+//0x6F
+pub fn ld_l_a(cpu : &mut Cpu){
+    cpu.set_l(cpu.get_a());
+}
+/*****************Load (HL)***********************/
+//0x70
+pub fn ld_hlp_b(cpu: &mut Cpu, ram : &mut [u8;0x10000]){
+    cpu.write(ram,cpu.get_b(),cpu.get_hl());
+}
+//0x71
+pub fn ld_hlp_c(cpu: &mut Cpu, ram : &mut [u8;0x10000]){
+    cpu.write(ram,cpu.get_c(),cpu.get_hl());
+}
+//0x72
+pub fn ld_hlp_d(cpu: &mut Cpu, ram : &mut [u8;0x10000]){
+    cpu.write(ram,cpu.get_d(),cpu.get_hl());
+}
+//0x73
+pub fn ld_hlp_e(cpu: &mut Cpu, ram : &mut [u8;0x10000]){
+    cpu.write(ram,cpu.get_e(),cpu.get_hl());
+}
+//0x74
+pub fn ld_hlp_h(cpu: &mut Cpu, ram : &mut [u8;0x10000]){
+    cpu.write(ram,cpu.get_h(),cpu.get_hl());
+}
+//0x75
+pub fn ld_hlp_l(cpu: &mut Cpu, ram : &mut [u8;0x10000]){
+    cpu.write(ram,cpu.get_l(),cpu.get_hl());
+}
+//0x0x36
+pub fn ld_hlp_u8(cpu: &mut Cpu, n : u8, ram : &mut [u8;0x10000]){
+    cpu.write(ram,n,cpu.get_hl());
+}
+//0x77
+pub fn ld_hlp_a(cpu: &mut Cpu, ram : &mut [u8;0x10000]){
+    cpu.write(ram,cpu.get_a(),cpu.get_hl());
+}
+
 
 //0xF3 (4tics)
 pub fn di(cpu : &mut Cpu){
