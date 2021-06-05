@@ -59,7 +59,7 @@ fn main(){
         e : 0,
         h : 0,
         l : 0,
-        sp : 0xfffe, // default value
+        sp : 0x0000, //0xfffe, // default value
         pc : 0xFF, //default value
         mie : true,
         //flags : Flags,
