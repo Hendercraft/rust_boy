@@ -9,6 +9,7 @@ mod Gui;
 mod Controls;
 mod Interrupts;
 mod Timer;
+mod Dma;
 mod Master;
 
 
@@ -59,8 +60,8 @@ fn main(){
         e : 0,
         h : 0,
         l : 0,
-        sp : 0xfffe, // default value
-        pc : 0xFF, //default value
+        sp : 0,//0xfffe, // default value
+        pc : 0xFF, //default valueS
         mie : true,
         //flags : Flags,
         instructs: InstrucArr::createOperations(),
@@ -87,6 +88,7 @@ fn main(){
     }
     //ram[0xff05] = 255;
     //ram[0xffff] = ram[0xffff] | 0b100;
+    ram[0xFF46] = 0x25;
 
     while window.update(){
         window.clear();

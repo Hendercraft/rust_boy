@@ -14,6 +14,7 @@ impl Timer{
 
         //Up divider
         if self.divider_ticks > 255 {
+            println!("/!\\ DIVIDER OVERFLOW");
             self.divider_ticks = 0;
             ram[0xff04] = ram[0xff04].wrapping_add(1);
         }
@@ -40,6 +41,7 @@ impl Timer{
             self.timer_ticks += ticks as u16 ;
             if self.timer_ticks > self.division{
                 if ram[0xff05] == 255{
+                    println!("/!\\ TIMER OVERFLOW");
                     ram[0xff05] = ram[0xff06];
                     ram[0xff0f] = ram[0xff0f] | 0b00000100;
                 }else{

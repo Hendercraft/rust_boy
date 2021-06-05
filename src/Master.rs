@@ -1,4 +1,4 @@
-use crate::{Hardware, Interrupts, Controls, InstrucArr, Timer};
+use crate::{Hardware, Interrupts, Controls, InstrucArr, Timer, Dma};
 use std::io::{stdin, stdout, Read, Write};
 
 pub struct Master{
@@ -19,15 +19,17 @@ impl Master{
 
         self.maxi_debug_print(&cpu,&gpu,&timer,&ram,&instruct);
 
-
-
         self.tick = self.tick.wrapping_add(instruct.ticks as u64);
 
         timer.update(instruct.ticks, ram);
 
         cpu.exec(instruct.n,ram);
 
-        cpu.set_pc(cpu.pc + cpu.fetch(ram[cpu.get_pc() as usize]).argc as u16)
+        cpu.set_pc(cpu.pc + cpu.fetch(ram[cpu.get_pc() as usize]).argc as u16);
+
+        Dma::update_dma(ram);
+
+
 
     }
 
@@ -93,7 +95,7 @@ impl Master{
         println!("e:{}",cpu.get_e());
         println!("h:{}",cpu.get_h());
         println!("l:{}",cpu.get_l());
-        println!("sp:{}",cpu.get_sp());
+        println!("sp:{:#04x}",cpu.get_sp());
         println!("mie: {}",cpu.get_mie());
         println!("0xFFFF: {:#010b}",ram[0xFFFF]);
         println!("0xFF0F: {:#010b}",ram[0xFF0F]);
@@ -105,6 +107,7 @@ impl Master{
         println!("H:{}",flags.H);
         println!("C:{}",flags.C);
         println!("");
+
         println!("TIMER STATE__________________________________");
         println!("Divider:{:#04x}",ram[0xff04]);
         println!("Divider ticks:{}",timer.divider_ticks);
@@ -113,6 +116,7 @@ impl Master{
         println!("Timer:{:#04x}",ram[0xff05]);
         println!("Timer ticks:{}",timer.timer_ticks);
         println!("");
+        println!("WARNING_____________________________________");
     }
 }
 
