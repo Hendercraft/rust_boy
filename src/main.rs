@@ -27,7 +27,7 @@ fn load(path: String) -> [u8;0x10000]{
 
 fn main(){
 
-    let mut ram = load(String::from("dump.dmp"));
+    let mut ram = load(String::from("rom.gb"));
 
 
     let mut controls: Controls::Controls = Controls::Controls{
@@ -59,8 +59,8 @@ fn main(){
         e : 0,
         h : 0,
         l : 0,
-        sp : 0x6969,
-        pc : 0,
+        sp : 0xfffe, // default value
+        pc : 0xFF, //default value
         mie : true,
         //flags : Flags,
         instructs: InstrucArr::createOperations(),
