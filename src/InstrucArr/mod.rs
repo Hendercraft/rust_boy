@@ -141,6 +141,45 @@ pub fn createOperations() -> Vec<Instruct>{
     out[0xC1] = Instruct::build_instruct(0xC1, String::from("POP BC /!\\"), String::from("Pop from stack in BC , SP++*2"), 0, 12, Op::no(InstrucFn::nop));
     out[0xD1] = Instruct::build_instruct(0xD1, String::from("POP DE /!\\"), String::from("Pop from stack in DE , SP++*2"), 0, 12, Op::no(InstrucFn::nop));
     out[0xE1] = Instruct::build_instruct(0xE1, String::from("POP HL /!\\"), String::from("Pop from stack in HL , SP++*2"), 0, 12, Op::no(InstrucFn::nop));
+    //Add n to A
+    out[0x87] = Instruct::build_instruct(0x87, String::from("ADD A A /!\\"), String::from("Add A to A"), 0, 4, Op::no(InstrucFn::nop));
+    out[0x80] = Instruct::build_instruct(0x80, String::from("ADD A B /!\\"), String::from("Add B to A"), 0, 4, Op::no(InstrucFn::nop));
+    out[0x81] = Instruct::build_instruct(0x81, String::from("ADD A C /!\\"), String::from("Add C to A"), 0, 4, Op::no(InstrucFn::nop));
+    out[0x82] = Instruct::build_instruct(0x82, String::from("ADD A D /!\\"), String::from("Add D to A"), 0, 4, Op::no(InstrucFn::nop));
+    out[0x83] = Instruct::build_instruct(0x83, String::from("ADD A E /!\\"), String::from("Add E to A"), 0, 4, Op::no(InstrucFn::nop));
+    out[0x84] = Instruct::build_instruct(0x84, String::from("ADD A H /!\\"), String::from("Add H to A"), 0, 4, Op::no(InstrucFn::nop));
+    out[0x85] = Instruct::build_instruct(0x85, String::from("ADD A L /!\\"), String::from("Add L to A"), 0, 4, Op::no(InstrucFn::nop));
+    out[0x86] = Instruct::build_instruct(0x86, String::from("ADD A (HL) /!\\"), String::from("Add ram[HL] to A"), 0, 8, Op::no(InstrucFn::nop));
+    out[0xC6] = Instruct::build_instruct(0xC6, String::from("ADD A n /!\\"), String::from("Add n to A"), 1, 8, Op::no(InstrucFn::nop));
+    //Add n + carry flag to A
+    out[0x8F] = Instruct::build_instruct(0x8F, String::from("ADC A A /!\\"), String::from("Add A + Cflag to A"), 0, 4, Op::no(InstrucFn::nop));
+    out[0x88] = Instruct::build_instruct(0x88, String::from("ADC A B /!\\"), String::from("Add B + Cflag to A"), 0, 4, Op::no(InstrucFn::nop));
+    out[0x89] = Instruct::build_instruct(0x89, String::from("ADC A C /!\\"), String::from("Add C + Cflag to A"), 0, 4, Op::no(InstrucFn::nop));
+    out[0x8A] = Instruct::build_instruct(0x8A, String::from("ADC A D /!\\"), String::from("Add D + Cflag to A"), 0, 4, Op::no(InstrucFn::nop));
+    out[0x8B] = Instruct::build_instruct(0x8B, String::from("ADC A E /!\\"), String::from("Add E + Cflag to A"), 0, 4, Op::no(InstrucFn::nop));
+    out[0x8C] = Instruct::build_instruct(0x8C, String::from("ADC A H /!\\"), String::from("Add H + Cflag to A"), 0, 4, Op::no(InstrucFn::nop));
+    out[0x8D] = Instruct::build_instruct(0x8D, String::from("ADC A L /!\\"), String::from("Add L + Cflag to A"), 0, 4, Op::no(InstrucFn::nop));
+    out[0x8E] = Instruct::build_instruct(0x8E, String::from("ADC A (HL) /!\\"), String::from("Add ram[HL] + Cflag to A"), 0, 8, Op::no(InstrucFn::nop));
+    out[0xCE] = Instruct::build_instruct(0xCE, String::from("ADC A n /!\\"), String::from("Add n + Cflag to A"), 1, 8, Op::no(InstrucFn::nop));
+    //Sub from A
+    out[0x97] = Instruct::build_instruct(0x97, String::from("SUB A /!\\"), String::from("Sub A from A"), 0, 4, Op::no(InstrucFn::nop));
+    out[0x90] = Instruct::build_instruct(0x90, String::from("SUB B /!\\"), String::from("Sub B from A"), 0, 4, Op::no(InstrucFn::nop));
+    out[0x91] = Instruct::build_instruct(0x91, String::from("SUB C /!\\"), String::from("Sub C from A"), 0, 4, Op::no(InstrucFn::nop));
+    out[0x92] = Instruct::build_instruct(0x92, String::from("SUB D /!\\"), String::from("Sub D from A"), 0, 4, Op::no(InstrucFn::nop));
+    out[0x93] = Instruct::build_instruct(0x93, String::from("SUB E /!\\"), String::from("Sub E from A"), 0, 4, Op::no(InstrucFn::nop));
+    out[0x94] = Instruct::build_instruct(0x94, String::from("SUB H /!\\"), String::from("Sub H from A"), 0, 4, Op::no(InstrucFn::nop));
+    out[0x95] = Instruct::build_instruct(0x95, String::from("SUB L /!\\"), String::from("Sub L from A"), 0, 4, Op::no(InstrucFn::nop));
+    out[0x96] = Instruct::build_instruct(0x96, String::from("SUB (HL) /!\\"), String::from("Sub ram[HL] from A"), 0, 8, Op::no(InstrucFn::nop));
+    out[0xD6] = Instruct::build_instruct(0xD6, String::from("SUB n /!\\"), String::from("Sub n from A"), 1, 8, Op::no(InstrucFn::nop));
+    //Sub n + carry flag from A
+    out[0x9F] = Instruct::build_instruct(0x9F, String::from("SBC A /!\\"), String::from("Sub A + Cflag from A"), 0, 4, Op::no(InstrucFn::nop));
+    out[0x98] = Instruct::build_instruct(0x98, String::from("SBC B /!\\"), String::from("Sub B + Cflag from A"), 0, 4, Op::no(InstrucFn::nop));
+    out[0x99] = Instruct::build_instruct(0x99, String::from("SBC C /!\\"), String::from("Sub C + Cflag from A"), 0, 4, Op::no(InstrucFn::nop));
+    out[0x9A] = Instruct::build_instruct(0x9A, String::from("SBC D /!\\"), String::from("Sub D + Cflag from A"), 0, 4, Op::no(InstrucFn::nop));
+    out[0x9B] = Instruct::build_instruct(0x9B, String::from("SBC E /!\\"), String::from("Sub E + Cflag from A"), 0, 4, Op::no(InstrucFn::nop));
+    out[0x9C] = Instruct::build_instruct(0x9C, String::from("SBC H /!\\"), String::from("Sub H + Cflag from A"), 0, 4, Op::no(InstrucFn::nop));
+    out[0x9D] = Instruct::build_instruct(0x9D, String::from("SBC L /!\\"), String::from("Sub L + Cflag from A"), 0, 4, Op::no(InstrucFn::nop));
+    out[0x9E] = Instruct::build_instruct(0x9E, String::from("SBC (HL) /!\\"), String::from("Sub ram[HL] + Cflag from A"), 0, 8, Op::no(InstrucFn::nop));
 
 
     //What's left
