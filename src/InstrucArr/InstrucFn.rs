@@ -374,12 +374,12 @@ pub fn ld_dep_a(cpu : &mut Cpu, ram : &mut [u8;0x10000]){
 }
 //0xEA
 pub fn ld_u16p_a(cpu :&mut Cpu,h : u8, l : u8, ram : &mut [u8;0x10000]){
-    cpu.write(ram,cpu.get_a(),cpu.get_u16(h,l));
+    cpu.write(ram,cpu.get_a(),Cpu::get_u16(h,l));
 }
 /*****************Load A and HRam+C***********************/
 //0xF2
 pub fn ld_a_hram_c(cpu :&mut Cpu,ram : &mut [u8;0x10000]){
-    cpu.set_a(ram[(0xff00 + cpu.get_c()) as usize]);
+    cpu.set_a(ram[(0xff00 + cpu.get_c() as u16) as usize]);
 }
 //0xE2
 pub fn ld_hram_c_a(cpu :&mut Cpu,ram : &mut [u8;0x10000]){
@@ -409,7 +409,7 @@ pub fn ldi_hlp_a(cpu : &mut Cpu, ram : &mut [u8;0x10000]){
 /*****************Load A and HRam + n***********************/
 //0xF0 //TODO revoir le system de read?
 pub fn ldh_a_u8(cpu: &mut Cpu, n : u8, ram : &mut [u8;0x10000]){
-    cpu.set_a(ram[(0xff0 + n)as usize]);
+    cpu.set_a(ram[(0xff00 + n as u16)as usize]);
 }
 //0xE0
 pub fn ldh_u8_a(cpu: &mut Cpu, n : u8, ram : &mut [u8;0x10000]){
