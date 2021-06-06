@@ -108,21 +108,20 @@ pub fn createOperations() -> Vec<Instruct>{
     out[0x36] = Instruct::build_instruct(0x36, String::from("LD (HL) n"), String::from("Load n in ram[HL]"), 1, 12, Op::ramu8(InstrucFn::ld_hlp_u8));
     out[0x77] = Instruct::build_instruct(0x77, String::from("LD (HL) A"), String::from("Load A in ram[HL]"), 0, 8, Op::ram(InstrucFn::ld_hlp_a));
     //Load n from A
-    out[0x02] = Instruct::build_instruct(0x02, String::from("LD (BC) A /!\\"), String::from("Load A in ram[BC]"), 0, 8, Op::no(InstrucFn::nop));
-    out[0x12] = Instruct::build_instruct(0x12, String::from("LD (DE) A /!\\"), String::from("Load A in ram[DE]"), 0, 8, Op::no(InstrucFn::nop));
-
-    out[0xEA] = Instruct::build_instruct(0xEA, String::from("LD (nn) A /!\\"), String::from("Load A in ram[nn]"), 2, 16, Op::no(InstrucFn::nop));
+    out[0x02] = Instruct::build_instruct(0x02, String::from("LD (BC) A"), String::from("Load A in ram[BC]"), 0, 8, Op::ram(InstrucFn::ld_bcp_a));
+    out[0x12] = Instruct::build_instruct(0x12, String::from("LD (DE) A"), String::from("Load A in ram[DE]"), 0, 8, Op::ram(InstrucFn::ld_dep_a));
+    out[0xEA] = Instruct::build_instruct(0xEA, String::from("LD (nn) A"), String::from("Load A in ram[nn]"), 2, 16, Op::ramu16(InstrucFn::ld_u16p_a));
     //Load A and HRam+C
-    out[0xF2] = Instruct::build_instruct(0xF2, String::from("LD A (C) /!\\"), String::from("Load ram[0xFF00 + C] in A"), 0, 8, Op::no(InstrucFn::nop));
-    out[0xE2] = Instruct::build_instruct(0xE2, String::from("LD (C) A /!\\"), String::from("Load A in ram[0xFF00 + C]"), 0, 8, Op::no(InstrucFn::nop));
+    out[0xF2] = Instruct::build_instruct(0xF2, String::from("LD A (C)"), String::from("Load ram[0xFF00 + C] in A"), 0, 8, Op::ram(InstrucFn::ld_a_hram_c));
+    out[0xE2] = Instruct::build_instruct(0xE2, String::from("LD (C) A"), String::from("Load A in ram[0xFF00 + C]"), 0, 8, Op::ram(InstrucFn::ld_hram_c_a));
     //Load A and decrease/increase HL
-    out[0x3A] = Instruct::build_instruct(0x3A, String::from("LDD A (HL) /!\\"), String::from("Load ram[HL] in A, HL--"), 0, 8, Op::no(InstrucFn::nop));
-    out[0x32] = Instruct::build_instruct(0x32, String::from("LDD (HL) A /!\\"), String::from("Load A in ram[HL], HL--"), 0, 8, Op::no(InstrucFn::nop));
-    out[0x3A] = Instruct::build_instruct(0x3A, String::from("LDI A (HL) /!\\"), String::from("Load ram[HL] in A, HL++"), 0, 8, Op::no(InstrucFn::nop));
-    out[0x32] = Instruct::build_instruct(0x32, String::from("LDI (HL) A /!\\"), String::from("Load A in ram[HL], HL++"), 0, 8, Op::no(InstrucFn::nop));
+    out[0x3A] = Instruct::build_instruct(0x3A, String::from("LDD A (HL)"), String::from("Load ram[HL] in A, HL--"), 0, 8, Op::ram(InstrucFn::ldd_a_hlp));
+    out[0x32] = Instruct::build_instruct(0x32, String::from("LDD (HL) A"), String::from("Load A in ram[HL], HL--"), 0, 8, Op::ram(InstrucFn::ldd_hlp_a));
+    out[0x2A] = Instruct::build_instruct(0x2A, String::from("LDI A (HL)"), String::from("Load ram[HL] in A, HL++"), 0, 8, Op::ram(InstrucFn::ldi_a_hlp));
+    out[0x22] = Instruct::build_instruct(0x22, String::from("LDI (HL) A"), String::from("Load A in ram[HL], HL++"), 0, 8, Op::ram(InstrucFn::ldi_hlp_a));
     //Load A and HRam + n
-    out[0xF0] = Instruct::build_instruct(0xF0, String::from("LDH A (n) /!\\"), String::from("Load ram[0xff00+n] in A"), 1, 8, Op::no(InstrucFn::nop));
-    out[0xE0] = Instruct::build_instruct(0xE0, String::from("LDH (n) A /!\\"), String::from("Load A in ram[0xff00+n]"), 1, 8, Op::no(InstrucFn::nop));
+    out[0xF0] = Instruct::build_instruct(0xF0, String::from("LDH A (n) /!\\"), String::from("Load ram[0xff00+n] in A"), 1, 12, Op::ramu8(InstrucFn::ldh_a_u8));
+    out[0xE0] = Instruct::build_instruct(0xE0, String::from("LDH (n) A /!\\"), String::from("Load A in ram[0xff00+n]"), 1, 12, Op::ramu8(InstrucFn::ldh_u8_a));
     //16 bits direct loads
     out[0x01] = Instruct::build_instruct(0x01, String::from("LD BC nn /!\\"), String::from("Load nn in BC"), 2, 12, Op::u16(InstrucFn::ld_bc_u16));
     out[0x11] = Instruct::build_instruct(0x11, String::from("LD DE nn /!\\"), String::from("Load nn in DE"), 2, 12, Op::no(InstrucFn::nop));
@@ -184,8 +183,6 @@ pub fn createOperations() -> Vec<Instruct>{
 
 
     //What's left
-
-    out[0x02] = Instruct::build_instruct(2, String::from("LD (BC) A"), String::from("Load A to the ram adress specified in BC "), 0, 8, Op::ram(InstrucFn::ld_bcp_a));
     out[0x03] = Instruct::build_instruct(3, String::from("INC BC"), String::from("Increase BC "), 0, 8, Op::no(InstrucFn::inc_bc));
     out[0x04] = Instruct::build_instruct(4, String::from("INC B"), String::from("Increase B, manipulate Z,H flag, set N to 0"), 0, 4, Op::no(InstrucFn::inc_b));
     out[0x05] = Instruct::build_instruct(5, String::from("DEC B"), String::from("Decrease B, manipulate Z,H flag, set N to 1"), 0, 4, Op::no(InstrucFn::dec_b));

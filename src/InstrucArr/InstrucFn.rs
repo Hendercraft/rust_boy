@@ -15,10 +15,6 @@ pub fn ld_bc_u16(cpu : &mut Cpu, h : u8, l: u8){
     cpu.set_b(h);
     cpu.set_c(l);
 }
-//0x02
-pub fn ld_bcp_a(cpu : &mut Cpu, ram : &mut [u8;0x10000]){
-    ram[cpu.get_bc() as usize] = cpu.get_a();
-}
 
 //0x03
 pub fn inc_bc(cpu : &mut Cpu){
@@ -365,6 +361,59 @@ pub fn ld_hlp_u8(cpu: &mut Cpu, n : u8, ram : &mut [u8;0x10000]){
 //0x77
 pub fn ld_hlp_a(cpu: &mut Cpu, ram : &mut [u8;0x10000]){
     cpu.write(ram,cpu.get_a(),cpu.get_hl());
+}
+
+/*****************Load n from A***********************/
+//0x02
+pub fn ld_bcp_a(cpu : &mut Cpu, ram : &mut [u8;0x10000]){
+    cpu.write(ram,cpu.get_a(),cpu.get_bc());
+}
+//0x12
+pub fn ld_dep_a(cpu : &mut Cpu, ram : &mut [u8;0x10000]){
+    cpu.write(ram,cpu.get_a(),cpu.get_de());
+}
+//0xEA
+pub fn ld_u16p_a(cpu :&mut Cpu,h : u8, l : u8, ram : &mut [u8;0x10000]){
+    cpu.write(ram,cpu.get_a(),cpu.get_u16(h,l));
+}
+/*****************Load A and HRam+C***********************/
+//0xF2
+pub fn ld_a_hram_c(cpu :&mut Cpu,ram : &mut [u8;0x10000]){
+    cpu.set_a(ram[(0xff00 + cpu.get_c()) as usize]);
+}
+//0xE2
+pub fn ld_hram_c_a(cpu :&mut Cpu,ram : &mut [u8;0x10000]){
+    cpu.write(ram, cpu.get_a(), (0xff00 + cpu.get_c() as u16));
+}
+/*****************Load A and decrease/increase HL***********************/
+//0x3A //TODO revoir le system de read?
+pub fn ldd_a_hlp(cpu : &mut Cpu, ram : &mut [u8;0x10000]){
+    cpu.set_a(ram[cpu.get_hl() as usize]);
+    cpu.set_hl(cpu.get_hl().wrapping_sub(1));
+}
+//0x32
+pub fn ldd_hlp_a(cpu : &mut Cpu, ram : &mut [u8;0x10000]){
+    cpu.write(ram,cpu.get_a(),cpu.get_hl());
+    cpu.set_hl(cpu.get_hl().wrapping_sub(1));
+}
+//0x2A
+pub fn ldi_a_hlp(cpu : &mut Cpu, ram : &mut [u8;0x10000]){
+    cpu.set_a(ram[cpu.get_hl() as usize]);
+    cpu.set_hl(cpu.get_hl().wrapping_add(1));
+}
+//0x22
+pub fn ldi_hlp_a(cpu : &mut Cpu, ram : &mut [u8;0x10000]){
+    cpu.write(ram,cpu.get_a(),cpu.get_hl());
+    cpu.set_hl(cpu.get_hl().wrapping_add(1));
+}
+/*****************Load A and HRam + n***********************/
+//0xF0 //TODO revoir le system de read?
+pub fn ldh_a_u8(cpu: &mut Cpu, n : u8, ram : &mut [u8;0x10000]){
+    cpu.set_a(ram[(0xff0 + n)as usize]);
+}
+//0xE0
+pub fn ldh_u8_a(cpu: &mut Cpu, n : u8, ram : &mut [u8;0x10000]){
+    cpu.write(ram,cpu.get_a(),0xff00 + n as u16);
 }
 
 
