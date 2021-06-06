@@ -123,12 +123,12 @@ pub fn createOperations() -> Vec<Instruct>{
     out[0xF0] = Instruct::build_instruct(0xF0, String::from("LDH A (n)"), String::from("Load ram[0xff00+n] in A"), 1, 12, Op::ramu8(InstrucFn::ldh_a_u8));
     out[0xE0] = Instruct::build_instruct(0xE0, String::from("LDH (n) A"), String::from("Load A in ram[0xff00+n]"), 1, 12, Op::ramu8(InstrucFn::ldh_u8_a));
     //16 bits direct loads
-    out[0x01] = Instruct::build_instruct(0x01, String::from("LD BC nn /!\\"), String::from("Load nn in BC"), 2, 12, Op::u16(InstrucFn::ld_bc_u16));
-    out[0x11] = Instruct::build_instruct(0x11, String::from("LD DE nn /!\\"), String::from("Load nn in DE"), 2, 12, Op::no(InstrucFn::nop));
-    out[0x21] = Instruct::build_instruct(0x21, String::from("LD HL nn /!\\"), String::from("Load nn in HL"), 2, 12, Op::no(InstrucFn::nop));
-    out[0x31] = Instruct::build_instruct(0x31, String::from("LD SP nn /!\\"), String::from("Load nn in SP"), 2, 12, Op::no(InstrucFn::nop));
+    out[0x01] = Instruct::build_instruct(0x01, String::from("LD BC nn"), String::from("Load nn in BC"), 2, 12, Op::u16(InstrucFn::ld_bc_u16));
+    out[0x11] = Instruct::build_instruct(0x11, String::from("LD DE nn"), String::from("Load nn in DE"), 2, 12, Op::u16(InstrucFn::ld_de_u16));
+    out[0x21] = Instruct::build_instruct(0x21, String::from("LD HL nn"), String::from("Load nn in HL"), 2, 12, Op::u16(InstrucFn::ld_hl_u16));
+    out[0x31] = Instruct::build_instruct(0x31, String::from("LD SP nn"), String::from("Load nn in SP"), 2, 12, Op::u16(InstrucFn::ld_sp_u16));
     //SP related loads
-    out[0xF9] = Instruct::build_instruct(0xF9, String::from("LD SP HL /!\\"), String::from("Load HL in SP"), 0, 8, Op::no(InstrucFn::nop));
+    out[0xF9] = Instruct::build_instruct(0xF9, String::from("LD SP HL"), String::from("Load HL in SP"), 0, 8, Op::no(InstrucFn::ld_sp_hl));
     out[0xF8] = Instruct::build_instruct(0xF8, String::from("LDHL SP n /!\\"), String::from("Load SP+n in HL"), 1, 12, Op::no(InstrucFn::nop));
     out[0x08] = Instruct::build_instruct(0x08, String::from("LD (nn) SP /!\\"), String::from("Load SP in ram[nn]"), 2, 12, Op::no(InstrucFn::nop));
     //SP related PUSH

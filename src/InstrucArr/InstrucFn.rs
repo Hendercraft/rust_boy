@@ -10,12 +10,6 @@ use crate::Hardware::Flag::*;
 //0x00
 pub fn nop(cpu : &mut Cpu){}
 
-//0x01
-pub fn ld_bc_u16(cpu : &mut Cpu, h : u8, l: u8){
-    cpu.set_b(h);
-    cpu.set_c(l);
-}
-
 //0x03
 pub fn inc_bc(cpu : &mut Cpu){
     cpu.set_bc(cpu.get_bc() + 0b1);
@@ -415,7 +409,34 @@ pub fn ldh_a_u8(cpu: &mut Cpu, n : u8, ram : &mut [u8;0x10000]){
 pub fn ldh_u8_a(cpu: &mut Cpu, n : u8, ram : &mut [u8;0x10000]){
     cpu.write(ram,cpu.get_a(),0xff00 + n as u16);
 }
-
+/*****************16 bits direct loads***********************/
+//0x01
+pub fn ld_bc_u16(cpu : &mut Cpu, h : u8, l: u8){
+    cpu.set_b(h);
+    cpu.set_c(l);
+}
+//0x11
+pub fn ld_de_u16(cpu : &mut Cpu, h : u8, l: u8){
+    cpu.set_d(h);
+    cpu.set_e(l);
+}
+//0x21
+pub fn ld_hl_u16(cpu : &mut Cpu, h : u8, l: u8){
+    cpu.set_h(h);
+    cpu.set_l(l);
+}
+//0x31
+pub fn ld_sp_u16(cpu : &mut Cpu, h : u8, l: u8){
+    cpu.set_s(h);
+    cpu.set_p(l);
+}
+/*****************SP related loads***********************/
+//0xF9
+pub fn ld_sp_hl(cpu : &mut Cpu){
+    cpu.set_sp(cpu.get_hl());
+}
+//0xF8 //TODO
+pub fn ld_hl_sp_u8(cpu : &mut Cpu, n, u8){}
 
 //0xF3 (4tics)
 pub fn di(cpu : &mut Cpu){
