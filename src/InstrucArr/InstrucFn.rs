@@ -427,16 +427,33 @@ pub fn ld_hl_u16(cpu : &mut Cpu, h : u8, l: u8){
 }
 //0x31
 pub fn ld_sp_u16(cpu : &mut Cpu, h : u8, l: u8){
-    cpu.set_s(h);
-    cpu.set_p(l);
+    cpu.set_sp(Cpu::get_u16(h,l));
 }
 /*****************SP related loads***********************/
 //0xF9
 pub fn ld_sp_hl(cpu : &mut Cpu){
     cpu.set_sp(cpu.get_hl());
 }
-//0xF8 //TODO
-pub fn ld_hl_sp_u8(cpu : &mut Cpu, n, u8){}
+//0xF8 //TODO check l'instrution car j'ai des doutes
+pub fn ld_hl_sp_i8(cpu : &mut Cpu, n: u8){
+    let result : u32 = (cpu.get_sp() + n as u16) as u32;
+    if result & 0xffff0000 > 0 { //checking for an overflow
+        cpu.set_flag(C);
+    }else {
+        cpu.clear_flag(C);
+    }
+    if (cpu.get_sp() & 0x0f) +  (n & 0x0f) as u16 > 0x0f {
+        cpu.set_flag(H);
+    }else{
+        cpu.clear_flag(H);
+    }
+    cpu.clear_flag(Z);
+    cpu.clear_flag(N);
+
+    cpu.set_hl((result as u16));
+
+
+}
 
 //0xF3 (4tics)
 pub fn di(cpu : &mut Cpu){

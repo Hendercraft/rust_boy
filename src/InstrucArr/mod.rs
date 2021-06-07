@@ -129,8 +129,8 @@ pub fn createOperations() -> Vec<Instruct>{
     out[0x31] = Instruct::build_instruct(0x31, String::from("LD SP nn"), String::from("Load nn in SP"), 2, 12, Op::u16(InstrucFn::ld_sp_u16));
     //SP related loads
     out[0xF9] = Instruct::build_instruct(0xF9, String::from("LD SP HL"), String::from("Load HL in SP"), 0, 8, Op::no(InstrucFn::ld_sp_hl));
-    out[0xF8] = Instruct::build_instruct(0xF8, String::from("LDHL SP n /!\\"), String::from("Load SP+n in HL"), 1, 12, Op::no(InstrucFn::nop));
-    out[0x08] = Instruct::build_instruct(0x08, String::from("LD (nn) SP /!\\"), String::from("Load SP in ram[nn]"), 2, 12, Op::no(InstrucFn::nop));
+    out[0xF8] = Instruct::build_instruct(0xF8, String::from("LDHL SP n /?\\"), String::from("Load SP+n in HL"), 1, 12, Op::u8(InstrucFn::ld_hl_sp_i8));
+    out[0x08] = Instruct::build_instruct(0x08, String::from("LD (nn) SP /!\\"), String::from("Load SP in ram[nn]"), 2, 20, Op::no(InstrucFn::nop));
     //SP related PUSH
     out[0xF5] = Instruct::build_instruct(0xF5, String::from("PUSH AF /!\\"), String::from("Push AF in stack, SP--*2"), 0, 16, Op::no(InstrucFn::nop));
     out[0xC5] = Instruct::build_instruct(0xC5, String::from("PUSH BC /!\\"), String::from("Push BC in stack, SP--*2"), 0, 16, Op::no(InstrucFn::nop));
