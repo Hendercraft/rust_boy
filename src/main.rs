@@ -11,6 +11,9 @@ mod Interrupts;
 mod Timer;
 mod Dma;
 mod Master;
+const H_BLANK: u8 = 0;
+const V_BLANK: u8 = 1;
+const PX_TRANSFER: u8 = 2;
 
 
 use std::fs;
@@ -28,7 +31,7 @@ fn load(path: String) -> [u8;0x10000]{
 
 fn main(){
 
-    let mut ram = load(String::from("dump.dmp"));
+    let mut ram = load(String::from("__dump.dmp"));
 
 
     let mut controls: Controls::Controls = Controls::Controls{
@@ -77,9 +80,11 @@ fn main(){
 
     let mut master: Master::Master = Master::Master{
         tick: 0,
-        step_by_step: true,
+        mode: PX_TRANSFER,
+        previous_mode: PX_TRANSFER,
+        step_by_step: false,
         line_by_line: false,
-        screen_by_screen: false,
+        screen_by_screen: true,
     };
     gpu.buildBG(&ram);
     gpu.buildWindow(&ram);
@@ -87,15 +92,18 @@ fn main(){
         gpu.pushLine(&ram);
     }
     //ram[0xff05] = 255;
-    //ram[0xffff] = ram[0xffff] | 0b100;
-    ram[0xFF46] = 0x25;
+    ram[0xffff] = 0;
+    ram[0xff0f] = 0;
+    ram[0xFF46] = 0;
+    ram[0xFF41] = 255;
+    ram[0xFF45] = 1;
 
     while window.update(){
         window.clear();
         controls.getKeyboard(&mut window);
         controls.updateRam(&mut ram);
         window.pushMatrix(&gpu.screen);
-        //master.screen(&mut cpu, &mut gpu, &mut timer, &mut controls, &mut ram);
+        master.screen(&mut cpu, &mut gpu, &mut timer, &mut controls, &mut ram);
 
     }
 

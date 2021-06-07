@@ -1,8 +1,13 @@
 use crate::{Hardware, Interrupts, Controls, InstrucArr, Timer, Dma};
 use std::io::{stdin, stdout, Read, Write};
+const H_BLANK: u8 = 0;
+const V_BLANK: u8 = 1;
+const PX_TRANSFER: u8 = 2;
 
 pub struct Master{
 pub tick: u64,
+pub mode: u8,
+pub previous_mode: u8,
 pub step_by_step: bool,
 pub line_by_line: bool,
 pub screen_by_screen: bool,
@@ -38,12 +43,19 @@ impl Master{
     pub fn screen(&mut self, cpu: &mut Hardware::Cpu, gpu: &mut Hardware::Gpu, timer: &mut Timer::Timer, controls: &mut Controls::Controls, ram: &mut [u8;0x10000]){
         for i in 0..144{
             while self.tick < 114{
+                if self.tick > 63{
+                    self.mode = H_BLANK;
+                }else{
+                    self.mode = PX_TRANSFER;
+                }
                 print!("{esc}c", esc = 27 as char);
                 println!("SCREEN STATE__________________________________");
                 println!("State: Printing");
                 println!("Line: {}",i);
+                println!("Mode: {}",self.mode);
                 println!(" ");
                 self.step(cpu, gpu, timer,controls, ram);
+                self.lcd_stat(i, ram);
                 if self.step_by_step{
                     wait();
                 }
@@ -57,14 +69,17 @@ impl Master{
         }
 
         ram[0xFF0F] = ram[0xFF0F] | 0b1;
+        self.mode = V_BLANK;
 
         for j in 0..10{
             while self.tick < 114{
                 print!("{esc}c", esc = 27 as char);
                 println!("SCREEN STATE__________________________________");
                 println!("State: V-Blank");
+                println!("Mode: {}",self.mode);
                 println!(" ");
                 self.step(cpu, gpu, timer,controls, ram);
+                self.lcd_stat(254, ram);
                 if self.step_by_step {
                     wait();
                 }
@@ -122,7 +137,33 @@ impl Master{
         println!("INPUT STATE__________________________________");
         println!("Buttons: U:{} D:{} L:{} R:{} A:{} B:{} SE:{} ST:{}",controls.up, controls.down, controls.left, controls.right, controls.a,
         controls.b, controls.select, controls.start);
+        println!("0XFF00: {:#010b}",ram[0xFF00]);
+        println!("");
         println!("WARNING______________________________________");
+    }
+
+    pub fn lcd_stat(&mut self, line: u8, ram: &mut [u8;0x10000]){
+        if ram[0xFF41] & 0b0100000 > 0 && line == ram[0xFF45] && self.previous_mode == H_BLANK{
+            ram[0xFF0F] = ram[0xFF0F] | 0b00000010;
+            println!("/!\\ STAT interrupt trigerred: LY=LYC");
+            self.previous_mode = self.mode;
+        }
+        if ram[0xFF41] & 0b00001000 > 0 && self.mode == H_BLANK && self.mode != self.previous_mode{
+            ram[0xFF0F] = ram[0xFF0F] | 0b00000010;
+            println!("/!\\ STAT interrupt trigerred: H_BLANK");
+            self.previous_mode = self.mode;
+        }
+        if ram[0xFF41] & 0b00010000 > 0 && self.mode == V_BLANK && self.mode != self.previous_mode{
+            ram[0xFF0F] = ram[0xFF0F] | 0b00000010;
+            println!("/!\\ STAT interrupt trigerred: V_BLANK");
+            self.previous_mode = self.mode;
+        }
+        if ram[0xFF41] & 0b0010000 > 0 && self.mode == PX_TRANSFER && self.mode != self.previous_mode{
+            ram[0xFF0F] = ram[0xFF0F] | 0b00000010;
+            println!("/!\\ STAT interrupt trigerred: PX_TRANSFER");
+            self.previous_mode = self.mode;
+        }
+
     }
 }
 
