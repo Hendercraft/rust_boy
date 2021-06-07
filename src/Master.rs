@@ -10,18 +10,20 @@ pub screen_by_screen: bool,
 }
 
 impl Master{
-    pub fn step(&mut self, cpu: &mut Hardware::Cpu, gpu: &mut Hardware::Gpu, timer: &mut Timer::Timer, ram: &mut [u8;0x10000]){
+    pub fn step(&mut self, cpu: &mut Hardware::Cpu, gpu: &mut Hardware::Gpu, timer: &mut Timer::Timer,controls: &mut Controls::Controls, ram: &mut [u8;0x10000]){
         //Check for interrupts, if none juste add 1 to PC
         if !Interrupts::interrupt_check(cpu,ram){
             cpu.set_pc(cpu.get_pc().wrapping_add(1));
         }
         let instruct : &Hardware::Instruct = cpu.fetch(ram[cpu.get_pc() as usize]);
 
-        self.maxi_debug_print(&cpu,&gpu,&timer,&ram,&instruct);
+        self.maxi_debug_print(&cpu,&gpu,&timer,&ram,&controls,&instruct);
 
         self.tick = self.tick.wrapping_add(instruct.ticks as u64);
 
         timer.update(instruct.ticks, ram);
+
+        controls.updateRam(ram);
 
         cpu.exec(instruct.n,ram);
 
@@ -33,7 +35,7 @@ impl Master{
 
     }
 
-    pub fn screen(&mut self, cpu: &mut Hardware::Cpu, gpu: &mut Hardware::Gpu, timer: &mut Timer::Timer, ram: &mut [u8;0x10000]){
+    pub fn screen(&mut self, cpu: &mut Hardware::Cpu, gpu: &mut Hardware::Gpu, timer: &mut Timer::Timer, controls: &mut Controls::Controls, ram: &mut [u8;0x10000]){
         for i in 0..144{
             while self.tick < 114{
                 print!("{esc}c", esc = 27 as char);
@@ -41,7 +43,7 @@ impl Master{
                 println!("State: Printing");
                 println!("Line: {}",i);
                 println!(" ");
-                self.step(cpu, gpu, timer, ram);
+                self.step(cpu, gpu, timer,controls, ram);
                 if self.step_by_step{
                     wait();
                 }
@@ -54,13 +56,15 @@ impl Master{
             }
         }
 
+        ram[0xFF0F] = ram[0xFF0F] | 0b1;
+
         for j in 0..10{
             while self.tick < 114{
                 print!("{esc}c", esc = 27 as char);
                 println!("SCREEN STATE__________________________________");
                 println!("State: V-Blank");
                 println!(" ");
-                self.step(cpu, gpu, timer, ram);
+                self.step(cpu, gpu, timer,controls, ram);
                 if self.step_by_step {
                     wait();
                 }
@@ -77,7 +81,7 @@ impl Master{
     }
 
 
-    pub fn maxi_debug_print(&self, cpu: &Hardware::Cpu, gpu: &Hardware::Gpu, timer: &Timer::Timer, ram: &[u8;0x10000],instruc : &Hardware::Instruct){
+    pub fn maxi_debug_print(&self, cpu: &Hardware::Cpu, gpu: &Hardware::Gpu, timer: &Timer::Timer, ram: &[u8;0x10000],controls: &Controls::Controls, instruc : &Hardware::Instruct){
         println!("OPERATION____________________________________");
         println!("Count:{}",self.tick);
         println!("Pc: {:#06x}", cpu.get_pc());
@@ -107,7 +111,6 @@ impl Master{
         println!("H:{}",flags.H);
         println!("C:{}",flags.C);
         println!("");
-
         println!("TIMER STATE__________________________________");
         println!("Divider:{:#04x}",ram[0xff04]);
         println!("Divider ticks:{}",timer.divider_ticks);
@@ -116,7 +119,10 @@ impl Master{
         println!("Timer:{:#04x}",ram[0xff05]);
         println!("Timer ticks:{}",timer.timer_ticks);
         println!("");
-        println!("WARNING_____________________________________");
+        println!("INPUT STATE__________________________________");
+        println!("Buttons: U:{} D:{} L:{} R:{} A:{} B:{} SE:{} ST:{}",controls.up, controls.down, controls.left, controls.right, controls.a,
+        controls.b, controls.select, controls.start);
+        println!("WARNING______________________________________");
     }
 }
 

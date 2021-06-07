@@ -28,7 +28,7 @@ fn load(path: String) -> [u8;0x10000]{
 
 fn main(){
 
-    let mut ram = load(String::from("rom.gb"));
+    let mut ram = load(String::from("dump.dmp"));
 
 
     let mut controls: Controls::Controls = Controls::Controls{
@@ -95,7 +95,7 @@ fn main(){
         controls.getKeyboard(&mut window);
         controls.updateRam(&mut ram);
         window.pushMatrix(&gpu.screen);
-        master.screen(&mut cpu, &mut gpu, &mut timer, &mut ram);
+        //master.screen(&mut cpu, &mut gpu, &mut timer, &mut controls, &mut ram);
 
     }
 

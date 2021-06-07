@@ -427,8 +427,7 @@ pub fn ld_hl_u16(cpu : &mut Cpu, h : u8, l: u8){
 }
 //0x31
 pub fn ld_sp_u16(cpu : &mut Cpu, h : u8, l: u8){
-    cpu.set_s(h);
-    cpu.set_p(l);
+    cpu.set_sp(Cpu::get_u16(h,l));
 }
 /*****************SP related loads***********************/
 //0xF9
@@ -436,7 +435,7 @@ pub fn ld_sp_hl(cpu : &mut Cpu){
     cpu.set_sp(cpu.get_hl());
 }
 //0xF8 //TODO
-pub fn ld_hl_sp_u8(cpu : &mut Cpu, n, u8){}
+pub fn ld_hl_sp_u8(cpu : &mut Cpu, n : u8){}
 
 //0xF3 (4tics)
 pub fn di(cpu : &mut Cpu){
