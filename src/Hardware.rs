@@ -11,6 +11,7 @@ const SCREEN: u8 = 1;
 
 pub enum Op{
     no(fn(&mut Cpu)),
+    //i8(fn(&mut Cpu, i8)),
     u8(fn(&mut Cpu, u8)),
     u16(fn(&mut Cpu, u8, u8)),//High, low
     ram(fn(&mut Cpu,&mut [u8;0x10000])),
@@ -124,6 +125,7 @@ impl Cpu {
         match self.instructs[i as usize].exec {
             Op::no(instruct) => {instruct(self)}
             Op::u8(instruct) => { instruct(self, ram[(self.pc+1) as usize])}
+            //Op::i8(instruct) => {instruct(self,ram[(self.pc+1) as usize])}
             Op::u16(instruct) => { instruct(self, ram[(self.pc+1) as usize], ram[(self.pc+2) as usize])}
             Op::ram(instruct) => { instruct(self,ram)}
             Op::ramu16(instruct) => { instruct(self,ram[(self.pc+1) as usize], ram[(self.pc+2) as usize],ram)}
@@ -156,7 +158,6 @@ impl Cpu {
         self.set_sp(self.get_sp() +2);
         return value;
     }
-
 }
 
 pub enum Flag {Z,N,H,C}
