@@ -32,29 +32,7 @@ pub fn inc_b(cpu :&mut Cpu){
     } //zero flag
     cpu.clear_flag(N); //clearing N flag
 }
-//0x05
-pub fn dec_b(cpu : &mut Cpu) {
-    //Half carry flag here used as half borrow :
 
-    if cpu.get_b() & 0x0f > 0 {
-        cpu.clear_flag(H); //no borrow
-        //we have bits in the lower nibble
-    }else{
-        cpu.set_flag(H);
-        //we have no bits in the lower nibble
-        //we have to "borrow" some bits of the lower nibble :
-        //i.e 0xf0 - 0x01 = 0xef
-    }
-
-    cpu.set_b(cpu.get_b().wrapping_sub(1));
-
-    cpu.set_flag(N);
-    if cpu.get_b() == 0{
-        cpu.set_flag(Z);
-    }else{
-        cpu.clear_flag(Z);
-    }
-}
 /*****************8 bit direct load***********************/
 //0x3E
 pub fn  ld_a_u8(cpu : &mut Cpu, n : u8){
@@ -526,5 +504,197 @@ pub fn jpr(cpu : &mut Cpu, n: u8){
 pub fn jpr_nz(cpu : &mut Cpu, n: u8){
     if(!cpu.get_flags().Z){
         jpr(cpu, n);
+    }
+}
+/*DEC_____________________________________________________________________*/
+//0x3D
+pub fn dec_a(cpu : &mut Cpu) {
+    //Half carry flag here used as half borrow :
+
+    if cpu.get_a() & 0x0f > 0 {
+        cpu.clear_flag(H); //no borrow
+        //we have bits in the lower nibble
+    }else{
+        cpu.set_flag(H);
+        //we have no bits in the lower nibble
+        //we have to "borrow" some bits of the lower nibble :
+        //i.e 0xf0 - 0x01 = 0xef
+    }
+
+    cpu.set_a(cpu.get_a().wrapping_sub(1));
+
+    cpu.set_flag(N);
+    if cpu.get_a() == 0{
+        cpu.set_flag(Z);
+    }else{
+        cpu.clear_flag(Z);
+    }
+}
+
+//0x05
+pub fn dec_b(cpu : &mut Cpu) {
+    //Half carry flag here used as half borrow :
+
+    if cpu.get_b() & 0x0f > 0 {
+        cpu.clear_flag(H); //no borrow
+        //we have bits in the lower nibble
+    }else{
+        cpu.set_flag(H);
+        //we have no bits in the lower nibble
+        //we have to "borrow" some bits of the lower nibble :
+        //i.e 0xf0 - 0x01 = 0xef
+    }
+
+    cpu.set_b(cpu.get_b().wrapping_sub(1));
+
+    cpu.set_flag(N);
+    if cpu.get_b() == 0{
+        cpu.set_flag(Z);
+    }else{
+        cpu.clear_flag(Z);
+    }
+}
+
+//0x0D
+pub fn dec_c(cpu : &mut Cpu) {
+    //Half carry flag here used as half borrow :
+
+    if cpu.get_c() & 0x0f > 0 {
+        cpu.clear_flag(H); //no borrow
+        //we have bits in the lower nibble
+    }else{
+        cpu.set_flag(H);
+        //we have no bits in the lower nibble
+        //we have to "borrow" some bits of the lower nibble :
+        //i.e 0xf0 - 0x01 = 0xef
+    }
+
+    cpu.set_c(cpu.get_c().wrapping_sub(1));
+
+    cpu.set_flag(N);
+    if cpu.get_c() == 0{
+        cpu.set_flag(Z);
+    }else{
+        cpu.clear_flag(Z);
+    }
+}
+
+//0x15
+pub fn dec_d(cpu : &mut Cpu) {
+    //Half carry flag here used as half borrow :
+
+    if cpu.get_d() & 0x0f > 0 {
+        cpu.clear_flag(H); //no borrow
+        //we have bits in the lower nibble
+    }else{
+        cpu.set_flag(H);
+        //we have no bits in the lower nibble
+        //we have to "borrow" some bits of the lower nibble :
+        //i.e 0xf0 - 0x01 = 0xef
+    }
+
+    cpu.set_d(cpu.get_d().wrapping_sub(1));
+
+    cpu.set_flag(N);
+    if cpu.get_d() == 0{
+        cpu.set_flag(Z);
+    }else{
+        cpu.clear_flag(Z);
+    }
+}
+
+//0x1D
+pub fn dec_e(cpu : &mut Cpu) {
+    //Half carry flag here used as half borrow :
+
+    if cpu.get_e() & 0x0f > 0 {
+        cpu.clear_flag(H); //no borrow
+        //we have bits in the lower nibble
+    }else{
+        cpu.set_flag(H);
+        //we have no bits in the lower nibble
+        //we have to "borrow" some bits of the lower nibble :
+        //i.e 0xf0 - 0x01 = 0xef
+    }
+
+    cpu.set_e(cpu.get_e().wrapping_sub(1));
+
+    cpu.set_flag(N);
+    if cpu.get_e() == 0{
+        cpu.set_flag(Z);
+    }else{
+        cpu.clear_flag(Z);
+    }
+}
+
+//0x25
+pub fn dec_h(cpu : &mut Cpu) {
+    //Half carry flag here used as half borrow :
+
+    if cpu.get_h() & 0x0f > 0 {
+        cpu.clear_flag(H); //no borrow
+        //we have bits in the lower nibble
+    }else{
+        cpu.set_flag(H);
+        //we have no bits in the lower nibble
+        //we have to "borrow" some bits of the lower nibble :
+        //i.e 0xf0 - 0x01 = 0xef
+    }
+
+    cpu.set_h(cpu.get_h().wrapping_sub(1));
+
+    cpu.set_flag(N);
+    if cpu.get_h() == 0{
+        cpu.set_flag(Z);
+    }else{
+        cpu.clear_flag(Z);
+    }
+}
+
+//0x2D
+pub fn dec_l(cpu : &mut Cpu) {
+    //Half carry flag here used as half borrow :
+
+    if cpu.get_l() & 0x0f > 0 {
+        cpu.clear_flag(H); //no borrow
+        //we have bits in the lower nibble
+    }else{
+        cpu.set_flag(H);
+        //we have no bits in the lower nibble
+        //we have to "borrow" some bits of the lower nibble :
+        //i.e 0xf0 - 0x01 = 0xef
+    }
+
+    cpu.set_l(cpu.get_l().wrapping_sub(1));
+
+    cpu.set_flag(N);
+    if cpu.get_l() == 0{
+        cpu.set_flag(Z);
+    }else{
+        cpu.clear_flag(Z);
+    }
+}
+
+//0x35
+pub fn dec_hlp(cpu: &mut Cpu, ram: &mut [u8;0x10000]) {
+    //Half carry flag here used as half borrow :
+
+    if ram[cpu.get_hl() as usize] & 0x0f > 0 {
+        cpu.clear_flag(H); //no borrow
+        //we have bits in the lower nibble
+    }else{
+        cpu.set_flag(H);
+        //we have no bits in the lower nibble
+        //we have to "borrow" some bits of the lower nibble :
+        //i.e 0xf0 - 0x01 = 0xef
+    }
+
+    ram[cpu.get_hl() as usize]=(ram[cpu.get_hl() as usize].wrapping_sub(1));
+
+    cpu.set_flag(N);
+    if ram[cpu.get_hl() as usize] == 0{
+        cpu.set_flag(Z);
+    }else{
+        cpu.clear_flag(Z);
     }
 }

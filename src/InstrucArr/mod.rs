@@ -230,14 +230,14 @@ pub fn createOperations() -> Vec<Instruct>{
     out[0x2C] = Instruct::build_instruct(0x2C, String::from("INC L"), String::from("Increment L"), 0, 4, Op::no(InstrucFn::inc_l));
     out[0x34] = Instruct::build_instruct(0x34, String::from("INC (HL) /!\\"), String::from("Increment ram[HL]"), 0, 12, Op::no(InstrucFn::nop));
     //Dec
-    out[0x3D] = Instruct::build_instruct(0x3D, String::from("DEC A /!\\"), String::from("Decrement A"), 0, 4, Op::no(InstrucFn::nop));
+    out[0x3D] = Instruct::build_instruct(0x3D, String::from("DEC A"), String::from("Decrement A"), 0, 4, Op::no(InstrucFn::dec_a));
     out[0x05] = Instruct::build_instruct(0x05, String::from("DEC B"), String::from("Decrement B"), 0, 4, Op::no(InstrucFn::dec_b));
-    out[0x0D] = Instruct::build_instruct(0x0D, String::from("DEC C /!\\"), String::from("Decrement C"), 0, 4, Op::no(InstrucFn::nop));
-    out[0x15] = Instruct::build_instruct(0x15, String::from("DEC D /!\\"), String::from("Decrement D"), 0, 4, Op::no(InstrucFn::nop));
-    out[0x1D] = Instruct::build_instruct(0x1D, String::from("DEC E /!\\"), String::from("Decrement E"), 0, 4, Op::no(InstrucFn::nop));
-    out[0x25] = Instruct::build_instruct(0x25, String::from("DEC H /!\\"), String::from("Decrement H"), 0, 4, Op::no(InstrucFn::nop));
-    out[0x2D] = Instruct::build_instruct(0x2D, String::from("DEC L /!\\"), String::from("Decrement L"), 0, 4, Op::no(InstrucFn::nop));
-    out[0x35] = Instruct::build_instruct(0x35, String::from("DEC (HL) /!\\"), String::from("Decrement ram[HL]"), 0, 12, Op::no(InstrucFn::nop));
+    out[0x0D] = Instruct::build_instruct(0x0D, String::from("DEC C"), String::from("Decrement C"), 0, 4, Op::no(InstrucFn::dec_c));
+    out[0x15] = Instruct::build_instruct(0x15, String::from("DEC D"), String::from("Decrement D"), 0, 4, Op::no(InstrucFn::dec_d));
+    out[0x1D] = Instruct::build_instruct(0x1D, String::from("DEC E"), String::from("Decrement E"), 0, 4, Op::no(InstrucFn::dec_e));
+    out[0x25] = Instruct::build_instruct(0x25, String::from("DEC H"), String::from("Decrement H"), 0, 4, Op::no(InstrucFn::dec_h));
+    out[0x2D] = Instruct::build_instruct(0x2D, String::from("DEC L"), String::from("Decrement L"), 0, 4, Op::no(InstrucFn::dec_l));
+    out[0x35] = Instruct::build_instruct(0x35, String::from("DEC (HL)"), String::from("Decrement ram[HL]"), 0, 12, Op::ram(InstrucFn::dec_hlp));
     //ADD 16 bits
     out[0x09] = Instruct::build_instruct(0x09, String::from("ADD HL BC /!\\"), String::from("Add BC to HL"), 0, 8, Op::no(InstrucFn::nop));
     out[0x19] = Instruct::build_instruct(0x19, String::from("ADD HL DE /!\\"), String::from("Add DE to HL"), 0, 8, Op::no(InstrucFn::nop));

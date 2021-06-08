@@ -92,11 +92,11 @@ fn main(){
         gpu.pushLine(&ram);
     }
     //ram[0xff05] = 255;
-    ram[0xffff] = 0;
-    ram[0xff0f] = 0;
-    ram[0xFF46] = 0;
-    ram[0xFF41] = 255;
-    ram[0xFF45] = 1;
+    //ram[0xffff] = 0;
+    //ram[0xff0f] = 0;
+    //ram[0xFF46] = 0;
+    //ram[0xFF41] = 255;
+    //ram[0xFF45] = 1;
 
     while window.update(){
         window.clear();
