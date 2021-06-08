@@ -15,6 +15,7 @@ pub enum Op{
     u8(fn(&mut Cpu, u8)),
     u16(fn(&mut Cpu, u8, u8)),//High, low
     ram(fn(&mut Cpu,&mut [u8;0x10000])),
+    ramu8(fn(&mut Cpu,u8,&mut [u8;0x10000])),
     ramu16(fn(&mut Cpu,u8,u8,&mut [u8;0x10000]))//High, low, ram
 }
 
@@ -125,9 +126,9 @@ impl Cpu {
         match self.instructs[i as usize].exec {
             Op::no(instruct) => {instruct(self)}
             Op::u8(instruct) => { instruct(self, ram[(self.pc+1) as usize])}
-            //Op::i8(instruct) => {instruct(self,ram[(self.pc+1) as usize])}
             Op::u16(instruct) => { instruct(self, ram[(self.pc+1) as usize], ram[(self.pc+2) as usize])}
             Op::ram(instruct) => { instruct(self,ram)}
+            Op::ramu8(instruct) => { instruct(self,ram[(self.pc+1) as usize],ram)}
             Op::ramu16(instruct) => { instruct(self,ram[(self.pc+1) as usize], ram[(self.pc+2) as usize],ram)}
         }
     }

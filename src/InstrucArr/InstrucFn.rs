@@ -434,26 +434,29 @@ pub fn ld_sp_u16(cpu : &mut Cpu, h : u8, l: u8){
 pub fn ld_sp_hl(cpu : &mut Cpu){
     cpu.set_sp(cpu.get_hl());
 }
-//0xF8 //TODO check l'instrution car j'ai des doutes
+/*0xF8
+Complex instruction, the Gameboy use Two's complement signed number
+We use smartly rust cast function to avoid having to rotate the bits
+ */
 pub fn ld_hl_sp_i8(cpu : &mut Cpu, n: u8){
-    let result : u32 = (cpu.get_sp() + n as u16) as u32;
-    if result & 0xffff0000 > 0 { //checking for an overflow
-        cpu.set_flag(C);
-    }else {
-        cpu.clear_flag(C);
+
+    match cpu.get_sp().checked_add(n as u16) { //checking for an overflow
+        None => cpu.set_flag(C),
+        Some(_) => cpu.clear_flag(C),
     }
     if (cpu.get_sp() & 0x0f) +  (n & 0x0f) as u16 > 0x0f {
         cpu.set_flag(H);
     }else{
         cpu.clear_flag(H);
     }
+
     cpu.clear_flag(Z);
     cpu.clear_flag(N);
-
-    cpu.set_hl((result as u16));
-
+    cpu.set_sp((cpu.get_sp() as i16).wrapping_add((n as i8) as i16) as u16);
 
 }
+
+
 
 //0xF3 (4tics)
 pub fn di(cpu : &mut Cpu){
