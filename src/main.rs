@@ -31,7 +31,7 @@ fn load(path: String) -> [u8;0x10000]{
 
 fn main(){
 
-    let mut ram = load(String::from("__dump.dmp"));
+    let mut ram = load(String::from("rom.gb"));
 
 
     let mut controls: Controls::Controls = Controls::Controls{
@@ -82,7 +82,7 @@ fn main(){
         tick: 0,
         mode: PX_TRANSFER,
         previous_mode: PX_TRANSFER,
-        step_by_step: false,
+        step_by_step: true,
         line_by_line: false,
         screen_by_screen: true,
     };
