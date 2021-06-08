@@ -17,10 +17,9 @@ pub screen_by_screen: bool,
 impl Master{
     pub fn step(&mut self, cpu: &mut Hardware::Cpu, gpu: &mut Hardware::Gpu, timer: &mut Timer::Timer,controls: &mut Controls::Controls, ram: &mut [u8;0x10000]){
         //Check for interrupts, if none juste add 1 to PC
-        if !Interrupts::interrupt_check(cpu,ram){
-            cpu.set_pc(cpu.get_pc().wrapping_add(1));
-        }
+        Interrupts::interrupt_check(cpu,ram);
         let instruct : &Hardware::Instruct = cpu.fetch(ram[cpu.get_pc() as usize]);
+        let argc:u8 = instruct.argc;
 
         self.maxi_debug_print(&cpu,&gpu,&timer,&ram,&controls,&instruct);
 
@@ -32,7 +31,7 @@ impl Master{
 
         cpu.exec(instruct.n,ram);
 
-        cpu.set_pc(cpu.pc + cpu.fetch(ram[cpu.get_pc() as usize]).argc as u16);
+        cpu.set_pc(cpu.get_pc() + (argc as u16) + 1);
 
         Dma::update_dma(ram);
 
@@ -106,14 +105,14 @@ impl Master{
         println!("Ticks: {}", &instruc.ticks);
         println!("");
         println!("CPU STATE____________________________________");
-        println!("a:{}",cpu.get_a());
-        println!("f:{}",cpu.get_f());
-        println!("b:{}",cpu.get_b());
-        println!("c:{}",cpu.get_c());
-        println!("d:{}",cpu.get_d());
-        println!("e:{}",cpu.get_e());
-        println!("h:{}",cpu.get_h());
-        println!("l:{}",cpu.get_l());
+        println!("a:{} / {:#04x}",cpu.get_a(), cpu.get_a());
+        println!("f:{} / {:#04x}",cpu.get_f(), cpu.get_f());
+        println!("b:{} / {:#04x}",cpu.get_b(), cpu.get_b());
+        println!("c:{} / {:#04x}",cpu.get_c(), cpu.get_c());
+        println!("d:{} / {:#04x}",cpu.get_d(), cpu.get_d());
+        println!("e:{} / {:#04x}",cpu.get_e(), cpu.get_e());
+        println!("h:{} / {:#04x}",cpu.get_h(), cpu.get_h());
+        println!("l:{} / {:#04x}",cpu.get_l(), cpu.get_l());
         println!("sp:{:#04x}",cpu.get_sp());
         println!("mie: {}",cpu.get_mie());
         println!("0xFFFF: {:#010b}",ram[0xFFFF]);

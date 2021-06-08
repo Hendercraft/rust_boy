@@ -201,7 +201,7 @@ pub fn createOperations() -> Vec<Instruct>{
     out[0xB6] = Instruct::build_instruct(0xB6, String::from("OR (HL) /!\\"), String::from("Store ram[HL] | A in A"), 0, 8, Op::no(InstrucFn::nop));
     out[0xF6] = Instruct::build_instruct(0xF6, String::from("OR n /!\\"), String::from("Store n | A in A"), 1, 8, Op::no(InstrucFn::nop));
     //XOR(^ = XOR)
-    out[0xAF] = Instruct::build_instruct(0xAF, String::from("XOR A /!\\"), String::from("Store A ^ A in A"), 0, 4, Op::no(InstrucFn::nop));
+    out[0xAF] = Instruct::build_instruct(0xAF, String::from("XOR A"), String::from("Store A ^ A in A"), 0, 4, Op::no(InstrucFn::xor_a));
     out[0xA8] = Instruct::build_instruct(0xA8, String::from("XOR B /!\\"), String::from("Store B ^ A in A"), 0, 4, Op::no(InstrucFn::nop));
     out[0xA9] = Instruct::build_instruct(0xA9, String::from("XOR C /!\\"), String::from("Store C ^ A in A"), 0, 4, Op::no(InstrucFn::nop));
     out[0xAA] = Instruct::build_instruct(0xAA, String::from("XOR D /!\\"), String::from("Store D ^ A in A"), 0, 4, Op::no(InstrucFn::nop));
@@ -227,11 +227,11 @@ pub fn createOperations() -> Vec<Instruct>{
     out[0x14] = Instruct::build_instruct(0x14, String::from("INC D /!\\"), String::from("Increment D"), 0, 4, Op::no(InstrucFn::nop));
     out[0x1C] = Instruct::build_instruct(0x1C, String::from("INC E /!\\"), String::from("Increment E"), 0, 4, Op::no(InstrucFn::nop));
     out[0x24] = Instruct::build_instruct(0x24, String::from("INC H /!\\"), String::from("Increment H"), 0, 4, Op::no(InstrucFn::nop));
-    out[0x2C] = Instruct::build_instruct(0x2C, String::from("INC L /!\\"), String::from("Increment L"), 0, 4, Op::no(InstrucFn::nop));
+    out[0x2C] = Instruct::build_instruct(0x2C, String::from("INC L"), String::from("Increment L"), 0, 4, Op::no(InstrucFn::inc_l));
     out[0x34] = Instruct::build_instruct(0x34, String::from("INC (HL) /!\\"), String::from("Increment ram[HL]"), 0, 12, Op::no(InstrucFn::nop));
     //Dec
     out[0x3D] = Instruct::build_instruct(0x3D, String::from("DEC A /!\\"), String::from("Decrement A"), 0, 4, Op::no(InstrucFn::nop));
-    out[0x05] = Instruct::build_instruct(0x05, String::from("DEC B /!\\"), String::from("Decrement B"), 0, 4, Op::no(InstrucFn::nop));
+    out[0x05] = Instruct::build_instruct(0x05, String::from("DEC B"), String::from("Decrement B"), 0, 4, Op::no(InstrucFn::dec_b));
     out[0x0D] = Instruct::build_instruct(0x0D, String::from("DEC C /!\\"), String::from("Decrement C"), 0, 4, Op::no(InstrucFn::nop));
     out[0x15] = Instruct::build_instruct(0x15, String::from("DEC D /!\\"), String::from("Decrement D"), 0, 4, Op::no(InstrucFn::nop));
     out[0x1D] = Instruct::build_instruct(0x1D, String::from("DEC E /!\\"), String::from("Decrement E"), 0, 4, Op::no(InstrucFn::nop));
@@ -280,14 +280,14 @@ pub fn createOperations() -> Vec<Instruct>{
     out[0x1F] = Instruct::build_instruct(0x1F, String::from("RCA /!\\"), String::from("Rotate A right through C flag."), 0, 4, Op::no(InstrucFn::nop));
     out[0xCB] = Instruct::build_instruct(0xCB, String::from("THE PREFIX /!\\"), String::from("If we see this, we are dead"), 0, 4, Op::no(InstrucFn::nop));
     //(Synthé keyboard) MIGHT AS WELL JUMP (JUMP)
-    out[0xC3] = Instruct::build_instruct(0xC3, String::from("JP nn/!\\"), String::from("Jump to nn"), 2, 12, Op::no(InstrucFn::nop));
-    out[0xC2] = Instruct::build_instruct(0xC2, String::from("JP NZ nn/!\\"), String::from("Jump to nn if Z=0"), 2, 12, Op::no(InstrucFn::nop));
-    out[0xCA] = Instruct::build_instruct(0xCA, String::from("JP Z nn/!\\"), String::from("Jump to nn if Z=1"), 2, 12, Op::no(InstrucFn::nop));
-    out[0xD2] = Instruct::build_instruct(0xD2, String::from("JP NC nn/!\\"), String::from("Jump to nn if C=0"), 2, 12, Op::no(InstrucFn::nop));
-    out[0xDA] = Instruct::build_instruct(0xDA, String::from("JP C nn/!\\"), String::from("Jump to nn if C=1"), 2, 12, Op::no(InstrucFn::nop));
+    out[0xC3] = Instruct::build_instruct(0xC3, String::from("JP nn"), String::from("Jump to nn"), 2, 16, Op::u16(InstrucFn::jp_u16));
+    out[0xC2] = Instruct::build_instruct(0xC2, String::from("JP NZ nn/!\\"), String::from("Jump to nn if Z=0"), 2, 16, Op::no(InstrucFn::nop));
+    out[0xCA] = Instruct::build_instruct(0xCA, String::from("JP Z nn/!\\"), String::from("Jump to nn if Z=1"), 2, 16, Op::no(InstrucFn::nop));
+    out[0xD2] = Instruct::build_instruct(0xD2, String::from("JP NC nn/!\\"), String::from("Jump to nn if C=0"), 2, 16, Op::no(InstrucFn::nop));
+    out[0xDA] = Instruct::build_instruct(0xDA, String::from("JP C nn/!\\"), String::from("Jump to nn if C=1"), 2, 16, Op::no(InstrucFn::nop));
     out[0xE9] = Instruct::build_instruct(0xE9, String::from("JP (HL)/!\\"), String::from("Jump to (HL)"), 0, 4, Op::no(InstrucFn::nop));
-    out[0x18] = Instruct::build_instruct(0x18, String::from("JR i/!\\"), String::from("Add i to PC"), 1, 8, Op::no(InstrucFn::nop));
-    out[0x20] = Instruct::build_instruct(0x20, String::from("JR NZ i /!\\"), String::from("Add i to PC if Z=0"), 1, 8, Op::no(InstrucFn::nop));
+    out[0x18] = Instruct::build_instruct(0x18, String::from("JR i"), String::from("Add i to PC"), 1, 12, Op::u8(InstrucFn::jpr));
+    out[0x20] = Instruct::build_instruct(0x20, String::from("JR NZ i"), String::from("Add i to PC if Z=0"), 1, 8, Op::u8(InstrucFn::jpr_nz));
     out[0x28] = Instruct::build_instruct(0x28, String::from("JR Z i /!\\"), String::from("Add i to PC if Z=1"), 1, 8, Op::no(InstrucFn::nop));
     out[0x30] = Instruct::build_instruct(0x30, String::from("JR NC i /!\\"), String::from("Add i to PC if C=0"), 1, 8, Op::no(InstrucFn::nop));
     out[0x38] = Instruct::build_instruct(0x38, String::from("JR C i /!\\"), String::from("Add i to PC if C=1"), 1, 8, Op::no(InstrucFn::nop));

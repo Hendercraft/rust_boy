@@ -64,7 +64,7 @@ fn main(){
         h : 0,
         l : 0,
         sp : 0,//0xfffe, // default value
-        pc : 0xFF, //default valueS
+        pc : 0x100, //default valueS
         mie : true,
         //flags : Flags,
         instructs: InstrucArr::createOperations(),

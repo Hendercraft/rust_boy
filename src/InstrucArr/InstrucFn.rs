@@ -48,7 +48,12 @@ pub fn dec_b(cpu : &mut Cpu) {
 
     cpu.set_b(cpu.get_b().wrapping_sub(1));
 
-    cpu.set_flag(N); //setting N flag
+    cpu.set_flag(N);
+    if cpu.get_b() == 0{
+        cpu.set_flag(Z);
+    }else{
+        cpu.clear_flag(Z);
+    }
 }
 /*****************8 bit direct load***********************/
 //0x3E
@@ -473,4 +478,53 @@ pub fn reti (cpu: &mut Cpu, ram: &mut [u8;0x10000]){
     cpu.set_mie(true);
     let pc : u16 = cpu.read_u16_from_stack(&ram);
     cpu.set_pc(pc);
+}
+
+//0xC3
+pub fn jp_u16(cpu : &mut Cpu, h : u8, l: u8){
+    cpu.set_pc(Cpu::get_u16(h,l).wrapping_sub(3));
+}
+
+//0X2C
+pub fn inc_l(cpu :&mut Cpu){
+    if cpu.get_l() == 0x0f { //Half carry flag
+        cpu.set_flag(H);
+    }else{
+        cpu.clear_flag(H)
+    }
+
+    cpu.set_l(cpu.get_l().wrapping_add(1));
+
+    if cpu.get_l() == 0 { // Zero flag
+        cpu.set_flag(Z);
+    } else {
+        cpu.clear_flag(Z)
+    } //zero flag
+    cpu.clear_flag(N); //clearing N flag
+}
+
+//0xAF
+pub fn xor_a(cpu :&mut Cpu){
+    cpu.set_a(cpu.get_a() ^ cpu.get_a());
+    cpu.clear_flag(H);
+    cpu.clear_flag(C);
+    cpu.clear_flag(N);
+    if cpu.get_a() == 0{
+        cpu.set_flag(Z)
+    }else{
+        cpu.clear_flag(Z);
+    }
+}
+
+//0x18
+pub fn jpr(cpu : &mut Cpu, n: u8){
+    cpu.set_pc((cpu.get_pc() as i16).wrapping_add((n as i8) as i16) as u16);
+    //TODO: Timing ?
+}
+
+//Ox20
+pub fn jpr_nz(cpu : &mut Cpu, n: u8){
+    if(!cpu.get_flags().Z){
+        jpr(cpu, n);
+    }
 }
