@@ -325,7 +325,7 @@ impl Gpu{
         let winY:u8 = ram[0xff4a];
 
         for i in 0..160{
-            if winX <= i && winY <= self.line{// && false{
+            if winX <= i && winY <= self.line && false{// && false{
                 self.screen[i as usize][self.line as usize] = self.windowMatrix[(i-winX) as usize][(self.line - winY) as usize];
             }else{
                 self.screen[i as usize][self.line as usize] = self.bgMatrix[(scrollX.wrapping_add(i)) as usize][(scrollY.wrapping_add(self.line)) as usize];
