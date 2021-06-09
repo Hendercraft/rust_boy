@@ -82,9 +82,9 @@ fn main(){
         tick: 0,
         mode: PX_TRANSFER,
         previous_mode: PX_TRANSFER,
-        step_by_step: true,
+        step_by_step: false,
         line_by_line: false,
-        screen_by_screen: true,
+        screen_by_screen: false,
     };
     gpu.buildBG(&ram);
     gpu.buildWindow(&ram);

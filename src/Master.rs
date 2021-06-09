@@ -34,6 +34,7 @@ impl Master{
         cpu.set_pc(cpu.get_pc() + (argc as u16) + 1);
 
         Dma::update_dma(ram);
+        if cpu.get_pc() == 0x0235{ self.step_by_step = true;}
 
 
 

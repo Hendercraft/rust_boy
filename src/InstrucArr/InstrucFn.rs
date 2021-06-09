@@ -698,3 +698,30 @@ pub fn dec_hlp(cpu: &mut Cpu, ram: &mut [u8;0x10000]) {
         cpu.clear_flag(Z);
     }
 }
+
+//0xFE
+pub fn cp_u8(cpu : &mut Cpu, n: u8){
+    cpu.set_flag(N);
+    if n > cpu.get_a() {
+        cpu.set_flag(C);
+    }else{
+        cpu.clear_flag(C);
+    }
+    if cpu.get_a() - n == 0{
+        cpu.set_flag(Z);
+    }else{
+        cpu.clear_flag(Z);
+    }
+    if (n & 0x0f) > (cpu.get_a() & 0x0f){ //(like a - n) check for borrow
+        cpu.set_flag(H);
+    }else{
+        cpu.clear_flag(H);
+    }
+
+
+
+
+
+}
+
+

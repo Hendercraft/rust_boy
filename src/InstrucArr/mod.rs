@@ -219,7 +219,7 @@ pub fn createOperations() -> Vec<Instruct>{
     out[0xBC] = Instruct::build_instruct(0xBC, String::from("CP H /!\\"), String::from("Compare H and A"), 0, 4, Op::no(InstrucFn::nop));
     out[0xBD] = Instruct::build_instruct(0xBD, String::from("CP L /!\\"), String::from("Compare L and A"), 0, 4, Op::no(InstrucFn::nop));
     out[0xBE] = Instruct::build_instruct(0xBE, String::from("CP (HL) /!\\"), String::from("Compare ram[HL] and A"), 0, 8, Op::no(InstrucFn::nop));
-    out[0xFE] = Instruct::build_instruct(0xFE, String::from("CP n /!\\"), String::from("Compare n and A"), 1, 8, Op::no(InstrucFn::nop));
+    out[0xFE] = Instruct::build_instruct(0xFE, String::from("CP n"), String::from("Compare n and A"), 1, 8, Op::u8(InstrucFn::cp_u8));
     //Inc
     out[0x3C] = Instruct::build_instruct(0x3C, String::from("INC A /!\\"), String::from("Increment A"), 0, 4, Op::no(InstrucFn::nop));
     out[0x04] = Instruct::build_instruct(0x04, String::from("INC B /!\\"), String::from("Increment B"), 0, 4, Op::no(InstrucFn::nop));
@@ -271,7 +271,7 @@ pub fn createOperations() -> Vec<Instruct>{
     out[0x37] = Instruct::build_instruct(0x37, String::from("SCF /!\\"), String::from("Set C flag, reset N and H"), 0, 4, Op::no(InstrucFn::nop));
     out[0x76] = Instruct::build_instruct(0x76, String::from("HALT /!\\"), String::from("Stop CPU until interrupt is received"), 0, 4, Op::no(InstrucFn::nop));
     out[0x10] = Instruct::build_instruct(0x10, String::from("STOP /!\\"), String::from("Stop CPU and LCD until button pressed"), 0, 4, Op::no(InstrucFn::nop));
-    out[0xF3] = Instruct::build_instruct(0xF3, String::from("DI /!\\"), String::from("Disable interrupts"), 0, 4, Op::no(InstrucFn::nop));
+    out[0xF3] = Instruct::build_instruct(0xF3, String::from("DI"), String::from("Disable interrupts"), 0, 4, Op::no(InstrucFn::di));
     out[0xFB] = Instruct::build_instruct(0xFB, String::from("EI /!\\"), String::from("Enable interrupts"), 0, 4, Op::no(InstrucFn::nop));
     //Rotates
     out[0x07] = Instruct::build_instruct(0x07, String::from("RLCA /!\\"), String::from("Rotate A left, old bit 7 to C flag."), 0, 4, Op::no(InstrucFn::nop));
