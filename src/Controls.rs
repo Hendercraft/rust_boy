@@ -74,7 +74,7 @@ impl Controls{
             (self.right);
         }else{
             //buttons
-            n = 0b11110000 |
+            n = 0b11010000 |
             (self.start << 3) |
             (self.select << 2) |
             (self.b << 1) |

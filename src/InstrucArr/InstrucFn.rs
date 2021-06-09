@@ -1193,3 +1193,67 @@ pub fn cpl(cpu : &mut Cpu){
     cpu.set_flag(N);
     cpu.set_a(!(cpu.get_a()));
 }
+
+//CB
+pub fn prefix(cpu : &mut Cpu, n : u8){
+    match n {
+        0x37 =>{
+            println!("/!\\ SWAP A operation occured");
+            cpu.set_a((cpu.get_a() << 4) | (cpu.get_a() >> 4));
+            cpu.set_flag(Z);
+            cpu.clear_flag(H);
+            cpu.clear_flag(C);
+            cpu.clear_flag(N);
+        },
+        _ => {
+            println!("/!\\ {:#04x} Not done yet",n);
+        }
+    }
+}
+
+/*RESET_____________________________________________________________________*/
+//C7
+pub fn rst_0(cpu : &mut Cpu, ram : &mut [u8;0x10000]){
+    cpu.write_u16_to_stack(cpu.get_pc(),ram);
+    cpu.set_pc(0xFFFF);
+}
+//CF
+pub fn rst_8(cpu : &mut Cpu, ram : &mut [u8;0x10000]){
+    cpu.write_u16_to_stack(cpu.get_pc(),ram);
+    cpu.set_pc(0x0007);
+}
+
+//D7
+pub fn rst_10(cpu : &mut Cpu, ram : &mut [u8;0x10000]){
+    cpu.write_u16_to_stack(cpu.get_pc(),ram);
+    cpu.set_pc(0x000f);
+}
+
+//DF
+pub fn rst_18(cpu : &mut Cpu, ram : &mut [u8;0x10000]){
+    cpu.write_u16_to_stack(cpu.get_pc(),ram);
+    cpu.set_pc(0x0017);
+}
+//E7
+pub fn rst_20(cpu : &mut Cpu, ram : &mut [u8;0x10000]){
+    cpu.write_u16_to_stack(cpu.get_pc(),ram);
+    cpu.set_pc(0x001f);
+}
+
+//EF
+pub fn rst_28(cpu : &mut Cpu, ram : &mut [u8;0x10000]){
+    cpu.write_u16_to_stack(cpu.get_pc(),ram);
+    cpu.set_pc(0x0027);
+}
+
+//F7
+pub fn rst_30(cpu : &mut Cpu, ram : &mut [u8;0x10000]){
+    cpu.write_u16_to_stack(cpu.get_pc(),ram);
+    cpu.set_pc(0x002f);
+}
+
+//FF
+pub fn rst_38(cpu : &mut Cpu, ram : &mut [u8;0x10000]){
+    cpu.write_u16_to_stack(cpu.get_pc(),ram);
+    cpu.set_pc(0x0037);
+}

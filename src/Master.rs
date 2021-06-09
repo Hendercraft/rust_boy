@@ -19,7 +19,7 @@ pub screen_by_screen: bool,
 impl Master{
     pub fn step(&mut self, cpu: &mut Hardware::Cpu, gpu: &mut Hardware::Gpu, timer: &mut Timer::Timer,controls: &mut Controls::Controls, ram: &mut [u8;0x10000]){
         //Check for interrupts, if none juste add 1 to PC
-        if cpu.get_pc() == 0x29A6{ self.step_by_step = true;}
+        //if cpu.get_pc() == 0x0028{ self.step_by_step = true;}
         Interrupts::interrupt_check(cpu,ram);
         let instruct : &Hardware::Instruct = cpu.fetch(ram[cpu.get_pc() as usize]);
         let argc:u8 = instruct.argc;
@@ -38,7 +38,7 @@ impl Master{
         //Ie delay
         if ram[cpu.get_pc() as usize] == 0xFB { delay = true;}
 
-        cpu.set_pc(cpu.get_pc() + (argc as u16) + 1);
+        cpu.set_pc(cpu.get_pc().wrapping_add((argc as u16) + 1));
 
         Dma::update_dma(ram);
 

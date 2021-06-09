@@ -278,7 +278,7 @@ pub fn createOperations() -> Vec<Instruct>{
     out[0x17] = Instruct::build_instruct(0x17, String::from("RLA /!\\"), String::from("Rotate A left through C flag."), 0, 4, Op::no(InstrucFn::nop));
     out[0x0F] = Instruct::build_instruct(0x0F, String::from("RCCA /!\\"), String::from("Rotate A right, old bit 0 to C flag."), 0, 4, Op::no(InstrucFn::nop));
     out[0x1F] = Instruct::build_instruct(0x1F, String::from("RCA /!\\"), String::from("Rotate A right through C flag."), 0, 4, Op::no(InstrucFn::nop));
-    out[0xCB] = Instruct::build_instruct(0xCB, String::from("THE PREFIX /!\\"), String::from("If we see this, we are dead"), 0, 4, Op::no(InstrucFn::nop));
+    out[0xCB] = Instruct::build_instruct(0xCB, String::from("PREFIX 1/256"), String::from("My personal favourite <3"), 1, 12, Op::u8(InstrucFn::prefix));//TODO TIMING
     //(Synthé keyboard) MIGHT AS WELL JUMP (JUMP)
     out[0xC3] = Instruct::build_instruct(0xC3, String::from("JP nn"), String::from("Jump to nn"), 2, 16, Op::u16(InstrucFn::jp_u16));
     out[0xC2] = Instruct::build_instruct(0xC2, String::from("JP NZ nn/!\\"), String::from("Jump to nn if Z=0"), 2, 16, Op::no(InstrucFn::nop));
@@ -298,14 +298,14 @@ pub fn createOperations() -> Vec<Instruct>{
     out[0xD4] = Instruct::build_instruct(0xD4, String::from("CALL NC nn"), String::from("Push next adress onto stack and jump to nn if C=0"), 2, 12, Op::ramu16(InstrucFn::call_nc_u16));
     out[0xDC] = Instruct::build_instruct(0xDC, String::from("CALL C nn"), String::from("Push next adress onto stack and jump to nn if C=1"), 2, 12, Op::ramu16(InstrucFn::call_c_u16));
     //Restart
-    out[0xC7] = Instruct::build_instruct(0xC7, String::from("RST 00"), String::from("Push present adress and jump to ram[0x0000]"), 0, 32, Op::no(InstrucFn::nop));
-    out[0xCF] = Instruct::build_instruct(0xCF, String::from("RST 08"), String::from("Push present adress and jump to ram[0x0008]"), 0, 32, Op::no(InstrucFn::nop));
-    out[0xD7] = Instruct::build_instruct(0xD7, String::from("RST 10"), String::from("Push present adress and jump to ram[0x0010]"), 0, 32, Op::no(InstrucFn::nop));
-    out[0xDF] = Instruct::build_instruct(0xDF, String::from("RST 18"), String::from("Push present adress and jump to ram[0x0018]"), 0, 32, Op::no(InstrucFn::nop));
-    out[0xE7] = Instruct::build_instruct(0xE7, String::from("RST 20"), String::from("Push present adress and jump to ram[0x0020]"), 0, 32, Op::no(InstrucFn::nop));
-    out[0xEF] = Instruct::build_instruct(0xEF, String::from("RST 28"), String::from("Push present adress and jump to ram[0x0028]"), 0, 32, Op::no(InstrucFn::nop));
-    out[0xF7] = Instruct::build_instruct(0xF7, String::from("RST 30"), String::from("Push present adress and jump to ram[0x0030]"), 0, 32, Op::no(InstrucFn::nop));
-    out[0xFF] = Instruct::build_instruct(0xFF, String::from("RST 38"), String::from("Push present adress and jump to ram[0x0038]"), 0, 32, Op::no(InstrucFn::nop));
+    out[0xC7] = Instruct::build_instruct(0xC7, String::from("RST 00"), String::from("Push present adress and jump to ram[0x0000]"), 0, 16, Op::ram(InstrucFn::rst_0));
+    out[0xCF] = Instruct::build_instruct(0xCF, String::from("RST 08"), String::from("Push present adress and jump to ram[0x0008]"), 0, 16, Op::ram(InstrucFn::rst_8));
+    out[0xD7] = Instruct::build_instruct(0xD7, String::from("RST 10"), String::from("Push present adress and jump to ram[0x0010]"), 0, 16, Op::ram(InstrucFn::rst_10));
+    out[0xDF] = Instruct::build_instruct(0xDF, String::from("RST 18"), String::from("Push present adress and jump to ram[0x0018]"), 0, 16, Op::ram(InstrucFn::rst_18));
+    out[0xE7] = Instruct::build_instruct(0xE7, String::from("RST 20"), String::from("Push present adress and jump to ram[0x0020]"), 0, 16, Op::ram(InstrucFn::rst_20));
+    out[0xEF] = Instruct::build_instruct(0xEF, String::from("RST 28"), String::from("Push present adress and jump to ram[0x0028]"), 0, 16, Op::ram(InstrucFn::rst_28));
+    out[0xF7] = Instruct::build_instruct(0xF7, String::from("RST 30"), String::from("Push present adress and jump to ram[0x0030]"), 0, 16, Op::ram(InstrucFn::rst_30));
+    out[0xFF] = Instruct::build_instruct(0xFF, String::from("RST 38"), String::from("Push present adress and jump to ram[0x0038]"), 0, 16, Op::ram(InstrucFn::rst_38));
     //Returns
     out[0xC9] = Instruct::build_instruct(0xC9, String::from("RET"), String::from("Pop from stack and jump to adress"), 0, 16, Op::ram(InstrucFn::ret));
     out[0xC0] = Instruct::build_instruct(0xC0, String::from("RET NZ"), String::from("Pop from stack and jump to adress if Z=0"), 0, 8, Op::ram(InstrucFn::ret_nz));
