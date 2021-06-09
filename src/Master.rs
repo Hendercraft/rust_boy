@@ -34,7 +34,7 @@ impl Master{
         cpu.set_pc(cpu.get_pc() + (argc as u16) + 1);
 
         Dma::update_dma(ram);
-        if cpu.get_pc() == 0x0235{ self.step_by_step = true;}
+        if cpu.get_pc() == 0x029E{ self.step_by_step = true;}
 
 
 
@@ -92,13 +92,14 @@ impl Master{
             if self.line_by_line {
                 wait();
             }
+            ram[0xff44] += 1;
         }
 
         if self.screen_by_screen {
             wait();
         }
 
-        ram[0xff44] += 1;
+
     }
 
 

@@ -221,14 +221,14 @@ pub fn createOperations() -> Vec<Instruct>{
     out[0xBE] = Instruct::build_instruct(0xBE, String::from("CP (HL) /!\\"), String::from("Compare ram[HL] and A"), 0, 8, Op::no(InstrucFn::nop));
     out[0xFE] = Instruct::build_instruct(0xFE, String::from("CP n"), String::from("Compare n and A"), 1, 8, Op::u8(InstrucFn::cp_u8));
     //Inc
-    out[0x3C] = Instruct::build_instruct(0x3C, String::from("INC A /!\\"), String::from("Increment A"), 0, 4, Op::no(InstrucFn::nop));
-    out[0x04] = Instruct::build_instruct(0x04, String::from("INC B /!\\"), String::from("Increment B"), 0, 4, Op::no(InstrucFn::nop));
-    out[0x0C] = Instruct::build_instruct(0x0C, String::from("INC C /!\\"), String::from("Increment C"), 0, 4, Op::no(InstrucFn::nop));
-    out[0x14] = Instruct::build_instruct(0x14, String::from("INC D /!\\"), String::from("Increment D"), 0, 4, Op::no(InstrucFn::nop));
-    out[0x1C] = Instruct::build_instruct(0x1C, String::from("INC E /!\\"), String::from("Increment E"), 0, 4, Op::no(InstrucFn::nop));
-    out[0x24] = Instruct::build_instruct(0x24, String::from("INC H /!\\"), String::from("Increment H"), 0, 4, Op::no(InstrucFn::nop));
+    out[0x3C] = Instruct::build_instruct(0x3C, String::from("INC A"), String::from("Increment A"), 0, 4, Op::no(InstrucFn::inc_a));
+    out[0x04] = Instruct::build_instruct(0x04, String::from("INC B"), String::from("Increment B"), 0, 4, Op::no(InstrucFn::inc_b));
+    out[0x0C] = Instruct::build_instruct(0x0C, String::from("INC C"), String::from("Increment C"), 0, 4, Op::no(InstrucFn::inc_c));
+    out[0x14] = Instruct::build_instruct(0x14, String::from("INC D"), String::from("Increment D"), 0, 4, Op::no(InstrucFn::inc_d));
+    out[0x1C] = Instruct::build_instruct(0x1C, String::from("INC E"), String::from("Increment E"), 0, 4, Op::no(InstrucFn::inc_e));
+    out[0x24] = Instruct::build_instruct(0x24, String::from("INC H"), String::from("Increment H"), 0, 4, Op::no(InstrucFn::inc_h));
     out[0x2C] = Instruct::build_instruct(0x2C, String::from("INC L"), String::from("Increment L"), 0, 4, Op::no(InstrucFn::inc_l));
-    out[0x34] = Instruct::build_instruct(0x34, String::from("INC (HL) /!\\"), String::from("Increment ram[HL]"), 0, 12, Op::no(InstrucFn::nop));
+    out[0x34] = Instruct::build_instruct(0x34, String::from("INC (HL)"), String::from("Increment ram[HL]"), 0, 12, Op::ram(InstrucFn::inc_hlp));
     //Dec
     out[0x3D] = Instruct::build_instruct(0x3D, String::from("DEC A"), String::from("Decrement A"), 0, 4, Op::no(InstrucFn::dec_a));
     out[0x05] = Instruct::build_instruct(0x05, String::from("DEC B"), String::from("Decrement B"), 0, 4, Op::no(InstrucFn::dec_b));
@@ -292,11 +292,11 @@ pub fn createOperations() -> Vec<Instruct>{
     out[0x30] = Instruct::build_instruct(0x30, String::from("JR NC i /!\\"), String::from("Add i to PC if C=0"), 1, 8, Op::no(InstrucFn::nop));
     out[0x38] = Instruct::build_instruct(0x38, String::from("JR C i /!\\"), String::from("Add i to PC if C=1"), 1, 8, Op::no(InstrucFn::nop));
     //Calls
-    out[0xCD] = Instruct::build_instruct(0xCD, String::from("CALL nn /!\\"), String::from("Push next adress onto stack and jump to nn"), 2, 12, Op::no(InstrucFn::nop));
-    out[0xC4] = Instruct::build_instruct(0xC4, String::from("CALL NZ nn /!\\"), String::from("Push next adress onto stack and jump to nn if Z=0"), 2, 12, Op::no(InstrucFn::nop));
-    out[0xCC] = Instruct::build_instruct(0xCC, String::from("CALL Z nn /!\\"), String::from("Push next adress onto stack and jump to nn if Z=1"), 2, 12, Op::no(InstrucFn::nop));
-    out[0xD4] = Instruct::build_instruct(0xD4, String::from("CALL NC nn /!\\"), String::from("Push next adress onto stack and jump to nn if C=0"), 2, 12, Op::no(InstrucFn::nop));
-    out[0xDC] = Instruct::build_instruct(0xDC, String::from("CALL C nn /!\\"), String::from("Push next adress onto stack and jump to nn if C=1"), 2, 12, Op::no(InstrucFn::nop));
+    out[0xCD] = Instruct::build_instruct(0xCD, String::from("CALL nn"), String::from("Push next adress onto stack and jump to nn"), 2, 24, Op::ramu16(InstrucFn::call_u16));
+    out[0xC4] = Instruct::build_instruct(0xC4, String::from("CALL NZ nn"), String::from("Push next adress onto stack and jump to nn if Z=0"), 2, 12, Op::ramu16(InstrucFn::call_nz_u16));
+    out[0xCC] = Instruct::build_instruct(0xCC, String::from("CALL Z nn"), String::from("Push next adress onto stack and jump to nn if Z=1"), 2, 12, Op::ramu16(InstrucFn::call_z_u16));
+    out[0xD4] = Instruct::build_instruct(0xD4, String::from("CALL NC nn"), String::from("Push next adress onto stack and jump to nn if C=0"), 2, 12, Op::ramu16(InstrucFn::call_nc_u16));
+    out[0xDC] = Instruct::build_instruct(0xDC, String::from("CALL C nn"), String::from("Push next adress onto stack and jump to nn if C=1"), 2, 12, Op::ramu16(InstrucFn::call_c_u16));
     //Restart
     out[0xC7] = Instruct::build_instruct(0xC7, String::from("RST 00"), String::from("Push present adress and jump to ram[0x0000]"), 0, 32, Op::no(InstrucFn::nop));
     out[0xCF] = Instruct::build_instruct(0xCF, String::from("RST 08"), String::from("Push present adress and jump to ram[0x0008]"), 0, 32, Op::no(InstrucFn::nop));
