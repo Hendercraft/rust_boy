@@ -10,12 +10,6 @@ use crate::Hardware::Flag::*;
 //0x00
 pub fn nop(cpu : &mut Cpu){}
 
-//0x03
-pub fn inc_bc(cpu : &mut Cpu){
-    cpu.set_bc(cpu.get_bc() + 0b1);
-}
-
-
 /*****************8 bit direct load***********************/
 //0x3E
 pub fn  ld_a_u8(cpu : &mut Cpu, n : u8){
@@ -431,19 +425,8 @@ pub fn di(cpu : &mut Cpu){
 
 //0xFB (4tics)
 pub fn ei(cpu : &mut Cpu){
-    cpu.set_mie(true);
-}
-
-//0xD9
-pub fn reti (cpu: &mut Cpu, ram: &mut [u8;0x10000]){
-    cpu.set_mie(true);
-    let pc : u16 = cpu.read_u16_from_stack(&ram);
-    cpu.set_pc(pc);
-}
-
-//0xC3
-pub fn jp_u16(cpu : &mut Cpu, h : u8, l: u8){
-    cpu.set_pc(Cpu::get_u16(h,l).wrapping_sub(3));
+    //Since you there is a delay of instruction
+    //before enabling interrupts it's handle in the Master::step method
 }
 
 //0xAF
@@ -458,7 +441,11 @@ pub fn xor_a(cpu :&mut Cpu){
         cpu.clear_flag(Z);
     }
 }
-
+/*****************JUMP***********************/
+//0xC3
+pub fn jp_u16(cpu : &mut Cpu, h : u8, l: u8){
+    cpu.set_pc(Cpu::get_u16(h,l).wrapping_sub(3));
+}
 //0x18
 pub fn jpr(cpu : &mut Cpu, n: u8){
     cpu.set_pc((cpu.get_pc() as i16).wrapping_add((n as i8) as i16) as u16);
@@ -467,10 +454,30 @@ pub fn jpr(cpu : &mut Cpu, n: u8){
 
 //Ox20
 pub fn jpr_nz(cpu : &mut Cpu, n: u8){
-    if(!cpu.get_flags().Z){
+    if !cpu.get_flags().Z {
         jpr(cpu, n);
     }
 }
+//0x28
+pub fn jpr_z(cpu : &mut Cpu, n: u8){
+    if cpu.get_flags().Z {
+        jpr(cpu, n);
+    }
+}
+//0x30
+pub fn jpr_nc(cpu : &mut Cpu, n: u8){
+    if !cpu.get_flags().C {
+        jpr(cpu, n);
+    }
+}
+//0x38
+pub fn jpr_c(cpu : &mut Cpu, n: u8){
+    if cpu.get_flags().C {
+        jpr(cpu, n);
+    }
+}
+
+
 /*DEC_____________________________________________________________________*/
 //0x3D
 pub fn dec_a(cpu : &mut Cpu) {
@@ -684,9 +691,9 @@ pub fn cp_u8(cpu : &mut Cpu, n: u8){
     }
 }
 
-/*AINCRAIMANTE__________________________________________________________________________________*/
+/*INC__________________________________________________________________________________*/
 
-//0xC3
+//0x3C
 pub fn inc_a(cpu :&mut Cpu){
     if cpu.get_a() == 0x0f { //Half carry flag
         cpu.set_flag(H);
@@ -788,7 +795,7 @@ pub fn inc_h(cpu :&mut Cpu){
     } //zero flag
     cpu.clear_flag(N); //clearing N flag
 }
-//0X2C
+//0x2C
 pub fn inc_l(cpu :&mut Cpu){
     if cpu.get_l() == 0x0f { //Half carry flag
         cpu.set_flag(H);
@@ -805,7 +812,7 @@ pub fn inc_l(cpu :&mut Cpu){
     } //zero flag
     cpu.clear_flag(N); //clearing N flag
 }
-//0X34
+//0x34
 pub fn inc_hlp(cpu: &mut Cpu, ram: &mut [u8;0x10000]){
     if ram[cpu.get_hl() as usize] == 0x0f { //Half carry flag
         cpu.set_flag(H);
@@ -852,4 +859,337 @@ pub fn call_c_u16(cpu :&mut Cpu,h : u8, l : u8, ram : &mut [u8;0x10000]){
     if(cpu.get_flags().C){
         call_u16(cpu,h,l,ram);
     }
+}
+/*****************DEC 16 bits***********************/
+//0x0B
+pub fn dec_bc(cpu : &mut Cpu){
+    cpu.set_bc(cpu.get_bc().wrapping_sub(1));
+}
+//0x1B
+pub fn dec_de(cpu : &mut Cpu){
+    cpu.set_de(cpu.get_de().wrapping_sub(1));
+}
+//0x2B
+pub fn dec_hl(cpu : &mut Cpu){
+    cpu.set_hl(cpu.get_hl().wrapping_sub(1));
+}
+//0x3B
+pub fn dec_sp(cpu : &mut Cpu){
+    cpu.set_sp(cpu.get_sp().wrapping_sub(1));
+}
+/*****************INC 16 bits***********************/
+//0x03
+pub fn inc_bc(cpu : &mut Cpu){
+    cpu.set_bc(cpu.get_bc().wrapping_add(1));
+}
+//0x13
+pub fn inc_de(cpu : &mut Cpu){
+    cpu.set_de(cpu.get_de().wrapping_add(1));
+}
+//0x23
+pub fn inc_hl(cpu : &mut Cpu){
+    cpu.set_hl(cpu.get_hl().wrapping_add(1));
+}
+//0x33
+pub fn inc_sp(cpu : &mut Cpu){
+    cpu.set_sp(cpu.get_sp().wrapping_add(1));
+}
+/*****************OR***********************/
+//0xB7
+pub fn or_a(cpu : &mut Cpu){
+    cpu.clear_flag(N);
+    cpu.clear_flag(H);
+    cpu.clear_flag(C);
+    cpu.set_a(cpu.get_a() | cpu.get_a());
+    if cpu.get_a() == 0{
+        cpu.set_flag(Z);
+    }else{
+        cpu.clear_flag(Z);
+    }
+}
+//0xB0
+pub fn or_b(cpu : &mut Cpu){
+    cpu.clear_flag(N);
+    cpu.clear_flag(H);
+    cpu.clear_flag(C);
+    cpu.set_a(cpu.get_a() | cpu.get_b());
+    if cpu.get_a() == 0{
+        cpu.set_flag(Z);
+    }else{
+        cpu.clear_flag(Z);
+    }
+}
+//0xB1
+pub fn or_c(cpu : &mut Cpu){
+    cpu.clear_flag(N);
+    cpu.clear_flag(H);
+    cpu.clear_flag(C);
+    cpu.set_a(cpu.get_a() | cpu.get_c());
+    if cpu.get_a() == 0{
+        cpu.set_flag(Z);
+    }else{
+        cpu.clear_flag(Z);
+    }
+}
+//0xB2
+pub fn or_d(cpu : &mut Cpu){
+    cpu.clear_flag(N);
+    cpu.clear_flag(H);
+    cpu.clear_flag(C);
+    cpu.set_a(cpu.get_a() | cpu.get_d());
+    if cpu.get_a() == 0{
+        cpu.set_flag(Z);
+    }else{
+        cpu.clear_flag(Z);
+    }
+}
+//0xB3
+pub fn or_e(cpu : &mut Cpu){
+    cpu.clear_flag(N);
+    cpu.clear_flag(H);
+    cpu.clear_flag(C);
+    cpu.set_a(cpu.get_a() | cpu.get_e());
+    if cpu.get_a() == 0{
+        cpu.set_flag(Z);
+    }else{
+        cpu.clear_flag(Z);
+    }
+}
+//0xB4
+pub fn or_h(cpu : &mut Cpu){
+    cpu.clear_flag(N);
+    cpu.clear_flag(H);
+    cpu.clear_flag(C);
+    cpu.set_a(cpu.get_a() | cpu.get_h());
+    if cpu.get_a() == 0{
+        cpu.set_flag(Z);
+    }else{
+        cpu.clear_flag(Z);
+    }
+}
+//0xB5
+pub fn or_l(cpu : &mut Cpu){
+    cpu.clear_flag(N);
+    cpu.clear_flag(H);
+    cpu.clear_flag(C);
+    cpu.set_a(cpu.get_a() | cpu.get_l());
+    if cpu.get_a() == 0{
+        cpu.set_flag(Z);
+    }else{
+        cpu.clear_flag(Z);
+    }
+}
+//0xB6
+pub fn or_hlp(cpu : &mut Cpu, ram : &mut [u8;0x10000]){
+    cpu.clear_flag(N);
+    cpu.clear_flag(H);
+    cpu.clear_flag(C);
+    cpu.set_a(cpu.get_a() | ram[cpu.get_hl() as usize]);
+    if cpu.get_a() == 0{
+        cpu.set_flag(Z);
+    }else{
+        cpu.clear_flag(Z);
+    }
+}
+//0xF6
+pub fn or_u8(cpu : &mut Cpu, n : u8){
+    cpu.clear_flag(N);
+    cpu.clear_flag(H);
+    cpu.clear_flag(C);
+    cpu.set_a(cpu.get_a() | n );
+    if cpu.get_a() == 0{
+        cpu.set_flag(Z);
+    }else{
+        cpu.clear_flag(Z);
+    }
+}
+/*****************Returns***********************/
+//0xC9 //TODO TIMING
+pub fn ret(cpu : &mut Cpu, ram : &mut [u8;0x10000]){
+    let n = cpu.read_u16_from_stack(ram).wrapping_sub(1);
+    cpu.set_pc(n);
+}
+//0xC0
+pub fn ret_nz(cpu : &mut Cpu, ram : &mut [u8;0x10000]){
+    if !cpu.get_flags().Z {
+        ret(cpu,ram);
+    }
+}
+//0xC8
+pub fn ret_z(cpu : &mut Cpu, ram : &mut [u8;0x10000]){
+    if cpu.get_flags().Z {
+        ret(cpu,ram);
+    }
+}
+//0xD0
+pub fn ret_nc(cpu : &mut Cpu, ram : &mut [u8;0x10000]){
+    if !cpu.get_flags().C {
+        ret(cpu,ram);
+    }
+}
+//0xD8
+pub fn ret_c(cpu : &mut Cpu, ram : &mut [u8;0x10000]){
+    if cpu.get_flags().C {
+        ret(cpu,ram);
+    }
+}
+//0xD9
+pub fn ret_i (cpu: &mut Cpu, ram: &mut [u8;0x10000]){
+    cpu.set_mie(true);
+    let pc : u16 = cpu.read_u16_from_stack(&ram).wrapping_sub(1);
+    cpu.set_pc(pc);
+}
+/*****************SP related PUSH***********************/
+//0xF5
+pub fn push_af(cpu :&mut Cpu, ram : &mut [u8;0x10000]){
+    cpu.write_u16_to_stack(cpu.get_af(),ram);
+}
+//0xC5
+pub fn push_bc(cpu :&mut Cpu, ram : &mut [u8;0x10000]){
+    cpu.write_u16_to_stack(cpu.get_bc(),ram);
+}
+//0xD5
+pub fn push_de(cpu :&mut Cpu, ram : &mut [u8;0x10000]){
+    cpu.write_u16_to_stack(cpu.get_de(),ram);
+}
+//0xE5
+pub fn push_hl(cpu :&mut Cpu, ram : &mut [u8;0x10000]){
+    cpu.write_u16_to_stack(cpu.get_hl(),ram);
+}
+/*****************SP related POP***********************/
+//0xF1
+pub fn pop_af(cpu :&mut Cpu, ram : &mut [u8;0x10000]){
+    let n = cpu.read_u16_from_stack(ram);
+    cpu.set_af(n);
+}
+//0xC1
+pub fn pop_bc(cpu :&mut Cpu, ram : &mut [u8;0x10000]){
+    let n = cpu.read_u16_from_stack(ram);
+    cpu.set_bc(n);
+}
+//0xDE
+pub fn pop_de(cpu :&mut Cpu, ram : &mut [u8;0x10000]){
+    let n = cpu.read_u16_from_stack(ram);
+    cpu.set_de(n);
+}
+//0xhl
+pub fn pop_hl(cpu :&mut Cpu, ram : &mut [u8;0x10000]){
+    let n = cpu.read_u16_from_stack(ram);
+    cpu.set_hl(n);
+}
+/*****************AND***********************/
+//0xA7
+pub fn and_a(cpu : &mut Cpu){
+    cpu.clear_flag(N);
+    cpu.set_flag(H);
+    cpu.clear_flag(C);
+    cpu.set_a(cpu.get_a() & cpu.get_a());
+    if cpu.get_a() == 0{
+        cpu.set_flag(Z);
+    }else{
+        cpu.clear_flag(Z);
+    }
+}
+//0xA0
+pub fn and_b(cpu : &mut Cpu){
+    cpu.clear_flag(N);
+    cpu.set_flag(H);
+    cpu.clear_flag(C);
+    cpu.set_a(cpu.get_a() & cpu.get_b());
+    if cpu.get_a() == 0{
+        cpu.set_flag(Z);
+    }else{
+        cpu.clear_flag(Z);
+    }
+}
+//0xA1
+pub fn and_c(cpu : &mut Cpu){
+    cpu.clear_flag(N);
+    cpu.set_flag(H);
+    cpu.clear_flag(C);
+    cpu.set_a(cpu.get_a() & cpu.get_c());
+    if cpu.get_a() == 0{
+        cpu.set_flag(Z);
+    }else{
+        cpu.clear_flag(Z);
+    }
+}
+//0xA2
+pub fn and_d(cpu : &mut Cpu){
+    cpu.clear_flag(N);
+    cpu.set_flag(H);
+    cpu.clear_flag(C);
+    cpu.set_a(cpu.get_a() & cpu.get_d());
+    if cpu.get_a() == 0{
+        cpu.set_flag(Z);
+    }else{
+        cpu.clear_flag(Z);
+    }
+}
+//0xA3
+pub fn and_e(cpu : &mut Cpu){
+    cpu.clear_flag(N);
+    cpu.set_flag(H);
+    cpu.clear_flag(C);
+    cpu.set_a(cpu.get_a() & cpu.get_e());
+    if cpu.get_a() == 0{
+        cpu.set_flag(Z);
+    }else{
+        cpu.clear_flag(Z);
+    }
+}
+//0xA4
+pub fn and_h(cpu : &mut Cpu){
+    cpu.clear_flag(N);
+    cpu.set_flag(H);
+    cpu.clear_flag(C);
+    cpu.set_a(cpu.get_a() & cpu.get_h());
+    if cpu.get_a() == 0{
+        cpu.set_flag(Z);
+    }else{
+        cpu.clear_flag(Z);
+    }
+}
+//0xA5
+pub fn and_l(cpu : &mut Cpu){
+    cpu.clear_flag(N);
+    cpu.set_flag(H);
+    cpu.clear_flag(C);
+    cpu.set_a(cpu.get_a() & cpu.get_l());
+    if cpu.get_a() == 0{
+        cpu.set_flag(Z);
+    }else{
+        cpu.clear_flag(Z);
+    }
+}
+//0xA6
+pub fn and_hlp(cpu : &mut Cpu, ram : &mut [u8;0x10000]){
+    cpu.clear_flag(N);
+    cpu.set_flag(H);
+    cpu.clear_flag(C);
+    cpu.set_a(cpu.get_a() & ram[cpu.get_hl() as usize]);
+    if cpu.get_a() == 0{
+        cpu.set_flag(Z);
+    }else{
+        cpu.clear_flag(Z);
+    }
+}
+//0xE6
+pub fn and_u8(cpu : &mut Cpu, n : u8){
+    cpu.clear_flag(N);
+    cpu.set_flag(H);
+    cpu.clear_flag(C);
+    cpu.set_a(cpu.get_a() & n);
+    if cpu.get_a() == 0{
+        cpu.set_flag(Z);
+    }else{
+        cpu.clear_flag(Z);
+    }
+}
+//MISC
+//0x2F
+pub fn cpl(cpu : &mut Cpu){
+    cpu.set_flag(H);
+    cpu.set_flag(N);
+    cpu.set_a(!cpu.get_a());
 }

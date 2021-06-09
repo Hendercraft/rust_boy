@@ -1,5 +1,7 @@
 use crate::{Hardware, Interrupts, Controls, InstrucArr, Timer, Dma};
 use std::io::{stdin, stdout, Read, Write};
+
+
 const H_BLANK: u8 = 0;
 const V_BLANK: u8 = 1;
 const PX_TRANSFER: u8 = 2;
@@ -31,10 +33,20 @@ impl Master{
 
         cpu.exec(instruct.n,ram);
 
+        let mut delay = false;
+        //Ie delay
+        if ram[cpu.get_pc() as usize] == 0xFB { delay = true;}
+
         cpu.set_pc(cpu.get_pc() + (argc as u16) + 1);
 
         Dma::update_dma(ram);
-        if cpu.get_pc() == 0x029E{ self.step_by_step = true;}
+        if cpu.get_pc() == 0x29b2{ self.step_by_step = true;}
+        if delay{
+            self.step(cpu,gpu,timer,controls,ram);
+            cpu.mie = true;
+        }
+
+
 
 
 

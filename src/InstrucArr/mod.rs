@@ -132,15 +132,15 @@ pub fn createOperations() -> Vec<Instruct>{
     out[0xF8] = Instruct::build_instruct(0xF8, String::from("LDHL SP n"), String::from("Load SP+n in HL"), 1, 12, Op::u8(InstrucFn::ld_hl_sp_i8));
     out[0x08] = Instruct::build_instruct(0x08, String::from("LD (nn) SP /!\\"), String::from("Load SP in ram[nn]"), 2, 20, Op::no(InstrucFn::nop));
     //SP related PUSH
-    out[0xF5] = Instruct::build_instruct(0xF5, String::from("PUSH AF /!\\"), String::from("Push AF in stack, SP--*2"), 0, 16, Op::no(InstrucFn::nop));
-    out[0xC5] = Instruct::build_instruct(0xC5, String::from("PUSH BC /!\\"), String::from("Push BC in stack, SP--*2"), 0, 16, Op::no(InstrucFn::nop));
-    out[0xD5] = Instruct::build_instruct(0xD5, String::from("PUSH DE /!\\"), String::from("Push DE in stack, SP--*2"), 0, 16, Op::no(InstrucFn::nop));
-    out[0xE5] = Instruct::build_instruct(0xE5, String::from("PUSH HL /!\\"), String::from("Push HL in stack, SP--*2"), 0, 16, Op::no(InstrucFn::nop));
+    out[0xF5] = Instruct::build_instruct(0xF5, String::from("PUSH AF"), String::from("Push AF in stack, SP--*2"), 0, 16, Op::ram(InstrucFn::push_af));
+    out[0xC5] = Instruct::build_instruct(0xC5, String::from("PUSH BC"), String::from("Push BC in stack, SP--*2"), 0, 16, Op::ram(InstrucFn::push_bc));
+    out[0xD5] = Instruct::build_instruct(0xD5, String::from("PUSH DE"), String::from("Push DE in stack, SP--*2"), 0, 16, Op::ram(InstrucFn::push_de));
+    out[0xE5] = Instruct::build_instruct(0xE5, String::from("PUSH HL"), String::from("Push HL in stack, SP--*2"), 0, 16, Op::ram(InstrucFn::push_hl));
     //SP related POP
-    out[0xF1] = Instruct::build_instruct(0xF1, String::from("POP AF /!\\"), String::from("Pop from stack in AF , SP++*2"), 0, 12, Op::no(InstrucFn::nop));
-    out[0xC1] = Instruct::build_instruct(0xC1, String::from("POP BC /!\\"), String::from("Pop from stack in BC , SP++*2"), 0, 12, Op::no(InstrucFn::nop));
-    out[0xD1] = Instruct::build_instruct(0xD1, String::from("POP DE /!\\"), String::from("Pop from stack in DE , SP++*2"), 0, 12, Op::no(InstrucFn::nop));
-    out[0xE1] = Instruct::build_instruct(0xE1, String::from("POP HL /!\\"), String::from("Pop from stack in HL , SP++*2"), 0, 12, Op::no(InstrucFn::nop));
+    out[0xF1] = Instruct::build_instruct(0xF1, String::from("POP AF"), String::from("Pop from stack in AF , SP++*2"), 0, 12, Op::ram(InstrucFn::pop_af));
+    out[0xC1] = Instruct::build_instruct(0xC1, String::from("POP BC"), String::from("Pop from stack in BC , SP++*2"), 0, 12, Op::ram(InstrucFn::pop_bc));
+    out[0xD1] = Instruct::build_instruct(0xD1, String::from("POP DE"), String::from("Pop from stack in DE , SP++*2"), 0, 12, Op::ram(InstrucFn::pop_de));
+    out[0xE1] = Instruct::build_instruct(0xE1, String::from("POP HL"), String::from("Pop from stack in HL , SP++*2"), 0, 12, Op::ram(InstrucFn::pop_hl));
     //Add n to A
     out[0x87] = Instruct::build_instruct(0x87, String::from("ADD A A /!\\"), String::from("Add A to A"), 0, 4, Op::no(InstrucFn::nop));
     out[0x80] = Instruct::build_instruct(0x80, String::from("ADD A B /!\\"), String::from("Add B to A"), 0, 4, Op::no(InstrucFn::nop));
@@ -181,25 +181,25 @@ pub fn createOperations() -> Vec<Instruct>{
     out[0x9D] = Instruct::build_instruct(0x9D, String::from("SBC L /!\\"), String::from("Sub L + Cflag from A"), 0, 4, Op::no(InstrucFn::nop));
     out[0x9E] = Instruct::build_instruct(0x9E, String::from("SBC (HL) /!\\"), String::from("Sub ram[HL] + Cflag from A"), 0, 8, Op::no(InstrucFn::nop));
     //and(H is SET)
-    out[0xA7] = Instruct::build_instruct(0xA7, String::from("AND A /!\\"), String::from("Store A & A in A"), 0, 4, Op::no(InstrucFn::nop));
-    out[0xA0] = Instruct::build_instruct(0xA0, String::from("AND B /!\\"), String::from("Store B & A in A"), 0, 4, Op::no(InstrucFn::nop));
-    out[0xA1] = Instruct::build_instruct(0xA1, String::from("AND C /!\\"), String::from("Store C & A in A"), 0, 4, Op::no(InstrucFn::nop));
-    out[0xA2] = Instruct::build_instruct(0xA2, String::from("AND D /!\\"), String::from("Store D & A in A"), 0, 4, Op::no(InstrucFn::nop));
-    out[0xA3] = Instruct::build_instruct(0xA3, String::from("AND E /!\\"), String::from("Store E & A in A"), 0, 4, Op::no(InstrucFn::nop));
-    out[0xA4] = Instruct::build_instruct(0xA4, String::from("AND H /!\\"), String::from("Store H & A in A"), 0, 4, Op::no(InstrucFn::nop));
-    out[0xA5] = Instruct::build_instruct(0xA5, String::from("AND L /!\\"), String::from("Store L & A in A"), 0, 4, Op::no(InstrucFn::nop));
-    out[0xA6] = Instruct::build_instruct(0xA6, String::from("AND (HL) /!\\"), String::from("Store ram[HL] & A in A"), 0, 8, Op::no(InstrucFn::nop));
-    out[0xE6] = Instruct::build_instruct(0xE6, String::from("AND n /!\\"), String::from("Store n & A in A"), 1, 8, Op::no(InstrucFn::nop));
+    out[0xA7] = Instruct::build_instruct(0xA7, String::from("AND A"), String::from("Store A & A in A"), 0, 4, Op::no(InstrucFn::and_a));
+    out[0xA0] = Instruct::build_instruct(0xA0, String::from("AND B"), String::from("Store B & A in A"), 0, 4, Op::no(InstrucFn::and_b));
+    out[0xA1] = Instruct::build_instruct(0xA1, String::from("AND C"), String::from("Store C & A in A"), 0, 4, Op::no(InstrucFn::and_c));
+    out[0xA2] = Instruct::build_instruct(0xA2, String::from("AND D"), String::from("Store D & A in A"), 0, 4, Op::no(InstrucFn::and_d));
+    out[0xA3] = Instruct::build_instruct(0xA3, String::from("AND E"), String::from("Store E & A in A"), 0, 4, Op::no(InstrucFn::and_e));
+    out[0xA4] = Instruct::build_instruct(0xA4, String::from("AND H"), String::from("Store H & A in A"), 0, 4, Op::no(InstrucFn::and_h));
+    out[0xA5] = Instruct::build_instruct(0xA5, String::from("AND L"), String::from("Store L & A in A"), 0, 4, Op::no(InstrucFn::and_l));
+    out[0xA6] = Instruct::build_instruct(0xA6, String::from("AND (HL)"), String::from("Store ram[HL] & A in A"), 0, 8, Op::ram(InstrucFn::and_hlp));
+    out[0xE6] = Instruct::build_instruct(0xE6, String::from("AND n"), String::from("Store n & A in A"), 1, 8, Op::u8(InstrucFn::and_u8));
     //OR
-    out[0xB7] = Instruct::build_instruct(0xB7, String::from("OR A /!\\"), String::from("Store A | A in A"), 0, 4, Op::no(InstrucFn::nop));
-    out[0xB0] = Instruct::build_instruct(0xB0, String::from("OR B /!\\"), String::from("Store B | A in A"), 0, 4, Op::no(InstrucFn::nop));
-    out[0xB1] = Instruct::build_instruct(0xB1, String::from("OR C /!\\"), String::from("Store C | A in A"), 0, 4, Op::no(InstrucFn::nop));
-    out[0xB2] = Instruct::build_instruct(0xB2, String::from("OR D /!\\"), String::from("Store D | A in A"), 0, 4, Op::no(InstrucFn::nop));
-    out[0xB3] = Instruct::build_instruct(0xB3, String::from("OR E /!\\"), String::from("Store E | A in A"), 0, 4, Op::no(InstrucFn::nop));
-    out[0xB4] = Instruct::build_instruct(0xB4, String::from("OR H /!\\"), String::from("Store H | A in A"), 0, 4, Op::no(InstrucFn::nop));
-    out[0xB5] = Instruct::build_instruct(0xB5, String::from("OR L /!\\"), String::from("Store L | A in A"), 0, 4, Op::no(InstrucFn::nop));
-    out[0xB6] = Instruct::build_instruct(0xB6, String::from("OR (HL) /!\\"), String::from("Store ram[HL] | A in A"), 0, 8, Op::no(InstrucFn::nop));
-    out[0xF6] = Instruct::build_instruct(0xF6, String::from("OR n /!\\"), String::from("Store n | A in A"), 1, 8, Op::no(InstrucFn::nop));
+    out[0xB7] = Instruct::build_instruct(0xB7, String::from("OR A"), String::from("Store A | A in A"), 0, 4, Op::no(InstrucFn::or_a));
+    out[0xB0] = Instruct::build_instruct(0xB0, String::from("OR B"), String::from("Store B | A in A"), 0, 4, Op::no(InstrucFn::or_b));
+    out[0xB1] = Instruct::build_instruct(0xB1, String::from("OR C"), String::from("Store C | A in A"), 0, 4, Op::no(InstrucFn::or_c));
+    out[0xB2] = Instruct::build_instruct(0xB2, String::from("OR D"), String::from("Store D | A in A"), 0, 4, Op::no(InstrucFn::or_d));
+    out[0xB3] = Instruct::build_instruct(0xB3, String::from("OR E"), String::from("Store E | A in A"), 0, 4, Op::no(InstrucFn::or_e));
+    out[0xB4] = Instruct::build_instruct(0xB4, String::from("OR H"), String::from("Store H | A in A"), 0, 4, Op::no(InstrucFn::or_h));
+    out[0xB5] = Instruct::build_instruct(0xB5, String::from("OR L"), String::from("Store L | A in A"), 0, 4, Op::no(InstrucFn::or_l));
+    out[0xB6] = Instruct::build_instruct(0xB6, String::from("OR (HL)"), String::from("Store ram[HL] | A in A"), 0, 8, Op::ram(InstrucFn::or_hlp));
+    out[0xF6] = Instruct::build_instruct(0xF6, String::from("OR n"), String::from("Store n | A in A"), 1, 8, Op::u8(InstrucFn::or_u8));
     //XOR(^ = XOR)
     out[0xAF] = Instruct::build_instruct(0xAF, String::from("XOR A"), String::from("Store A ^ A in A"), 0, 4, Op::no(InstrucFn::xor_a));
     out[0xA8] = Instruct::build_instruct(0xA8, String::from("XOR B /!\\"), String::from("Store B ^ A in A"), 0, 4, Op::no(InstrucFn::nop));
@@ -246,15 +246,15 @@ pub fn createOperations() -> Vec<Instruct>{
     //Add Sp
     out[0xE8] = Instruct::build_instruct(0xE8, String::from("ADD SP n /!\\"), String::from("Add n to SP"), 1, 16, Op::no(InstrucFn::nop));
     //INC 16 bits
-    out[0x03] = Instruct::build_instruct(0x03, String::from("INC BC /!\\"), String::from("Increment BC"), 0, 8, Op::no(InstrucFn::nop));
-    out[0x13] = Instruct::build_instruct(0x13, String::from("INC DE /!\\"), String::from("Increment DE"), 0, 8, Op::no(InstrucFn::nop));
-    out[0x23] = Instruct::build_instruct(0x23, String::from("INC HL /!\\"), String::from("Increment HL"), 0, 8, Op::no(InstrucFn::nop));
-    out[0x33] = Instruct::build_instruct(0x33, String::from("INC SP /!\\"), String::from("Increment SP"), 0, 8, Op::no(InstrucFn::nop));
+    out[0x03] = Instruct::build_instruct(0x03, String::from("INC BC"), String::from("Increment BC"), 0, 8, Op::no(InstrucFn::inc_bc));
+    out[0x13] = Instruct::build_instruct(0x13, String::from("INC DE"), String::from("Increment DE"), 0, 8, Op::no(InstrucFn::inc_de));
+    out[0x23] = Instruct::build_instruct(0x23, String::from("INC HL"), String::from("Increment HL"), 0, 8, Op::no(InstrucFn::inc_hl));
+    out[0x33] = Instruct::build_instruct(0x33, String::from("INC SP"), String::from("Increment SP"), 0, 8, Op::no(InstrucFn::inc_sp));
     //DEC 16 bits
-    out[0x0B] = Instruct::build_instruct(0x0B, String::from("DEC BC /!\\"), String::from("Decrement BC"), 0, 8, Op::no(InstrucFn::nop));
-    out[0x1B] = Instruct::build_instruct(0x1B, String::from("DEC DE /!\\"), String::from("Decrement DE"), 0, 8, Op::no(InstrucFn::nop));
-    out[0x2B] = Instruct::build_instruct(0x2B, String::from("DEC HL /!\\"), String::from("Decrement HL"), 0, 8, Op::no(InstrucFn::nop));
-    out[0x3B] = Instruct::build_instruct(0x3B, String::from("DEC SP /!\\"), String::from("Decrement SP"), 0, 8, Op::no(InstrucFn::nop));
+    out[0x0B] = Instruct::build_instruct(0x0B, String::from("DEC BC"), String::from("Decrement BC"), 0, 8, Op::no(InstrucFn::dec_bc));
+    out[0x1B] = Instruct::build_instruct(0x1B, String::from("DEC DE"), String::from("Decrement DE"), 0, 8, Op::no(InstrucFn::dec_de));
+    out[0x2B] = Instruct::build_instruct(0x2B, String::from("DEC HL"), String::from("Decrement HL"), 0, 8, Op::no(InstrucFn::dec_hl));
+    out[0x3B] = Instruct::build_instruct(0x3B, String::from("DEC SP"), String::from("Decrement SP"), 0, 8, Op::no(InstrucFn::dec_sp));
     //SWAP
     //out[0x37] = Instruct::build_instruct(0x37, String::from("SWAP A /!\\"), String::from("Swap upper and lower nibble of A"), 0, 8, Op::no(InstrucFn::nop));
     //out[0x30] = Instruct::build_instruct(0x30, String::from("SWAP B /!\\"), String::from("Swap upper and lower nibble of B"), 0, 8, Op::no(InstrucFn::nop));
@@ -266,13 +266,13 @@ pub fn createOperations() -> Vec<Instruct>{
     //out[0x36] = Instruct::build_instruct(0x36, String::from("SWAP (HL) /!\\"), String::from("Swap upper and lower nibble of ram[HL]"), 0, 16, Op::no(InstrucFn::nop));
     //MISC
     out[0x27] = Instruct::build_instruct(0x27, String::from("DAA /!\\"), String::from("Adjust A to obtain a correct BCD"), 0, 4, Op::no(InstrucFn::nop));
-    out[0x2F] = Instruct::build_instruct(0x2F, String::from("CPL /!\\"), String::from("Flip all bits of A"), 0, 4, Op::no(InstrucFn::nop));
+    out[0x2F] = Instruct::build_instruct(0x2F, String::from("CPL"), String::from("Flip all bits of A"), 0, 4, Op::no(InstrucFn::cpl));
     out[0x3F] = Instruct::build_instruct(0x3F, String::from("CCF /!\\"), String::from("Flip C flag"), 0, 4, Op::no(InstrucFn::nop));
     out[0x37] = Instruct::build_instruct(0x37, String::from("SCF /!\\"), String::from("Set C flag, reset N and H"), 0, 4, Op::no(InstrucFn::nop));
     out[0x76] = Instruct::build_instruct(0x76, String::from("HALT /!\\"), String::from("Stop CPU until interrupt is received"), 0, 4, Op::no(InstrucFn::nop));
     out[0x10] = Instruct::build_instruct(0x10, String::from("STOP /!\\"), String::from("Stop CPU and LCD until button pressed"), 0, 4, Op::no(InstrucFn::nop));
     out[0xF3] = Instruct::build_instruct(0xF3, String::from("DI"), String::from("Disable interrupts"), 0, 4, Op::no(InstrucFn::di));
-    out[0xFB] = Instruct::build_instruct(0xFB, String::from("EI /!\\"), String::from("Enable interrupts"), 0, 4, Op::no(InstrucFn::nop));
+    out[0xFB] = Instruct::build_instruct(0xFB, String::from("EI"), String::from("Enable interrupts"), 0, 4, Op::no(InstrucFn::ei));
     //Rotates
     out[0x07] = Instruct::build_instruct(0x07, String::from("RLCA /!\\"), String::from("Rotate A left, old bit 7 to C flag."), 0, 4, Op::no(InstrucFn::nop));
     out[0x17] = Instruct::build_instruct(0x17, String::from("RLA /!\\"), String::from("Rotate A left through C flag."), 0, 4, Op::no(InstrucFn::nop));
@@ -288,9 +288,9 @@ pub fn createOperations() -> Vec<Instruct>{
     out[0xE9] = Instruct::build_instruct(0xE9, String::from("JP (HL)/!\\"), String::from("Jump to (HL)"), 0, 4, Op::no(InstrucFn::nop));
     out[0x18] = Instruct::build_instruct(0x18, String::from("JR i"), String::from("Add i to PC"), 1, 12, Op::u8(InstrucFn::jpr));
     out[0x20] = Instruct::build_instruct(0x20, String::from("JR NZ i"), String::from("Add i to PC if Z=0"), 1, 8, Op::u8(InstrucFn::jpr_nz));
-    out[0x28] = Instruct::build_instruct(0x28, String::from("JR Z i /!\\"), String::from("Add i to PC if Z=1"), 1, 8, Op::no(InstrucFn::nop));
-    out[0x30] = Instruct::build_instruct(0x30, String::from("JR NC i /!\\"), String::from("Add i to PC if C=0"), 1, 8, Op::no(InstrucFn::nop));
-    out[0x38] = Instruct::build_instruct(0x38, String::from("JR C i /!\\"), String::from("Add i to PC if C=1"), 1, 8, Op::no(InstrucFn::nop));
+    out[0x28] = Instruct::build_instruct(0x28, String::from("JR Z i"), String::from("Add i to PC if Z=1"), 1, 8, Op::u8(InstrucFn::jpr_z));
+    out[0x30] = Instruct::build_instruct(0x30, String::from("JR NC i"), String::from("Add i to PC if C=0"), 1, 8, Op::u8(InstrucFn::jpr_nc));
+    out[0x38] = Instruct::build_instruct(0x38, String::from("JR C i"), String::from("Add i to PC if C=1"), 1, 8, Op::u8(InstrucFn::jpr_c));
     //Calls
     out[0xCD] = Instruct::build_instruct(0xCD, String::from("CALL nn"), String::from("Push next adress onto stack and jump to nn"), 2, 24, Op::ramu16(InstrucFn::call_u16));
     out[0xC4] = Instruct::build_instruct(0xC4, String::from("CALL NZ nn"), String::from("Push next adress onto stack and jump to nn if Z=0"), 2, 12, Op::ramu16(InstrucFn::call_nz_u16));
@@ -307,12 +307,12 @@ pub fn createOperations() -> Vec<Instruct>{
     out[0xF7] = Instruct::build_instruct(0xF7, String::from("RST 30"), String::from("Push present adress and jump to ram[0x0030]"), 0, 32, Op::no(InstrucFn::nop));
     out[0xFF] = Instruct::build_instruct(0xFF, String::from("RST 38"), String::from("Push present adress and jump to ram[0x0038]"), 0, 32, Op::no(InstrucFn::nop));
     //Returns
-    out[0xC9] = Instruct::build_instruct(0xC9, String::from("RET"), String::from("Pop from stack and jump to adress"), 0, 8, Op::no(InstrucFn::nop));
-    out[0xC0] = Instruct::build_instruct(0xC0, String::from("RET NZ"), String::from("Pop from stack and jump to adress if Z=0"), 0, 8, Op::no(InstrucFn::nop));
-    out[0xC8] = Instruct::build_instruct(0xC8, String::from("RET Z"), String::from("Pop from stack and jump to adress if Z=1"), 0, 8, Op::no(InstrucFn::nop));
-    out[0xD0] = Instruct::build_instruct(0xD0, String::from("RET NC"), String::from("Pop from stack and jump to adress if C=0"), 0, 8, Op::no(InstrucFn::nop));;
-    out[0xD8] = Instruct::build_instruct(0xD8, String::from("RET C"), String::from("Pop from stack and jump to adress if C=1"), 0, 8, Op::no(InstrucFn::nop));
-    out[0xD9] = Instruct::build_instruct(0xD9, String::from("RETI"), String::from("Same as RET, but enable interrupts"), 0, 8, Op::ram(InstrucFn::reti));
+    out[0xC9] = Instruct::build_instruct(0xC9, String::from("RET"), String::from("Pop from stack and jump to adress"), 0, 16, Op::ram(InstrucFn::ret));
+    out[0xC0] = Instruct::build_instruct(0xC0, String::from("RET NZ"), String::from("Pop from stack and jump to adress if Z=0"), 0, 8, Op::ram(InstrucFn::ret_nz));
+    out[0xC8] = Instruct::build_instruct(0xC8, String::from("RET Z"), String::from("Pop from stack and jump to adress if Z=1"), 0, 8, Op::ram(InstrucFn::ret_z));
+    out[0xD0] = Instruct::build_instruct(0xD0, String::from("RET NC"), String::from("Pop from stack and jump to adress if C=0"), 0, 8, Op::ram(InstrucFn::ret_nc));;
+    out[0xD8] = Instruct::build_instruct(0xD8, String::from("RET C"), String::from("Pop from stack and jump to adress if C=1"), 0, 8, Op::ram(InstrucFn::ret_c));
+    out[0xD9] = Instruct::build_instruct(0xD9, String::from("RETI"), String::from("Same as RET, but enable interrupts"), 0, 16, Op::ram(InstrucFn::ret_i));
 
     //What's left
     return out;
