@@ -86,8 +86,6 @@ fn main(){
         line_by_line: false,
         screen_by_screen: false,
     };
-    gpu.buildBG(&ram);
-    gpu.buildWindow(&ram);
     for i in 0..160{
         gpu.pushLine(&ram);
     }
@@ -104,7 +102,8 @@ fn main(){
         controls.updateRam(&mut ram);
         window.pushMatrix(&gpu.screen);
         master.screen(&mut cpu, &mut gpu, &mut timer, &mut controls, &mut ram);
-
+        gpu.buildBG(&ram);
+        gpu.buildWindow(&ram);
     }
 
 
