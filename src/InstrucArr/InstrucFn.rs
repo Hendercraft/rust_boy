@@ -1191,5 +1191,5 @@ pub fn and_u8(cpu : &mut Cpu, n : u8){
 pub fn cpl(cpu : &mut Cpu){
     cpu.set_flag(H);
     cpu.set_flag(N);
-    cpu.set_a(!cpu.get_a());
+    cpu.set_a(!(cpu.get_a()));
 }

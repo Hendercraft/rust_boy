@@ -15,48 +15,48 @@ pub struct Controls{
 
 impl Controls{
     pub fn getKeyboard(&mut self, gui: &mut Gui){
-        self.up = 0;
-        self.down = 0;
-        self.left = 0;
-        self.right = 0;
-        self.a = 0;
-        self.b = 0;
-        self.select = 0;
-        self.start = 0;
+        self.up = 1;
+        self.down = 1;
+        self.left = 1;
+        self.right = 1;
+        self.a = 1;
+        self.b = 1;
+        self.select = 1;
+        self.start = 1;
         let mut iterator = gui.events.keyboard_state();
         for scancode in iterator.pressed_scancodes(){
             match scancode{
                 Scancode::Up =>{
                     //println!("up");
-                    self.up = 1;
+                    self.up = 0;
                 },
                 Scancode::Down =>{
                     //println!("down");
-                    self.down = 1;
+                    self.down = 0;
                 },
                 Scancode::Left =>{
                     //println!("left");
-                    self.left = 1;
+                    self.left = 0;
                 },
                 Scancode::Right =>{
                     //println!("right");
-                    self.right = 1;
+                    self.right = 0;
                 },
                 Scancode::Q =>{
                     //println!("a");
-                    self.a = 1;
+                    self.a = 0;
                 },
                 Scancode::W =>{
                     //println!("b");
-                    self.b = 1;
+                    self.b = 0;
                 },
                 Scancode::Return =>{
                     //println!("start");
-                    self.start = 1;
+                    self.start = 0;
                 },
                 Scancode::Backspace =>{
                     //println!("select");
-                    self.select = 1;
+                    self.select = 0;
                 },
                 _ => {}
             }
@@ -67,17 +67,17 @@ impl Controls{
         let mut n = ram[0xff00];
         if n & 0b00100000 > 0{
             //cross
-            n = 0b00100000 +
-            (self.down << 3) +
-            (self.up << 2) +
-            (self.left << 1) +
+            n = 0b11100000 |
+            (self.down << 3) |
+            (self.up << 2) |
+            (self.left << 1) |
             (self.right);
         }else{
             //buttons
-            n = 0b00010000 +
-            (self.start << 3) +
-            (self.select << 2) +
-            (self.b << 1) +
+            n = 0b11110000 |
+            (self.start << 3) |
+            (self.select << 2) |
+            (self.b << 1) |
             (self.a);
         }
         ram[0xff00] = n;
