@@ -40,6 +40,7 @@ impl Master{
     }
 
     pub fn screen(&mut self, cpu: &mut Hardware::Cpu, gpu: &mut Hardware::Gpu, timer: &mut Timer::Timer, controls: &mut Controls::Controls, ram: &mut [u8;0x10000]){
+        ram[0xFF44] = 0;
         for i in 0..144{
             while self.tick < 114{
                 if self.tick > 63{
@@ -62,9 +63,12 @@ impl Master{
             }
             self.tick = 0;
             gpu.pushLine(ram);
+
             if self.line_by_line {
                 wait();
             }
+
+            ram[0xff44] += 1;
         }
 
         ram[0xFF0F] = ram[0xFF0F] | 0b1;
@@ -92,6 +96,8 @@ impl Master{
         if self.screen_by_screen {
             wait();
         }
+
+        ram[0xff44] += 1;
     }
 
 
