@@ -441,6 +441,18 @@ pub fn xor_a(cpu :&mut Cpu){
         cpu.clear_flag(Z);
     }
 }
+
+pub fn xor_c(cpu :&mut Cpu){
+    cpu.set_a(cpu.get_a() ^ cpu.get_c());
+    cpu.clear_flag(H);
+    cpu.clear_flag(C);
+    cpu.clear_flag(N);
+    if cpu.get_a() == 0{
+        cpu.set_flag(Z)
+    }else{
+        cpu.clear_flag(Z);
+    }
+}
 /*****************JUMP***********************/
 //0xC3
 pub fn jp_u16(cpu : &mut Cpu, h : u8, l: u8){

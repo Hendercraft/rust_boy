@@ -85,6 +85,7 @@ fn main(){
         step_by_step: false,
         line_by_line: false,
         screen_by_screen: false,
+        log: false
     };
     for i in 0..160{
         gpu.pushLine(&ram);
