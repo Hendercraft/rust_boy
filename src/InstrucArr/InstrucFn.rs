@@ -3,9 +3,11 @@
 #![allow(unused_variables)]
 #![allow(unused_imports)]
 
+
 use crate::Hardware;
 use crate::Hardware::Cpu as Cpu;
 use crate::Hardware::Flag::*;
+use std::io::{stdin, stdout, Read, Write};
 
 //0x00
 pub fn nop(cpu : &mut Cpu){}
@@ -1396,8 +1398,13 @@ pub fn prefix(cpu : &mut Cpu, n : u8, ram : &mut [u8;0x10000] ){
             println!("/!\\ Res 0 A operation occurred");
             cpu.set_a(cpu.get_a() & 0xfe);
         },
+        0xFE =>{
+            println!("/!\\ SET 7 (HL) operation occurred");
+            cpu.write(ram,ram[cpu.get_hl() as usize] | 0b10000000,cpu.get_hl());
+        }
         _ => {
             println!("/!\\ {:#04x} Not done yet",n);
+            wait();
         }
 
     }
@@ -1545,4 +1552,119 @@ pub fn add_hl_hl(cpu : &mut Cpu){
 //0x39
 pub fn add_hl_sp(cpu : &mut Cpu){
     add_hl_u16(cpu,cpu.get_sp());
+}
+
+pub fn wait(){
+    let mut stdout = stdout();
+    stdout.write(b"Press Enter to continue...").unwrap();
+    stdout.flush().unwrap();
+    stdin().read(&mut [0]).unwrap();
+    print!("{esc}c", esc = 27 as char);
+}
+
+//0xD6
+pub fn sub_u8(cpu :&mut Cpu, n : u8){
+    match cpu.get_a().checked_sub(n){
+        None => {cpu.set_flag(C);}
+        Some(_) => {cpu.clear_flag(C);}
+    }
+    if cpu.get_a() & 0x0f < n & 0x0f{
+        cpu.set_flag(H);
+    }else {
+        cpu.clear_flag(H);
+    }
+
+    cpu.set_a(cpu.get_a().wrapping_sub(n));
+    if cpu.get_a() == 0 {
+        cpu.set_flag(Z);
+    }else{
+        cpu.clear_flag(Z)
+    }
+    cpu.set_flag(N);
+}
+
+pub fn sub_a(cpu :&mut Cpu){
+    sub_u8(cpu, cpu.get_a());
+}
+
+pub fn sub_b(cpu :&mut Cpu){
+    sub_u8(cpu, cpu.get_b());
+}
+
+pub fn sub_c(cpu :&mut Cpu){
+    sub_u8(cpu, cpu.get_c());
+}
+
+pub fn sub_d(cpu :&mut Cpu){
+    sub_u8(cpu, cpu.get_d());
+}
+
+pub fn sub_e(cpu :&mut Cpu){
+    sub_u8(cpu, cpu.get_e());
+}
+
+pub fn sub_h(cpu :&mut Cpu){
+    sub_u8(cpu, cpu.get_h());
+}
+
+pub fn sub_l(cpu :&mut Cpu){
+    sub_u8(cpu, cpu.get_l());
+}
+
+pub fn sub_hlp(cpu :&mut Cpu, ram : &mut [u8;0x10000]){
+    sub_u8(cpu, ram[cpu.get_hl() as usize]);
+}
+
+pub fn rlca(cpu :&mut Cpu){
+    cpu.clear_flag(N);
+    cpu.clear_flag(H);
+    cpu.clear_flag(Z);
+
+    if cpu.get_a() >> 7 > 0{
+        cpu.set_flag(C);
+    }else{
+        cpu.clear_flag(C);
+    }
+
+    cpu.set_a((cpu.get_a() << 1) | (cpu.get_a() >> 7));
+}
+
+pub fn adc_u8(cpu :&mut Cpu, n : u8){
+    if cpu.get_flags().C {
+        add_u8(cpu,n+1);
+    }else{
+        add_u8(cpu,n);
+    }
+}
+
+pub fn adc_a(cpu :&mut Cpu){
+    adc_u8(cpu, cpu.get_a());
+}
+
+pub fn adc_b(cpu :&mut Cpu){
+    adc_u8(cpu, cpu.get_b());
+}
+
+pub fn adc_c(cpu :&mut Cpu){
+    adc_u8(cpu, cpu.get_c());
+}
+
+pub fn adc_d(cpu :&mut Cpu){
+    adc_u8(cpu, cpu.get_d());
+}
+
+pub fn adc_e(cpu :&mut Cpu){
+    adc_u8(cpu, cpu.get_e());
+}
+
+pub fn adc_h(cpu :&mut Cpu){
+    adc_u8(cpu, cpu.get_h());
+}
+
+pub fn adc_l(cpu :&mut Cpu){
+    adc_u8(cpu, cpu.get_l());
+}
+
+pub fn adc_hlp(cpu :&mut Cpu, ram : &mut [u8;0x10000]){
+    adc_u8(cpu, ram[cpu.get_hl() as usize]);
 }
