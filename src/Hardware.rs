@@ -147,7 +147,7 @@ impl Cpu {
     //memory manipulation
 
     pub fn write_u16_to_stack(&mut self,n : u16,ram : &mut [u8;0x10000]){
-        self.set_sp(self.get_sp() - 2);
+        self.set_sp(self.get_sp().wrapping_sub(2));
         ram[self.get_sp() as usize] = n as u8;
         ram[(self.get_sp() + 1) as usize] = (n >> 8) as u8 ;
     }
@@ -156,7 +156,7 @@ impl Cpu {
         let h : u8 = ram[(self.get_sp() + 1) as usize];
         let l : u8 = ram[self.get_sp() as usize];
         let value : u16 = ((h as u16) << 8) | l as u16;
-        self.set_sp(self.get_sp() +2);
+        self.set_sp(self.get_sp().wrapping_add(2));
         return value;
     }
 }
@@ -275,7 +275,7 @@ impl Gpu{
 
     }
 
-    fn displaySprites(&mut self,ram: &[u8;0x10000]){
+    pub(crate) fn displaySprites(&mut self, ram: &[u8;0x10000]){
         //let tilesAdr:u16 = 0x8000;
         //let oamAdr:u16 = 0xfe00;
         //let mut sprX:u8;
@@ -353,6 +353,7 @@ pub struct Instruct {
     pub ticks: u8,
     pub exec : Op,
 }
+
 
 
 

@@ -20,12 +20,12 @@ pub log: bool,
 impl Master{
     pub fn step(&mut self, cpu: &mut Hardware::Cpu, gpu: &mut Hardware::Gpu, timer: &mut Timer::Timer,controls: &mut Controls::Controls, ram: &mut [u8;0x10000]){
         //Check for interrupts, if none juste add 1 to PC
-        //if cpu.get_pc() == 0x03ff{ self.step_by_step = true;}
+        //if cpu.get_pc() == 0x6d1d{ self.step_by_step = true;}
         Interrupts::interrupt_check(cpu,ram);
         let instruct : &Hardware::Instruct = cpu.fetch(ram[cpu.get_pc() as usize]);
         let argc:u8 = instruct.argc;
 
-        if instruct.name.contains("/!\\"){
+       if instruct.name.contains("/!\\") && (ram[cpu.get_pc() as usize] != 0xcb && ram[cpu.get_pc() as usize +1 ] != 0x37) || self.step_by_step {
             self.log = true;
             self.maxi_debug_print(&cpu,&gpu,&timer,&ram,&controls,&instruct);
             wait();
@@ -133,7 +133,7 @@ impl Master{
             println!("Name:{}",&instruc.name);
             println!("Instruction: {}", &instruc.desc);
             println!("Ticks: {}", &instruc.ticks);
-            println!("");
+            println!();
             println!("CPU STATE____________________________________");
             println!("a:{} / {:#04x}",cpu.get_a(), cpu.get_a());
             println!("f:{} / {:#04x}",cpu.get_f(), cpu.get_f());
@@ -147,14 +147,14 @@ impl Master{
             println!("mie: {}",cpu.get_mie());
             println!("0xFFFF: {:#010b}",ram[0xFFFF]);
             println!("0xFF0F: {:#010b}",ram[0xFF0F]);
-            println!("");
+            println!();
             println!("FLAGS STATE__________________________________");
             let flags = cpu.get_flags();
             println!("Z:{}",flags.Z);
             println!("N:{}",flags.N);
             println!("H:{}",flags.H);
             println!("C:{}",flags.C);
-            println!("");
+            println!();
             println!("TIMER STATE__________________________________");
             println!("Divider:{:#04x}",ram[0xff04]);
             println!("Divider ticks:{}",timer.divider_ticks);
@@ -162,12 +162,12 @@ impl Master{
             println!("Timer division:{}",timer.division);
             println!("Timer:{:#04x}",ram[0xff05]);
             println!("Timer ticks:{}",timer.timer_ticks);
-            println!("");
+            println!();
             println!("INPUT STATE__________________________________");
             println!("Buttons: U:{} D:{} L:{} R:{} A:{} B:{} SE:{} ST:{}",controls.up, controls.down, controls.left, controls.right, controls.a,
             controls.b, controls.select, controls.start);
             println!("0XFF00: {:#010b}",ram[0xFF00]);
-            println!("");
+            println!();
             println!("WARNING______________________________________");
         }
     }
