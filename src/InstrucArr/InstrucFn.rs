@@ -1159,6 +1159,33 @@ pub fn and_u8(cpu : &mut Cpu, n : u8){
     }
 }
 //MISC
+
+//0x27
+pub fn daa(cpu : &mut Cpu){
+    if !cpu.get_flags().N{
+        if cpu.get_flags().C || cpu.get_a() > 0x99{
+            cpu.set_a(cpu.get_a().wrapping_add(0x60));
+            cpu.set_flag(C);
+        }
+        if cpu.get_flags().H || (cpu.get_a() & 0x0f) > 0x09{
+            cpu.set_a(cpu.get_a().wrapping_add(0x06));
+        }
+    }else{
+        if cpu.get_flags().C {
+            cpu.set_a(cpu.get_a().wrapping_sub(0x60));
+        }
+        if cpu.get_flags().H {
+            cpu.set_a(cpu.get_a().wrapping_sub(0x6));
+        }
+    }
+    if cpu.get_a() == 0 {
+        cpu.set_flag(Z);
+    }else{
+        cpu.clear_flag(Z);
+    }
+    cpu.clear_flag(H);
+}
+
 //0x2F
 pub fn cpl(cpu : &mut Cpu){
     cpu.set_flag(H);

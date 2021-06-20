@@ -265,7 +265,7 @@ pub fn createOperations() -> Vec<Instruct>{
     //out[0x35] = Instruct::build_instruct(0x35, String::from("SWAP L /!\\"), String::from("Swap upper and lower nibble of L"), 0, 8, Op::no(InstrucFn::nop));
     //out[0x36] = Instruct::build_instruct(0x36, String::from("SWAP (HL) /!\\"), String::from("Swap upper and lower nibble of ram[HL]"), 0, 16, Op::no(InstrucFn::nop));
     //MISC
-    out[0x27] = Instruct::build_instruct(0x27, String::from("DAA /!\\"), String::from("Adjust A to obtain a correct BCD"), 0, 4, Op::no(InstrucFn::nop));
+    out[0x27] = Instruct::build_instruct(0x27, String::from("DAA"), String::from("Adjust A to obtain a correct BCD"), 0, 4, Op::no(InstrucFn::daa));
     out[0x2F] = Instruct::build_instruct(0x2F, String::from("CPL"), String::from("Flip all bits of A"), 0, 4, Op::no(InstrucFn::cpl));
     out[0x3F] = Instruct::build_instruct(0x3F, String::from("CCF /!\\"), String::from("Flip C flag"), 0, 4, Op::no(InstrucFn::nop));
     out[0x37] = Instruct::build_instruct(0x37, String::from("SCF /!\\"), String::from("Set C flag, reset N and H"), 0, 4, Op::no(InstrucFn::nop));
