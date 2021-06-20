@@ -20,7 +20,7 @@ pub log: bool,
 impl Master{
     pub fn step(&mut self, cpu: &mut Hardware::Cpu, gpu: &mut Hardware::Gpu, timer: &mut Timer::Timer,controls: &mut Controls::Controls, ram: &mut [u8;0x10000]){
         //Check for interrupts, if none juste add 1 to PC
-        //if cpu.get_pc() == 0x01d5 { self.step_by_step = true;self.log=true;}
+        //if cpu.get_pc() == 0x2000 { self.step_by_step = true;self.log=true;}
         Interrupts::interrupt_check(cpu,ram);
         let instruct : &Hardware::Instruct = cpu.fetch(ram[cpu.get_pc() as usize]);
         let argc:u8 = instruct.argc;

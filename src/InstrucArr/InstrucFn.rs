@@ -1615,11 +1615,6 @@ fn add_hl_u16(cpu : &mut Cpu, n :u16){
         cpu.clear_flag(H);
     }
     cpu.set_hl(cpu.get_hl().wrapping_add(n));
-    if cpu.get_hl() == 0 {
-        cpu.set_flag(Z);
-    }else{
-        cpu.clear_flag(Z)
-    }
     cpu.clear_flag(N);
 }
 //0x09

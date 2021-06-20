@@ -134,10 +134,10 @@ impl Cpu {
     }
 
     pub fn write(&mut self, ram: &mut [u8;0x10000], n: u8, adr: u16){
-        ram[adr as usize] = n;
         match adr{
+            0x0000..=0x7FFF => {}
             0xff04 => {ram[0xff04] = 0;},
-            _ => {}
+            _ => {ram[adr as usize] = n;}
         }
     }
 
@@ -276,7 +276,7 @@ impl Gpu{
     }
 
     pub(crate) fn displaySprites(&mut self, ram: &[u8;0x10000]){
-    /*   let tilesAdr:u16 = 0x8000;
+       let tilesAdr:u16 = 0x8000;
         let oamAdr:u16 = 0xfe00;
         let mut sprX:u8;
         let mut realX:i16;
@@ -315,7 +315,7 @@ impl Gpu{
                     }
                 }
             }
-        }*/
+        }
     }
 
     pub fn pushLine(&mut self, ram: &[u8;0x10000]){
