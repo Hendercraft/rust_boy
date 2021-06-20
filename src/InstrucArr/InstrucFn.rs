@@ -415,9 +415,12 @@ pub fn ld_hl_sp_i8(cpu : &mut Cpu, n: u8){
     cpu.clear_flag(Z);
     cpu.clear_flag(N);
     cpu.set_sp((cpu.get_sp() as i16).wrapping_add((n as i8) as i16) as u16);
-
 }
-
+//0x08
+pub fn ld_u16_sp(cpu: &mut Cpu, h : u8,l :u8, ram : &mut [u8;0x10000]){
+    cpu.write(ram,cpu.get_sp() as u8,Cpu::get_u16(h,l));
+    cpu.write(ram,(cpu.get_sp() >> 8) as u8,Cpu::get_u16(h,l)+1);
+}
 
 
 //0xF3 (4tics)
@@ -430,31 +433,53 @@ pub fn ei(cpu : &mut Cpu){
     //Since you there is a delay of instruction
     //before enabling interrupts it's handle in the Master::step method
 }
+/*****************XOR***********************/
+//0xEE
+pub fn xor_u8(cpu :&mut Cpu,n: u8) {
+    cpu.set_a(cpu.get_a() ^ n);
+    cpu.clear_flag(H);
+    cpu.clear_flag(C);
+    cpu.clear_flag(N);
+    if cpu.get_a() == 0 {
+        cpu.set_flag(Z)
+    } else {
+        cpu.clear_flag(Z);
+    }
+}
+//0xA8
+pub fn xor_b(cpu :&mut Cpu){
+    xor_u8(cpu,cpu.get_b());
+}
 
+//0xA9
+pub fn xor_c(cpu :&mut Cpu){
+    xor_u8(cpu,cpu.get_c());
+}
+//0xAA
+pub fn xor_d(cpu :&mut Cpu){
+    xor_u8(cpu,cpu.get_d());
+}
+//0xAB
+pub fn xor_e(cpu :&mut Cpu){
+    xor_u8(cpu,cpu.get_e());
+}
+//0xAC
+pub fn xor_h(cpu :&mut Cpu){
+    xor_u8(cpu,cpu.get_h());
+}
+//0xAD
+pub fn xor_l(cpu :&mut Cpu){
+    xor_u8(cpu,cpu.get_l());
+}
+//0xAE
+pub fn xor_hlp(cpu :&mut Cpu, ram : &mut [u8;0x10000]){
+    xor_u8(cpu,ram[cpu.get_hl() as usize]);
+}
 //0xAF
 pub fn xor_a(cpu :&mut Cpu){
-    cpu.set_a(cpu.get_a() ^ cpu.get_a());
-    cpu.clear_flag(H);
-    cpu.clear_flag(C);
-    cpu.clear_flag(N);
-    if cpu.get_a() == 0{
-        cpu.set_flag(Z)
-    }else{
-        cpu.clear_flag(Z);
-    }
+    xor_u8(cpu,cpu.get_a());
 }
 
-pub fn xor_c(cpu :&mut Cpu){
-    cpu.set_a(cpu.get_a() ^ cpu.get_c());
-    cpu.clear_flag(H);
-    cpu.clear_flag(C);
-    cpu.clear_flag(N);
-    if cpu.get_a() == 0{
-        cpu.set_flag(Z)
-    }else{
-        cpu.clear_flag(Z);
-    }
-}
 /*****************JUMP***********************/
 //0xC3
 pub fn jp_u16(cpu : &mut Cpu, h : u8, l: u8){
@@ -490,7 +515,7 @@ pub fn jp_hl(cpu : &mut Cpu){
 }
 //0x18
 pub fn jpr(cpu : &mut Cpu, n: u8){
-    cpu.set_pc((cpu.get_pc() as i16).wrapping_add((n as i8) as i16) as u16);
+    cpu.set_pc(((cpu.get_pc() as i16).wrapping_add((n as i8) as i16) as u16));
     //TODO: Timing ?
 }
 
@@ -712,7 +737,7 @@ pub fn dec_hlp(cpu: &mut Cpu, ram: &mut [u8;0x10000]) {
         cpu.clear_flag(Z);
     }
 }
-
+/*****************CP***********************/
 //0xFE
 pub fn cp_u8(cpu : &mut Cpu, n: u8){
     cpu.set_flag(N);
@@ -732,6 +757,39 @@ pub fn cp_u8(cpu : &mut Cpu, n: u8){
         cpu.clear_flag(H);
     }
 }
+//0xB8
+pub fn cp_b(cpu : &mut Cpu){
+    cp_u8(cpu,cpu.get_b());
+}
+//0xB9
+pub fn cp_c(cpu : &mut Cpu){
+    cp_u8(cpu,cpu.get_c());
+}
+//0xBA
+pub fn cp_d(cpu : &mut Cpu){
+    cp_u8(cpu,cpu.get_d());
+}
+//0xBB
+pub fn cp_e(cpu : &mut Cpu){
+    cp_u8(cpu,cpu.get_e());
+}
+//0xBC
+pub fn cp_h(cpu : &mut Cpu){
+    cp_u8(cpu,cpu.get_h());
+}
+//0xBD
+pub fn cp_l(cpu : &mut Cpu){
+    cp_u8(cpu,cpu.get_l());
+}
+//0xBE
+pub fn cp_hlp(cpu : &mut Cpu,ram: &mut [u8;0x10000]){
+    cp_u8(cpu,ram[cpu.get_hl() as usize]);
+}
+//0xBF
+pub fn cp_a(cpu : &mut Cpu){
+    cp_u8(cpu,cpu.get_a());
+}
+
 
 /*INC__________________________________________________________________________________*/
 
@@ -1125,6 +1183,14 @@ pub fn prefix(cpu : &mut Cpu, n : u8, ram : &mut [u8;0x10000] ){
                 cpu.set_flag(Z);
             }else { cpu.clear_flag(Z);}
         },
+        0x33 =>{
+            println!("/!\\ SWAP E operation occurred");
+            cpu.set_e((cpu.get_e() << 4) | (cpu.get_e() >> 4));
+            cpu.set_flag(Z);
+            cpu.clear_flag(H);
+            cpu.clear_flag(C);
+            cpu.clear_flag(N);
+        },
 
         0x37 =>{
             println!("/!\\ SWAP A operation occurred");
@@ -1134,6 +1200,21 @@ pub fn prefix(cpu : &mut Cpu, n : u8, ram : &mut [u8;0x10000] ){
             cpu.clear_flag(C);
             cpu.clear_flag(N);
         },
+        0x3f => {
+            println!("/!\\ SRL A operation occurred");
+            cpu.clear_flag(H);
+            cpu.clear_flag(N);
+            if cpu.get_a() & 0x01 > 0{
+                cpu.set_flag(C);
+            }else{
+                cpu.clear_flag(C);
+            }
+            cpu.set_a(cpu.get_a() >> 1);
+            if cpu.get_a() == 0 {
+                cpu.set_flag(Z);
+            }else { cpu.clear_flag(Z);}
+        },
+
         0x40 => {
             println!("/!\\ BIT 0 B operation occurred");
             bit(cpu,cpu.get_b(),0);
@@ -1398,6 +1479,10 @@ pub fn prefix(cpu : &mut Cpu, n : u8, ram : &mut [u8;0x10000] ){
             println!("/!\\ Res 0 A operation occurred");
             cpu.set_a(cpu.get_a() & 0xfe);
         },
+        0xBE => {
+            println!("/!\\ Res 7 (hl) operation occurred");
+            cpu.write(ram,ram[cpu.get_hl() as usize] & 0xef,cpu.get_hl());
+        },
         0xFE =>{
             println!("/!\\ SET 7 (HL) operation occurred");
             cpu.write(ram,ram[cpu.get_hl() as usize] | 0b10000000,cpu.get_hl());
@@ -1503,7 +1588,7 @@ pub fn add_u8(cpu :&mut Cpu, n : u8){
         None => {cpu.set_flag(C);}
         Some(_) => {cpu.clear_flag(C);}
     }
-    if cpu.get_a() & 0x0f + n & 0x0f > 0x0f {
+    if (cpu.get_a() & 0x0f) + (n & 0x0f) > 0x0f {
         cpu.set_flag(H);
     }else {
         cpu.clear_flag(H);

@@ -130,7 +130,7 @@ pub fn createOperations() -> Vec<Instruct>{
     //SP related loads
     out[0xF9] = Instruct::build_instruct(0xF9, String::from("LD SP HL"), String::from("Load HL in SP"), 0, 8, Op::no(InstrucFn::ld_sp_hl));
     out[0xF8] = Instruct::build_instruct(0xF8, String::from("LDHL SP n"), String::from("Load SP+n in HL"), 1, 12, Op::u8(InstrucFn::ld_hl_sp_i8));
-    out[0x08] = Instruct::build_instruct(0x08, String::from("LD (nn) SP /!\\"), String::from("Load SP in ram[nn]"), 2, 20, Op::no(InstrucFn::nop));
+    out[0x08] = Instruct::build_instruct(0x08, String::from("LD (nn) SP"), String::from("Load SP in ram[nn]"), 2, 20, Op::ramu16(InstrucFn::ld_u16_sp));
     //SP related PUSH
     out[0xF5] = Instruct::build_instruct(0xF5, String::from("PUSH AF"), String::from("Push AF in stack, SP--*2"), 0, 16, Op::ram(InstrucFn::push_af));
     out[0xC5] = Instruct::build_instruct(0xC5, String::from("PUSH BC"), String::from("Push BC in stack, SP--*2"), 0, 16, Op::ram(InstrucFn::push_bc));
@@ -202,23 +202,23 @@ pub fn createOperations() -> Vec<Instruct>{
     out[0xF6] = Instruct::build_instruct(0xF6, String::from("OR n"), String::from("Store n | A in A"), 1, 8, Op::u8(InstrucFn::or_u8));
     //XOR(^ = XOR)
     out[0xAF] = Instruct::build_instruct(0xAF, String::from("XOR A"), String::from("Store A ^ A in A"), 0, 4, Op::no(InstrucFn::xor_a));
-    out[0xA8] = Instruct::build_instruct(0xA8, String::from("XOR B /!\\"), String::from("Store B ^ A in A"), 0, 4, Op::no(InstrucFn::nop));
+    out[0xA8] = Instruct::build_instruct(0xA8, String::from("XOR B"), String::from("Store B ^ A in A"), 0, 4, Op::no(InstrucFn::xor_c));
     out[0xA9] = Instruct::build_instruct(0xA9, String::from("XOR C"), String::from("Store C ^ A in A"), 0, 4, Op::no(InstrucFn::xor_c));
-    out[0xAA] = Instruct::build_instruct(0xAA, String::from("XOR D /!\\"), String::from("Store D ^ A in A"), 0, 4, Op::no(InstrucFn::nop));
-    out[0xAB] = Instruct::build_instruct(0xAB, String::from("XOR E /!\\"), String::from("Store E ^ A in A"), 0, 4, Op::no(InstrucFn::nop));
-    out[0xAC] = Instruct::build_instruct(0xAC, String::from("XOR H /!\\"), String::from("Store H ^ A in A"), 0, 4, Op::no(InstrucFn::nop));
-    out[0xAD] = Instruct::build_instruct(0xAD, String::from("XOR L /!\\"), String::from("Store L ^ A in A"), 0, 4, Op::no(InstrucFn::nop));
-    out[0xAE] = Instruct::build_instruct(0xAE, String::from("XOR (HL) /!\\"), String::from("Store ram[HL] ^ A in A"), 0, 8, Op::no(InstrucFn::nop));
-    out[0xEE] = Instruct::build_instruct(0xEE, String::from("XOR n /!\\"), String::from("Store n ^ A in A"), 1, 8, Op::no(InstrucFn::nop));
+    out[0xAA] = Instruct::build_instruct(0xAA, String::from("XOR D"), String::from("Store D ^ A in A"), 0, 4, Op::no(InstrucFn::xor_d));
+    out[0xAB] = Instruct::build_instruct(0xAB, String::from("XOR E"), String::from("Store E ^ A in A"), 0, 4, Op::no(InstrucFn::xor_e));
+    out[0xAC] = Instruct::build_instruct(0xAC, String::from("XOR H"), String::from("Store H ^ A in A"), 0, 4, Op::no(InstrucFn::xor_h));
+    out[0xAD] = Instruct::build_instruct(0xAD, String::from("XOR L"), String::from("Store L ^ A in A"), 0, 4, Op::no(InstrucFn::xor_l));
+    out[0xAE] = Instruct::build_instruct(0xAE, String::from("XOR (HL)"), String::from("Store ram[HL] ^ A in A"), 0, 8, Op::ram(InstrucFn::xor_hlp));
+    out[0xEE] = Instruct::build_instruct(0xEE, String::from("XOR n"), String::from("Store n ^ A in A"), 1, 8, Op::u8(InstrucFn::xor_u8));
     //CMP(Z if A=n, C if A<n)
-    out[0xBF] = Instruct::build_instruct(0xBF, String::from("CP A /!\\"), String::from("Compare A and A"), 0, 4, Op::no(InstrucFn::nop));
-    out[0xB8] = Instruct::build_instruct(0xB8, String::from("CP B /!\\"), String::from("Compare B and A"), 0, 4, Op::no(InstrucFn::nop));
-    out[0xB9] = Instruct::build_instruct(0xB9, String::from("CP C /!\\"), String::from("Compare C and A"), 0, 4, Op::no(InstrucFn::nop));
-    out[0xBA] = Instruct::build_instruct(0xBA, String::from("CP D /!\\"), String::from("Compare D and A"), 0, 4, Op::no(InstrucFn::nop));
-    out[0xBB] = Instruct::build_instruct(0xBB, String::from("CP E /!\\"), String::from("Compare E and A"), 0, 4, Op::no(InstrucFn::nop));
-    out[0xBC] = Instruct::build_instruct(0xBC, String::from("CP H /!\\"), String::from("Compare H and A"), 0, 4, Op::no(InstrucFn::nop));
-    out[0xBD] = Instruct::build_instruct(0xBD, String::from("CP L /!\\"), String::from("Compare L and A"), 0, 4, Op::no(InstrucFn::nop));
-    out[0xBE] = Instruct::build_instruct(0xBE, String::from("CP (HL) /!\\"), String::from("Compare ram[HL] and A"), 0, 8, Op::no(InstrucFn::nop));
+    out[0xBF] = Instruct::build_instruct(0xBF, String::from("CP A"), String::from("Compare A and A"), 0, 4, Op::no(InstrucFn::cp_a));
+    out[0xB8] = Instruct::build_instruct(0xB8, String::from("CP B"), String::from("Compare B and A"), 0, 4, Op::no(InstrucFn::cp_b));
+    out[0xB9] = Instruct::build_instruct(0xB9, String::from("CP C"), String::from("Compare C and A"), 0, 4, Op::no(InstrucFn::cp_c));
+    out[0xBA] = Instruct::build_instruct(0xBA, String::from("CP D"), String::from("Compare D and A"), 0, 4, Op::no(InstrucFn::cp_d));
+    out[0xBB] = Instruct::build_instruct(0xBB, String::from("CP E"), String::from("Compare E and A"), 0, 4, Op::no(InstrucFn::cp_e));
+    out[0xBC] = Instruct::build_instruct(0xBC, String::from("CP H"), String::from("Compare H and A"), 0, 4, Op::no(InstrucFn::cp_h));
+    out[0xBD] = Instruct::build_instruct(0xBD, String::from("CP L"), String::from("Compare L and A"), 0, 4, Op::no(InstrucFn::cp_l));
+    out[0xBE] = Instruct::build_instruct(0xBE, String::from("CP (HL)"), String::from("Compare ram[HL] and A"), 0, 8, Op::ram(InstrucFn::cp_hlp));
     out[0xFE] = Instruct::build_instruct(0xFE, String::from("CP n"), String::from("Compare n and A"), 1, 8, Op::u8(InstrucFn::cp_u8));
     //Inc
     out[0x3C] = Instruct::build_instruct(0x3C, String::from("INC A"), String::from("Increment A"), 0, 4, Op::no(InstrucFn::inc_a));

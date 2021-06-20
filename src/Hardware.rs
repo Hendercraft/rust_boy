@@ -276,46 +276,46 @@ impl Gpu{
     }
 
     pub(crate) fn displaySprites(&mut self, ram: &[u8;0x10000]){
-        //let tilesAdr:u16 = 0x8000;
-        //let oamAdr:u16 = 0xfe00;
-        //let mut sprX:u8;
-        //let mut realX:i16;
-        //let mut realY:i16;
-        //let mut sprY:u8;
-        //let mut tileAdr:u16;
-        //let mut buffer:u8;
+    /*   let tilesAdr:u16 = 0x8000;
+        let oamAdr:u16 = 0xfe00;
+        let mut sprX:u8;
+        let mut realX:i16;
+        let mut realY:i16;
+        let mut sprY:u8;
+        let mut tileAdr:u16;
+        let mut buffer:u8;
 
 
-        //for i in 0..40{
-        //    sprX = ram[(oamAdr+(i*4)+1)as usize];
-        //    sprY = ram[(oamAdr+(i*4))as usize];
-        //    if !(sprX == 0 || sprX >= 168 || sprY == 0 || sprY >= 160){
-        //        tileAdr = self.getTile(0x8000,ram[(oamAdr+(i*4)+2)as usize],&ram);
-        //        //println!("Tile n°{}: number={} Adr=0x{:x}",i,ram[(oamAdr+(i*4)+2)as usize],tileAdr);
+        for i in 0..40{
+            sprX = ram[(oamAdr+(i*4)+1)as usize];
+            sprY = ram[(oamAdr+(i*4))as usize];
+            if !(sprX == 0 || sprX >= 168 || sprY == 0 || sprY >= 160){
+                tileAdr = self.getTile(0x8000,ram[(oamAdr+(i*4)+2)as usize],&ram);
+                //println!("Tile n°{}: number={} Adr=0x{:x}",i,ram[(oamAdr+(i*4)+2)as usize],tileAdr);
 
-        //        for j in 0..8{
-        //            let mut value:u8 = 0b10000000;
-        //            realY = (sprY - 16 + j) as i16;
-        //            for k in 0..7{
-        //                realX = (sprX - 8 + k) as i16;
-        //                if realX > 0 && realX < 159{
-        //                    buffer = (ram[(tileAdr + 2*(j as u16)) as usize] & value) >> 7-k | (ram[(tileAdr + 2*(j as u16) + 1) as usize] & value) >> 6-k;
-        //                    if buffer != 0{
-        //                        self.screen[(realX) as usize][(realY) as usize] = buffer
-        //                    }
-        //                }
-        //                value = value >> 1;
-        //            }
-        //            realX = (sprX - 1) as i16;
-        //            if realX > 0 && realX < 159{
-        //                buffer = (ram[(tileAdr + 2*(j as u16)) as usize] & value)| (ram[(tileAdr + 2*(j as u16) + 1) as usize] & value) << 1;
-        //                if buffer != 0{
-        //                    self.screen[(realX) as usize][(realY) as usize] = buffer
-        //                }
-        //            }
-        //        }
-        //    }
-        //}
+                for j in 0..8{
+                    let mut value:u8 = 0b10000000;
+                    realY = (sprY - 16 + j) as i16;
+                    for k in 0..7{
+                        realX = (sprX - 8 + k) as i16;
+                        if realX > 0 && realX < 159{
+                            buffer = (ram[(tileAdr + 2*(j as u16)) as usize] & value) >> 7-k | (ram[(tileAdr + 2*(j as u16) + 1) as usize] & value) >> 6-k;
+                            if buffer != 0{
+                                self.screen[(realX) as usize][(realY) as usize] = buffer
+                            }
+                        }
+                        value = value >> 1;
+                    }
+                    realX = (sprX - 1) as i16;
+                    if realX > 0 && realX < 159{
+                        buffer = (ram[(tileAdr + 2*(j as u16)) as usize] & value)| (ram[(tileAdr + 2*(j as u16) + 1) as usize] & value) << 1;
+                        if buffer != 0{
+                            self.screen[(realX) as usize][(realY) as usize] = buffer
+                        }
+                    }
+                }
+            }
+        }*/
     }
 
     pub fn pushLine(&mut self, ram: &[u8;0x10000]){
