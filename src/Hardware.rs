@@ -289,7 +289,7 @@ impl Gpu{
         for i in 0..40{
             sprX = ram[(oamAdr+(i*4)+1)as usize];
             sprY = ram[(oamAdr+(i*4))as usize];
-            if !(sprX == 0 || sprX >= 168 || sprY == 0 || sprY >= 160){
+            if !(sprX == 0 || sprX >= 168 || sprY == 0 || sprY>=160){
                 tileAdr = self.getTile(0x8000,ram[(oamAdr+(i*4)+2)as usize],&ram);
                 //println!("Tile n°{}: number={} Adr=0x{:x}",i,ram[(oamAdr+(i*4)+2)as usize],tileAdr);
 

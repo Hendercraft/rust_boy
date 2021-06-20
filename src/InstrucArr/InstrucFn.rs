@@ -1170,7 +1170,7 @@ pub fn cpl(cpu : &mut Cpu){
 pub fn prefix(cpu : &mut Cpu, n : u8, ram : &mut [u8;0x10000] ){
     match n {
         0x27 =>{ //Generlizer Sla?
-            println!("/!\\ SLA A operation occurred");
+            //println!("/!\\ SLA A operation occurred");
             cpu.clear_flag(H);
             cpu.clear_flag(N);
             if cpu.get_a() & 0x80 > 0{
@@ -1184,7 +1184,7 @@ pub fn prefix(cpu : &mut Cpu, n : u8, ram : &mut [u8;0x10000] ){
             }else { cpu.clear_flag(Z);}
         },
         0x33 =>{
-            println!("/!\\ SWAP E operation occurred");
+            //println!("/!\\ SWAP E operation occurred");
             cpu.set_e((cpu.get_e() << 4) | (cpu.get_e() >> 4));
             cpu.set_flag(Z);
             cpu.clear_flag(H);
@@ -1193,7 +1193,7 @@ pub fn prefix(cpu : &mut Cpu, n : u8, ram : &mut [u8;0x10000] ){
         },
 
         0x37 =>{
-            println!("/!\\ SWAP A operation occurred");
+            //println!("/!\\ SWAP A operation occurred");
             cpu.set_a((cpu.get_a() << 4) | (cpu.get_a() >> 4));
             cpu.set_flag(Z);
             cpu.clear_flag(H);
@@ -1201,7 +1201,7 @@ pub fn prefix(cpu : &mut Cpu, n : u8, ram : &mut [u8;0x10000] ){
             cpu.clear_flag(N);
         },
         0x3f => {
-            println!("/!\\ SRL A operation occurred");
+            //println!("/!\\ SRL A operation occurred");
             cpu.clear_flag(H);
             cpu.clear_flag(N);
             if cpu.get_a() & 0x01 > 0{
@@ -1216,275 +1216,275 @@ pub fn prefix(cpu : &mut Cpu, n : u8, ram : &mut [u8;0x10000] ){
         },
 
         0x40 => {
-            println!("/!\\ BIT 0 B operation occurred");
+            //println!("/!\\ BIT 0 B operation occurred");
             bit(cpu,cpu.get_b(),0);
         },
         0x41 => {
-            println!("/!\\ BIT 0 C operation occurred");
+            //println!("/!\\ BIT 0 C operation occurred");
             bit(cpu,cpu.get_c(),0);
         },
         0x42 => {
-            println!("/!\\ BIT 0 D operation occurred");
+            //println!("/!\\ BIT 0 D operation occurred");
             bit(cpu,cpu.get_d(),0);
         },
         0x43 => {
-            println!("/!\\ BIT 0 E operation occurred");
+            //println!("/!\\ BIT 0 E operation occurred");
             bit(cpu,cpu.get_e(),0);
         },
         0x44 => {
-            println!("/!\\ BIT 0 H operation occurred");
+            //println!("/!\\ BIT 0 H operation occurred");
             bit(cpu,cpu.get_h(),0);
         },
         0x45 => {
-            println!("/!\\ BIT 0 L operation occurred");
+            //println!("/!\\ BIT 0 L operation occurred");
             bit(cpu,cpu.get_l(),0);
         },
         0x46 => { //TODO TIMING
-            println!("/!\\ BIT 0 (HL) operation occurred");
+            //println!("/!\\ BIT 0 (HL) operation occurred");
             bit(cpu,ram[cpu.get_hl() as usize],0);
         },
         0x47 => {
-            println!("/!\\ BIT 0 A operation occurred");
+            //println!("/!\\ BIT 0 A operation occurred");
             bit(cpu,cpu.get_a(),0);
         },
         0x48 => {
-            println!("/!\\ BIT 1 B operation occurred");
+            //println!("/!\\ BIT 1 B operation occurred");
             bit(cpu,cpu.get_b(),1);
         },
         0x49 => {
-            println!("/!\\ BIT 1 C operation occurred");
+            //println!("/!\\ BIT 1 C operation occurred");
             bit(cpu,cpu.get_c(),1);
         },
         0x4A => {
-            println!("/!\\ BIT 1 D operation occurred");
+            //println!("/!\\ BIT 1 D operation occurred");
             bit(cpu,cpu.get_d(),1);
         },
         0x4B => {
-            println!("/!\\ BIT 1 E operation occurred");
+            //println!("/!\\ BIT 1 E operation occurred");
             bit(cpu,cpu.get_e(),1);
         },
         0x4C => {
-            println!("/!\\ BIT 1 H operation occurred");
+            //println!("/!\\ BIT 1 H operation occurred");
             bit(cpu,cpu.get_h(),1);
         },
         0x4D => {
-            println!("/!\\ BIT 1 L operation occurred");
+            //println!("/!\\ BIT 1 L operation occurred");
             bit(cpu,cpu.get_l(),1);
         },
         0x4E => { //TODO TIMING
-            println!("/!\\ BIT 1 (HL) operation occurred");
+            //println!("/!\\ BIT 1 (HL) operation occurred");
             bit(cpu,ram[cpu.get_hl() as usize],1);
         },
         0x4F => {
-            println!("/!\\ BIT 1 A operation occurred");
+            //println!("/!\\ BIT 1 A operation occurred");
             bit(cpu,cpu.get_a(),1);
         },
         0x50 => {
-            println!("/!\\ BIT 2 B operation occurred");
+            //println!("/!\\ BIT 2 B operation occurred");
             bit(cpu,cpu.get_b(),2);
         },
         0x51 => {
-            println!("/!\\ BIT 2 C operation occurred");
+            //println!("/!\\ BIT 2 C operation occurred");
             bit(cpu,cpu.get_c(),2);
         },
         0x52 => {
-            println!("/!\\ BIT 2 D operation occurred");
+            //println!("/!\\ BIT 2 D operation occurred");
             bit(cpu,cpu.get_d(),2);
         },
         0x53 => {
-            println!("/!\\ BIT 2 E operation occurred");
+            //println!("/!\\ BIT 2 E operation occurred");
             bit(cpu,cpu.get_e(),2);
         },
         0x54 => {
-            println!("/!\\ BIT 2 H operation occurred");
+            //println!("/!\\ BIT 2 H operation occurred");
             bit(cpu,cpu.get_h(),2);
         },
         0x55 => {
-            println!("/!\\ BIT 2 L operation occurred");
+            //println!("/!\\ BIT 2 L operation occurred");
             bit(cpu,cpu.get_l(),2);
         },
         0x56 => { //TODO Timing
-            println!("/!\\ BIT 2 (HL) operation occurred");
+            //println!("/!\\ BIT 2 (HL) operation occurred");
             bit(cpu,ram[cpu.get_hl() as usize],2);
         },
         0x57 => {
-            println!("/!\\ BIT 2 A operation occurred");
+            //println!("/!\\ BIT 2 A operation occurred");
             bit(cpu,cpu.get_a(),2);
         },
         0x58 => {
-            println!("/!\\ BIT 3 B operation occurred");
+            //println!("/!\\ BIT 3 B operation occurred");
             bit(cpu,cpu.get_b(),3);
         },
         0x59 => {
-            println!("/!\\ BIT 3 C operation occurred");
+            //println!("/!\\ BIT 3 C operation occurred");
             bit(cpu,cpu.get_c(),3);
         },
         0x5A => {
-            println!("/!\\ BIT 3 D operation occurred");
+            //println!("/!\\ BIT 3 D operation occurred");
             bit(cpu,cpu.get_d(),3);
         },
         0x5B => {
-            println!("/!\\ BIT 3 E operation occurred");
+            //println!("/!\\ BIT 3 E operation occurred");
             bit(cpu,cpu.get_e(),3);
         },
         0x5C => {
-            println!("/!\\ BIT 3 H operation occurred");
+            //println!("/!\\ BIT 3 H operation occurred");
             bit(cpu,cpu.get_h(),3);
         },
         0x5D => {
-            println!("/!\\ BIT 3 L operation occurred");
+            //println!("/!\\ BIT 3 L operation occurred");
             bit(cpu,cpu.get_l(),3);
         },
         0x5E => { //TODO Timing
-            println!("/!\\ BIT 3 (HL) operation occurred");
+            //println!("/!\\ BIT 3 (HL) operation occurred");
             bit(cpu,ram[cpu.get_hl() as usize],3);
         },
         0x5F => {
-            println!("/!\\ BIT 3 A operation occurred");
+            //println!("/!\\ BIT 3 A operation occurred");
             bit(cpu,cpu.get_a(),3);
         },
         0x60 => {
-            println!("/!\\ BIT 4 B operation occurred");
+            //println!("/!\\ BIT 4 B operation occurred");
             bit(cpu,cpu.get_b(),4);
         },
         0x61 => {
-            println!("/!\\ BIT 4 C operation occurred");
+            //println!("/!\\ BIT 4 C operation occurred");
             bit(cpu,cpu.get_c(),4);
         },
         0x62 => {
-            println!("/!\\ BIT 4 D operation occurred");
+            //println!("/!\\ BIT 4 D operation occurred");
             bit(cpu,cpu.get_d(),4);
         },
         0x63 => {
-            println!("/!\\ BIT 4 E operation occurred");
+            //println!("/!\\ BIT 4 E operation occurred");
             bit(cpu,cpu.get_e(),4);
         },
         0x64 => {
-            println!("/!\\ BIT 4 H operation occurred");
+            //println!("/!\\ BIT 4 H operation occurred");
             bit(cpu,cpu.get_h(),4);
         },
         0x65 => {
-            println!("/!\\ BIT 4 L operation occurred");
+            //println!("/!\\ BIT 4 L operation occurred");
             bit(cpu,cpu.get_l(),4);
         },
         0x66 => { //TODO timing
-            println!("/!\\ BIT 4 (HL) operation occurred");
+            //println!("/!\\ BIT 4 (HL) operation occurred");
             bit(cpu,ram[cpu.get_hl() as usize],4);
         },
         0x67 => {
-            println!("/!\\ BIT 4 A operation occurred");
+            //println!("/!\\ BIT 4 A operation occurred");
             bit(cpu,cpu.get_a(),4);
         },
         0x68 => {
-            println!("/!\\ BIT 5 B operation occurred");
+            //println!("/!\\ BIT 5 B operation occurred");
             bit(cpu,cpu.get_b(),5);
         },
         0x69 => {
-            println!("/!\\ BIT 5 C operation occurred");
+            //println!("/!\\ BIT 5 C operation occurred");
             bit(cpu,cpu.get_c(),5);
         },
         0x6A => {
-            println!("/!\\ BIT 5 D operation occurred");
+            //println!("/!\\ BIT 5 D operation occurred");
             bit(cpu,cpu.get_d(),5);
         },
         0x6B => {
-            println!("/!\\ BIT 5 E operation occurred");
+            //println!("/!\\ BIT 5 E operation occurred");
             bit(cpu,cpu.get_e(),5);
         },
         0x6C => {
-            println!("/!\\ BIT 5 H operation occurred");
+            //println!("/!\\ BIT 5 H operation occurred");
             bit(cpu,cpu.get_h(),5);
         },
         0x6D => {
-            println!("/!\\ BIT 5 L operation occurred");
+            //println!("/!\\ BIT 5 L operation occurred");
             bit(cpu,cpu.get_l(),5);
         },
         0x6E => { //TODO Timing
-            println!("/!\\ BIT 5 (HL) operation occurred");
+            //println!("/!\\ BIT 5 (HL) operation occurred");
             bit(cpu,ram[cpu.get_hl() as usize],5);
         },
         0x6F => {
-            println!("/!\\ BIT 5 A operation occurred");
+            //println!("/!\\ BIT 5 A operation occurred");
             bit(cpu,cpu.get_a(),5);
         },
         0x70 => {
-            println!("/!\\ BIT 6 B operation occurred");
+            //println!("/!\\ BIT 6 B operation occurred");
             bit(cpu,cpu.get_b(),6);
         },
         0x71 => {
-            println!("/!\\ BIT 6 C operation occurred");
+            //println!("/!\\ BIT 6 C operation occurred");
             bit(cpu,cpu.get_c(),6);
         },
         0x72 => {
-            println!("/!\\ BIT 6 D operation occurred");
+            //println!("/!\\ BIT 6 D operation occurred");
             bit(cpu,cpu.get_d(),6);
         },
         0x73 => {
-            println!("/!\\ BIT 6 E operation occurred");
+            //println!("/!\\ BIT 6 E operation occurred");
             bit(cpu,cpu.get_e(),6);
         },
         0x74 => {
-            println!("/!\\ BIT 6 H operation occurred");
+            //println!("/!\\ BIT 6 H operation occurred");
             bit(cpu,cpu.get_h(),6);
         },
         0x75 => {
-            println!("/!\\ BIT 6 L operation occurred");
+            //println!("/!\\ BIT 6 L operation occurred");
             bit(cpu,cpu.get_l(),6);
         },
         0x76 => {
-            println!("/!\\ BIT 6 (HL) operation occurred");
+            ////println!("/!\\ BIT 6 (HL) operation occurred");
             bit(cpu,ram[cpu.get_hl() as usize],6);
         },
         0x77 => {
-            println!("/!\\ BIT 6 A operation occurred");
+            //println!("/!\\ BIT 6 A operation occurred");
             bit(cpu,cpu.get_a(),6);
         },
         0x78 => {
-            println!("/!\\ BIT 7 B operation occurred");
+            //println!("/!\\ BIT 7 B operation occurred");
             bit(cpu,cpu.get_b(),7);
         },
         0x79 => {
-            println!("/!\\ BIT 7 C operation occurred");
+            //println!("/!\\ BIT 7 C operation occurred");
             bit(cpu,cpu.get_c(),7);
         },
         0x7A => {
-            println!("/!\\ BIT 7 D operation occurred");
+            //println!("/!\\ BIT 7 D operation occurred");
             bit(cpu,cpu.get_d(),7);
         },
         0x7B => {
-            println!("/!\\ BIT 7 E operation occurred");
+            //println!("/!\\ BIT 7 E operation occurred");
             bit(cpu,cpu.get_e(),7);
         },
         0x7C => {
-            println!("/!\\ BIT 7 H operation occurred");
+            //println!("/!\\ BIT 7 H operation occurred");
             bit(cpu,cpu.get_h(),7);
         },
         0x7D => {
-            println!("/!\\ BIT 7 L operation occurred");
+            //println!("/!\\ BIT 7 L operation occurred");
             bit(cpu,cpu.get_l(),7);
         },
         0x7E => {
-            println!("/!\\ BIT 7 (HL) operation occurred");
+            //println!("/!\\ BIT 7 (HL) operation occurred");
             bit(cpu,ram[cpu.get_hl() as usize],7);
         },
         0x7F => {
-            println!("/!\\ BIT 7 L operation occurred");
+            //println!("/!\\ BIT 7 L operation occurred");
             bit(cpu,cpu.get_a(),7);
         },
         0x86 => {
-            println!("/!\\ Res 0 (HL) operation occurred");
+            //println!("/!\\ Res 0 (HL) operation occurred");
             cpu.write(ram,ram[cpu.get_hl() as usize] & 0xfe,cpu.get_hl());
         },
         0x87 => {
-            println!("/!\\ Res 0 A operation occurred");
+            //println!("/!\\ Res 0 A operation occurred");
             cpu.set_a(cpu.get_a() & 0xfe);
-        },
+        },//
         0xBE => {
-            println!("/!\\ Res 7 (hl) operation occurred");
+            //println!("/!\\ Res 7 (hl) operation occurred");
             cpu.write(ram,ram[cpu.get_hl() as usize] & 0xef,cpu.get_hl());
         },
         0xFE =>{
-            println!("/!\\ SET 7 (HL) operation occurred");
+            //println!("/!\\ SET 7 (HL) operation occurred");
             cpu.write(ram,ram[cpu.get_hl() as usize] | 0b10000000,cpu.get_hl());
         }
         _ => {

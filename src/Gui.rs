@@ -24,15 +24,15 @@ impl Gui{
         let video_subsystem = sdl_context.video().unwrap();
 
 
-        let window = video_subsystem.window("Rustboy", 512, 512)
+        let window = video_subsystem.window("Rustboy", 480, 432)
             .position_centered()
             .opengl()
             .build()
             .expect("could not initialize video subsystem");
 
-        let mut canvas = window.into_canvas().accelerated().build()
+        let mut canvas = window.into_canvas().accelerated().present_vsync().build()
             .expect("could not make a canvas");
-        canvas.set_scale(2.0,2.0);
+        canvas.set_scale(3.0,3.0);
         canvas.set_draw_color((255,255,255));
         canvas.clear();
 

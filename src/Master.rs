@@ -30,7 +30,7 @@ impl Master{
             self.maxi_debug_print(&cpu,&gpu,&timer,&ram,&controls,&instruct);
             wait();
         }
-        println!("Pc: {:#06x}", cpu.get_pc());
+        //println!("Pc: {:#06x}", cpu.get_pc());
 
 
 
@@ -177,22 +177,22 @@ impl Master{
     pub fn lcd_stat(&mut self, line: u8, ram: &mut [u8;0x10000]){
         if ram[0xFF41] & 0b0100000 > 0 && line == ram[0xFF45] && self.previous_mode == H_BLANK{
             ram[0xFF0F] = ram[0xFF0F] | 0b00000010;
-            if self.log {println!("/!\\ STAT interrupt trigerred: LY=LYC");}
+            //if self.log {println!("/!\\ STAT interrupt trigerred: LY=LYC");}
             self.previous_mode = self.mode;
         }
         if ram[0xFF41] & 0b00001000 > 0 && self.mode == H_BLANK && self.mode != self.previous_mode{
             ram[0xFF0F] = ram[0xFF0F] | 0b00000010;
-            if self.log {println!("/!\\ STAT interrupt trigerred: H_BLANK");}
+            //if self.log {println!("/!\\ STAT interrupt trigerred: H_BLANK");}
             self.previous_mode = self.mode;
         }
         if ram[0xFF41] & 0b00010000 > 0 && self.mode == V_BLANK && self.mode != self.previous_mode{
             ram[0xFF0F] = ram[0xFF0F] | 0b00000010;
-            if self.log {println!("/!\\ STAT interrupt trigerred: V_BLANK");}
+            //if self.log {println!("/!\\ STAT interrupt trigerred: V_BLANK");}
             self.previous_mode = self.mode;
         }
         if ram[0xFF41] & 0b0010000 > 0 && self.mode == PX_TRANSFER && self.mode != self.previous_mode{
             ram[0xFF0F] = ram[0xFF0F] | 0b00000010;
-            if self.log {println!("/!\\ STAT interrupt trigerred: PX_TRANSFER");}
+            //if self.log {println!("/!\\ STAT interrupt trigerred: PX_TRANSFER");}
             self.previous_mode = self.mode;
         }
 
