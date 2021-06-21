@@ -51,6 +51,7 @@ fn main(){
         screen : [[0;144];160],
         bgMatrix : [[0;256];256],
         windowMatrix : [[0;256];256],
+        spriteMatrix : [[0;256];256],
         line : 0
     };
 
@@ -105,6 +106,7 @@ fn main(){
         master.screen(&mut cpu, &mut gpu, &mut timer, &mut controls, &mut ram);
         gpu.buildBG(&ram);
         gpu.buildWindow(&ram);
+        gpu.buildSprite(&ram);
     }
 
 

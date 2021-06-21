@@ -5,6 +5,7 @@
 
 use std::num::Wrapping;
 const BG: u8 = 1;
+const SPRITE: u8 = 3;
 const WINDOW: u8 = 2;
 const SCREEN: u8 = 1;
 
@@ -167,14 +168,11 @@ pub struct Gpu{
     pub screen : [[u8;144];160],
     pub bgMatrix : [[u8;256];256],
     pub windowMatrix : [[u8;256];256],
+    pub spriteMatrix : [[u8;256];256],
     pub line : u8
 }
 
 impl Gpu{
-    fn pushToScreen(&mut self){
-        //push matrix to SDL2
-        self.line = 0
-    }
 
 
     fn getTileMethod(&self, ram: &[u8;0x10000]) -> u16{
@@ -220,27 +218,24 @@ impl Gpu{
         }
     }
 
-    fn displayTile(&mut self, dest:u8, x:u16, y:u16, location:u16,ram: &[u8;0x10000]){
+    fn displayTile(&mut self, dest:u8, x:u8, y:u8, location:u16,ram: &[u8;0x10000]){
         let &mut mat;
         if dest == WINDOW{
             mat = &mut self.windowMatrix;
-        }else {
+        }else if dest == SPRITE{
+            mat = &mut self.spriteMatrix;
+        }else{
             mat = &mut self.bgMatrix;
         }
-        let origin_x = x*8;
-        let origin_y = y*8;
         for i in 0..8{
             let mut value:u8 = 0b10000000;
             for j in 0..7{
-                mat[(origin_x+j) as usize][(origin_y+i) as usize] = (ram[(location + 2*(i as u16)) as usize] & value) >> 7-j | (ram[(location + 2*(i as u16) + 1) as usize] & value) >> 6-j;
+                mat[(x.wrapping_add(j)) as usize][(y.wrapping_add(i)) as usize] = (ram[(location + 2*(i as u16)) as usize] & value) >> 7-j | (ram[(location + 2*(i as u16) + 1) as usize] & value) >> 6-j;
                 value = value >> 1;
             }
-            mat[(origin_x+7) as usize][(origin_y+i) as usize] = (ram[(location + 2*(i as u16)) as usize] & value) | (ram[(location + 2*(i as u16) + 1) as usize] & value) << 1;
+            mat[(x.wrapping_add(7)) as usize][(y.wrapping_add(i)) as usize] = (ram[(location + 2*(i as u16)) as usize] & value) | (ram[(location + 2*(i as u16) + 1) as usize] & value) << 1;
 
         }
-        //println!("Tile adress: 0x{:x}",location);
-        //println!("Tile coords: x={} y={}",x,y);
-        //println!("__________________________");
     }
 
     pub fn buildBG(&mut self, ram: &[u8;0x10000]){
@@ -251,8 +246,7 @@ impl Gpu{
 
         for i in 0..32{
             for j in 0..32{
-                //println!("Map adress: 0x{:x}",index+n);
-                self.displayTile(BG, j as u16, i as u16, self.getTile(method, ram[(index+n) as usize], &ram), &ram);
+                self.displayTile(BG, j*8 as u8, i*8 as u8, self.getTile(method, ram[(index+n) as usize], &ram), &ram);
                 n += 1;
             }
         }
@@ -268,55 +262,37 @@ impl Gpu{
         for i in 0..32{
             for j in 0..32{
                 //println!("Map adress: 0x{:x}",index+n);
-                self.displayTile(WINDOW, j as u16, i as u16, self.getTile(method, ram[(index+n) as usize], &ram), &ram);
+                self.displayTile(WINDOW, (j*8) as u8, (i*8) as u8, self.getTile(method, ram[(index+n) as usize], &ram), &ram);
                 n += 1;
             }
         }
 
     }
 
-    pub(crate) fn displaySprites(&mut self, ram: &[u8;0x10000]){
-       let tilesAdr:u16 = 0x8000;
-        let oamAdr:u16 = 0xfe00;
-        let mut sprX:u8;
-        let mut realX:i16;
-        let mut realY:i16;
-        let mut sprY:u8;
-        let mut tileAdr:u16;
-        let mut buffer:u8;
-
-
-        for i in 0..40{
-            sprX = ram[(oamAdr+(i*4)+1)as usize];
-            sprY = ram[(oamAdr+(i*4))as usize];
-            if !(sprX == 0 || sprX >= 168 || sprY == 0 || sprY>=160){
-                tileAdr = self.getTile(0x8000,ram[(oamAdr+(i*4)+2)as usize],&ram);
-                //println!("Tile n°{}: number={} Adr=0x{:x}",i,ram[(oamAdr+(i*4)+2)as usize],tileAdr);
-
-                for j in 0..8{
-                    let mut value:u8 = 0b10000000;
-                    realY = (sprY - 16 + j) as i16;
-                    for k in 0..7{
-                        realX = (sprX - 8 + k) as i16;
-                        if realX > 0 && realX < 159{
-                            buffer = (ram[(tileAdr + 2*(j as u16)) as usize] & value) >> 7-k | (ram[(tileAdr + 2*(j as u16) + 1) as usize] & value) >> 6-k;
-                            if buffer != 0{
-                                self.screen[(realX) as usize][(realY) as usize] = buffer
-                            }
-                        }
-                        value = value >> 1;
-                    }
-                    realX = (sprX - 1) as i16;
-                    if realX > 0 && realX < 159{
-                        buffer = (ram[(tileAdr + 2*(j as u16)) as usize] & value)| (ram[(tileAdr + 2*(j as u16) + 1) as usize] & value) << 1;
-                        if buffer != 0{
-                            self.screen[(realX) as usize][(realY) as usize] = buffer
-                        }
-                    }
-                }
+    pub fn buildSprite(&mut self, ram: &[u8;0x10000]){
+        for i in 0..255{
+            for j in 0..255{
+                self.spriteMatrix[i][j] = 0;
             }
         }
+
+        let method:u16 = 0x8000;
+        let mut spriteIndex: u16;
+        let mut x: u8;
+        let mut y: u8;
+        let mut index: u8;
+
+        for i in 0..40{
+            spriteIndex = (0xFE00 + (4*i)) as u16;
+            x = ram[(spriteIndex+1) as usize].wrapping_sub(8);
+            y = ram[(spriteIndex) as usize].wrapping_sub(16);
+            index = ram[(spriteIndex+2) as usize];
+            self.displayTile(SPRITE,  x, y, self.getTile(method, index, &ram), &ram);
+        }
+
     }
+
+
 
     pub fn pushLine(&mut self, ram: &[u8;0x10000]){
         let scrollX:u8 = ram[0xff43];
@@ -324,16 +300,25 @@ impl Gpu{
         let winX:u8 = ram[0xff4b].wrapping_sub(7);
         let winY:u8 = ram[0xff4a];
 
-        for i in 0..160{
-            if winX <= i && winY <= self.line && false{// && false{
-                self.screen[i as usize][self.line as usize] = self.windowMatrix[(i-winX) as usize][(self.line - winY) as usize];
-            }else{
-                self.screen[i as usize][self.line as usize] = self.bgMatrix[(scrollX.wrapping_add(i)) as usize][(scrollY.wrapping_add(self.line)) as usize];
+        if ram[0xff40] & 0b10000000 > 0{
+            for i in 0..160{
+                if winX <= i && winY <= self.line && false{// && false{
+                    self.screen[i as usize][self.line as usize] = self.windowMatrix[(i-winX) as usize][(self.line - winY) as usize];
+                }else{
+                    self.screen[i as usize][self.line as usize] = self.bgMatrix[(scrollX.wrapping_add(i)) as usize][(scrollY.wrapping_add(self.line)) as usize];
+                }
+                if self.spriteMatrix[i as usize][self.line as usize] != 0{
+                    self.screen[i as usize][self.line as usize] = self.spriteMatrix[i as usize][self.line as usize];
+                }
+            }
+        }else{
+            for i in 0..160{
+                self.screen[i as usize][self.line as usize] = 0;
             }
         }
         self.line += 1;
         if self.line == 144{
-            self.displaySprites(&ram);
+
 
             self.line = 0;
         }
