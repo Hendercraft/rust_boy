@@ -66,10 +66,10 @@ impl Gui{
             for j in 0..mat[i].len(){
                 //println!("{}",mat[i][j]);
                 match mat[i][j]{
-                    0 => {self.canvas.set_draw_color((255,255,255))},
-                    1 => {self.canvas.set_draw_color((170,170,170))},
-                    2 => {self.canvas.set_draw_color((84,84,84))},
-                    _ => {self.canvas.set_draw_color((0,0,0))}
+                    0 => {self.canvas.set_draw_color((224,248,208))},
+                    1 => {self.canvas.set_draw_color((136,192,112))},
+                    2 => {self.canvas.set_draw_color((52,104,86))},
+                    _ => {self.canvas.set_draw_color((8,24,32))}
                 }
                 self.canvas.draw_point(Point::new(i as i32,j as i32));
             }
