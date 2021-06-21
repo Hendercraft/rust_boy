@@ -1505,11 +1505,19 @@ pub fn prefix(cpu : &mut Cpu, n : u8, ram : &mut [u8;0x10000] ){
         0x87 => {
             //println!("/!\\ Res 0 A operation occurred");
             cpu.set_a(cpu.get_a() & 0xfe);
-        },//
+        },
+        0x9e => {
+            //println!("/!\\ Res 3 (HL) operation occurred");
+            cpu.write(ram,ram[cpu.get_hl() as usize] & 0b11110111,cpu.get_hl());
+        },
         0xBE => {
             //println!("/!\\ Res 7 (hl) operation occurred");
             cpu.write(ram,ram[cpu.get_hl() as usize] & 0xef,cpu.get_hl());
         },
+        0xDE =>{
+            //println!("/!\\ SET 3 (HL) operation occurred");
+            cpu.write(ram,ram[cpu.get_hl() as usize] | 0b1000,cpu.get_hl());
+        }
         0xFE =>{
             //println!("/!\\ SET 7 (HL) operation occurred");
             cpu.write(ram,ram[cpu.get_hl() as usize] | 0b10000000,cpu.get_hl());
