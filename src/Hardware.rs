@@ -12,7 +12,6 @@ const SCREEN: u8 = 1;
 
 pub enum Op{
     no(fn(&mut Cpu)),
-    //i8(fn(&mut Cpu, i8)),
     u8(fn(&mut Cpu, u8)),
     u16(fn(&mut Cpu, u8, u8)),//High, low
     ram(fn(&mut Cpu,&mut [u8;0x10000])),
