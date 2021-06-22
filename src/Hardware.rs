@@ -39,7 +39,6 @@ pub struct Cpu{
     pub sp : u16,
     pub pc : u16,
     pub mie : bool,
-    //pub flags : Flags,
     pub instructs: Vec<Instruct>
 }
 
