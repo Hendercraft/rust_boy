@@ -88,9 +88,6 @@ fn main(){
         screen_by_screen: false,
         log: false
     };
-    for i in 0..160{
-        gpu.pushLine(&ram);
-    }
     //ram[0xff05] = 255;
     //ram[0xffff] = 0;
     //ram[0xff0f] = 0;

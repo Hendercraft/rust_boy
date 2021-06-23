@@ -19,6 +19,14 @@ pub enum Op{
     ramu16(fn(&mut Cpu,u8,u8,&mut [u8;0x10000]))//High, low, ram
 }
 
+pub struct Flags{
+    pub Z : bool,
+    pub N : bool,
+    pub H : bool,
+    pub C : bool,
+}
+
+
 pub struct Cpu{
     pub a : u8,
     pub f : u8,
