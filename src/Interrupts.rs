@@ -1,10 +1,10 @@
 use crate::Hardware::Cpu;
 
-const INTERRUPTS_VBLANK: u8	 = (1 << 0);
-const INTERRUPTS_LCDSTAT: u8 = (1 << 1);
-const INTERRUPTS_TIMER: u8 = (1 << 2);
-const INTERRUPTS_SERIAL: u8 = (1 << 3);
-const INTERRUPTS_JOYPAD: u8 = (1 << 4);
+const INTERRUPTS_VBLANK: u8	 = 1 << 0;
+const INTERRUPTS_LCDSTAT: u8 = 1 << 1;
+const INTERRUPTS_TIMER: u8 = 1 << 2;
+const INTERRUPTS_SERIAL: u8 = 1 << 3;
+const INTERRUPTS_JOYPAD: u8 = 1 << 4;
 
 
 pub fn interrupt_check(cpu : &mut Cpu, ram : &mut [u8;0x10000]) -> bool{

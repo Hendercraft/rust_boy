@@ -11,8 +11,6 @@ mod Interrupts;
 mod Timer;
 mod Dma;
 mod Master;
-const H_BLANK: u8 = 0;
-const V_BLANK: u8 = 1;
 const PX_TRANSFER: u8 = 2;
 
 use sdl2::pixels::{Color, PixelFormatEnum};

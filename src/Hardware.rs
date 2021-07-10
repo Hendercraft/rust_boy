@@ -7,8 +7,6 @@ use std::num::Wrapping;
 const BG: u8 = 1;
 const SPRITE: u8 = 3;
 const WINDOW: u8 = 2;
-const SCREEN: u8 = 1;
-
 
 pub enum Op{
     no(fn(&mut Cpu)),
@@ -92,7 +90,7 @@ impl Cpu {
 
     pub fn get_flags (&self) -> Flags{
         let temp = self.f >> 4;
-        let mut output : Flags = Flags{
+        let output : Flags = Flags{
             Z : temp & 0b1000 > 0, //get upper
             N : temp & 0b0100 > 0,
             H : temp & 0b0010 > 0,
@@ -330,7 +328,7 @@ impl Gpu{
 
 
 pub struct Instruct {
-    pub n : u16,
+    pub opcode : u16,
     pub name : String,
     pub desc : String,
     pub argc : u8,
@@ -343,8 +341,8 @@ pub struct Instruct {
 
 impl Instruct {
 
-    pub fn build_instruct(n: u16, name : String, desc : String, argc : u8, tics : u8, exec : Op) -> Instruct {
-        Instruct {n,name,desc,argc, ticks: tics,exec}
+    pub fn build_instruct(opcode: u16, name : String, desc : String, argc : u8, tics : u8, exec : Op) -> Instruct {
+        Instruct {opcode,name,desc,argc, ticks: tics,exec}
     }
 
 

@@ -15,7 +15,7 @@ pub fn createOperations() -> Vec<Instruct>{
     let mut out = Vec::new();
     for i in 0..256{
         out.push(Instruct {
-            n : i,
+            opcode : i,
             name : String::from("NOP"),
             desc : String::from("Aussi inutile que les cours de GE00"),
             argc : 0,
@@ -203,7 +203,7 @@ pub fn createOperations() -> Vec<Instruct>{
     out[0xF6] = Instruct::build_instruct(0xF6, String::from("OR n"), String::from("Store n | A in A"), 1, 8, Op::u8(InstrucFn::or_u8));
     //XOR(^ = XOR)
     out[0xAF] = Instruct::build_instruct(0xAF, String::from("XOR A"), String::from("Store A ^ A in A"), 0, 4, Op::no(InstrucFn::xor_a));
-    out[0xA8] = Instruct::build_instruct(0xA8, String::from("XOR B"), String::from("Store B ^ A in A"), 0, 4, Op::no(InstrucFn::xor_c));
+    out[0xA8] = Instruct::build_instruct(0xA8, String::from("XOR B"), String::from("Store B ^ A in A"), 0, 4, Op::no(InstrucFn::xor_b));
     out[0xA9] = Instruct::build_instruct(0xA9, String::from("XOR C"), String::from("Store C ^ A in A"), 0, 4, Op::no(InstrucFn::xor_c));
     out[0xAA] = Instruct::build_instruct(0xAA, String::from("XOR D"), String::from("Store D ^ A in A"), 0, 4, Op::no(InstrucFn::xor_d));
     out[0xAB] = Instruct::build_instruct(0xAB, String::from("XOR E"), String::from("Store E ^ A in A"), 0, 4, Op::no(InstrucFn::xor_e));
@@ -311,7 +311,7 @@ pub fn createOperations() -> Vec<Instruct>{
     out[0xC9] = Instruct::build_instruct(0xC9, String::from("RET"), String::from("Pop from stack and jump to adress"), 0, 16, Op::ram(InstrucFn::ret));
     out[0xC0] = Instruct::build_instruct(0xC0, String::from("RET NZ"), String::from("Pop from stack and jump to adress if Z=0"), 0, 8, Op::ram(InstrucFn::ret_nz));
     out[0xC8] = Instruct::build_instruct(0xC8, String::from("RET Z"), String::from("Pop from stack and jump to adress if Z=1"), 0, 8, Op::ram(InstrucFn::ret_z));
-    out[0xD0] = Instruct::build_instruct(0xD0, String::from("RET NC"), String::from("Pop from stack and jump to adress if C=0"), 0, 8, Op::ram(InstrucFn::ret_nc));;
+    out[0xD0] = Instruct::build_instruct(0xD0, String::from("RET NC"), String::from("Pop from stack and jump to adress if C=0"), 0, 8, Op::ram(InstrucFn::ret_nc));
     out[0xD8] = Instruct::build_instruct(0xD8, String::from("RET C"), String::from("Pop from stack and jump to adress if C=1"), 0, 8, Op::ram(InstrucFn::ret_c));
     out[0xD9] = Instruct::build_instruct(0xD9, String::from("RETI"), String::from("Same as RET, but enable interrupts"), 0, 16, Op::ram(InstrucFn::ret_i));
 

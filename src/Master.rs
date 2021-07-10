@@ -41,7 +41,8 @@ impl Master{
 
         controls.updateRam(ram);
 
-        cpu.exec(instruct.n,ram);
+        let opcode = instruct.opcode;
+        cpu.exec(opcode,ram);
 
         let mut delay = false;
         //Ie delay

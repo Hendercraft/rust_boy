@@ -23,7 +23,7 @@ impl Controls{
         self.b = 1;
         self.select = 1;
         self.start = 1;
-        let mut iterator = gui.events.keyboard_state();
+        let iterator = gui.events.keyboard_state();
         for scancode in iterator.pressed_scancodes(){
             match scancode{
                 Scancode::Up =>{

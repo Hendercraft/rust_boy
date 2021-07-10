@@ -339,7 +339,7 @@ pub fn ld_a_hram_c(cpu :&mut Cpu,ram : &mut [u8;0x10000]){
 }
 //0xE2
 pub fn ld_hram_c_a(cpu :&mut Cpu,ram : &mut [u8;0x10000]){
-    cpu.write(ram, cpu.get_a(), (0xff00 + cpu.get_c() as u16));
+    cpu.write(ram, cpu.get_a(), 0xff00 + cpu.get_c() as u16);
 }
 /*****************Load A and decrease/increase HL***********************/
 //0x3A //TODO revoir le system de read?
@@ -515,7 +515,7 @@ pub fn jp_hl(cpu : &mut Cpu){
 }
 //0x18
 pub fn jpr(cpu : &mut Cpu, n: u8){
-    cpu.set_pc(((cpu.get_pc() as i16).wrapping_add((n as i8) as i16) as u16));
+    cpu.set_pc((cpu.get_pc() as i16).wrapping_add((n as i8) as i16) as u16);
     //TODO: Timing ?
 }
 
@@ -728,7 +728,7 @@ pub fn dec_hlp(cpu: &mut Cpu, ram: &mut [u8;0x10000]) {
         //i.e 0xf0 - 0x01 = 0xef
     }
 
-    ram[cpu.get_hl() as usize]=(ram[cpu.get_hl() as usize].wrapping_sub(1));
+    ram[cpu.get_hl() as usize]=ram[cpu.get_hl() as usize].wrapping_sub(1);
 
     cpu.set_flag(N);
     if ram[cpu.get_hl() as usize] == 0{
