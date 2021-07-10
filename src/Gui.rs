@@ -51,14 +51,13 @@ impl Gui{
     }
 
     pub fn update(&mut self) -> bool{
-        for event in self.events.poll_iter(){
-            match event{
-                Event::Quit {..} => {return false;},
-                _ => {}
-            }
+        if self.events.poll_iter().any(|i| matches!(i, Event::Quit {..})) {
+            false
         }
-        self.canvas.present();
-        return true;
+        else {
+            self.canvas.present();
+            true
+        }
     }
 
     pub fn pushMatrix(&mut self, mat: &[[u8;144];160]){
