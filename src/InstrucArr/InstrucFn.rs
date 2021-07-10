@@ -1697,35 +1697,35 @@ pub fn sub_u8(cpu :&mut Cpu, n : u8){
     }
     cpu.set_flag(N);
 }
-
+//0x97
 pub fn sub_a(cpu :&mut Cpu){
     sub_u8(cpu, cpu.get_a());
 }
-
+//0x90
 pub fn sub_b(cpu :&mut Cpu){
     sub_u8(cpu, cpu.get_b());
 }
-
+//0x91
 pub fn sub_c(cpu :&mut Cpu){
     sub_u8(cpu, cpu.get_c());
 }
-
+//0x92
 pub fn sub_d(cpu :&mut Cpu){
     sub_u8(cpu, cpu.get_d());
 }
-
+//0x93
 pub fn sub_e(cpu :&mut Cpu){
     sub_u8(cpu, cpu.get_e());
 }
-
+//0x94
 pub fn sub_h(cpu :&mut Cpu){
     sub_u8(cpu, cpu.get_h());
 }
-
+//0x95
 pub fn sub_l(cpu :&mut Cpu){
     sub_u8(cpu, cpu.get_l());
 }
-
+//0x96
 pub fn sub_hlp(cpu :&mut Cpu, ram : &mut [u8;0x10000]){
     sub_u8(cpu, ram[cpu.get_hl() as usize]);
 }
@@ -1743,43 +1743,84 @@ pub fn rlca(cpu :&mut Cpu){
 
     cpu.set_a((cpu.get_a() << 1) | (cpu.get_a() >> 7));
 }
-
+//0xCE
 pub fn adc_u8(cpu :&mut Cpu, n : u8){
     if cpu.get_flags().C {
-        add_u8(cpu,n+1);
+        add_u8(cpu,n.wrapping_add(1));
     }else{
         add_u8(cpu,n);
     }
 }
-
+//0x8F
 pub fn adc_a(cpu :&mut Cpu){
     adc_u8(cpu, cpu.get_a());
 }
-
+//0x88
 pub fn adc_b(cpu :&mut Cpu){
     adc_u8(cpu, cpu.get_b());
 }
-
+//0x89
 pub fn adc_c(cpu :&mut Cpu){
     adc_u8(cpu, cpu.get_c());
 }
-
+//0x8A
 pub fn adc_d(cpu :&mut Cpu){
     adc_u8(cpu, cpu.get_d());
 }
-
+//0x8B
 pub fn adc_e(cpu :&mut Cpu){
     adc_u8(cpu, cpu.get_e());
 }
-
+//0x8C
 pub fn adc_h(cpu :&mut Cpu){
     adc_u8(cpu, cpu.get_h());
 }
-
+//0x8D
 pub fn adc_l(cpu :&mut Cpu){
     adc_u8(cpu, cpu.get_l());
 }
-
+//0x8E
 pub fn adc_hlp(cpu :&mut Cpu, ram : &mut [u8;0x10000]){
     adc_u8(cpu, ram[cpu.get_hl() as usize]);
+}
+
+//0xDE
+pub fn sbc_u8(cpu :&mut Cpu, n : u8){
+    if cpu.get_flags().C {
+        sub_u8(cpu,n.wrapping_add(1));
+    }else{
+        sub_u8(cpu,n);
+    }
+}
+//0x9F
+pub fn sbc_a(cpu :&mut Cpu){
+    sbc_u8(cpu, cpu.get_a());
+}
+//0x98
+pub fn sbc_b(cpu :&mut Cpu){
+    sbc_u8(cpu, cpu.get_b());
+}
+//0x99
+pub fn sbc_c(cpu :&mut Cpu){
+    sbc_u8(cpu, cpu.get_c());
+}
+//0x9A
+pub fn sbc_d(cpu :&mut Cpu){
+    sbc_u8(cpu, cpu.get_d());
+}
+//0x9B
+pub fn sbc_e(cpu :&mut Cpu){
+    sbc_u8(cpu, cpu.get_e());
+}
+//0x9C
+pub fn sbc_h(cpu :&mut Cpu){
+    sbc_u8(cpu, cpu.get_h());
+}
+//0x9D
+pub fn sbc_l(cpu :&mut Cpu){
+    sbc_u8(cpu, cpu.get_l());
+}
+//0x9E
+pub fn sbc_hlp(cpu :&mut Cpu, ram : &mut [u8;0x10000]){
+    sbc_u8(cpu, ram[cpu.get_hl() as usize]);
 }
