@@ -4,23 +4,21 @@
 #![allow(unused_imports)]
 
 use crate::Hardware;
-use Hardware::Instruct as Instruct;
-use Hardware::Op as Op;
-
-
+use Hardware::Instruct;
+use Hardware::Op;
 
 mod InstrucFn;
 
-pub fn createOperations() -> Vec<Instruct>{
+pub fn createOperations() -> Vec<Instruct> {
     let mut out = Vec::new();
-    for i in 0..256{
+    for i in 0..256 {
         out.push(Instruct {
-            opcode : i,
-            name : String::from("NOP"),
-            desc : String::from("Aussi inutile que les cours de GE00"),
-            argc : 0,
+            opcode: i,
+            name: String::from("NOP"),
+            desc: String::from("Aussi inutile que les cours de GE00"),
+            argc: 0,
             ticks: 4,
-            exec : Op::no(InstrucFn::nop),
+            exec: Op::no(InstrucFn::nop),
         })
     }
 
