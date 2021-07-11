@@ -15,7 +15,7 @@ const H_BLANK: u8 = 0;
 const V_BLANK: u8 = 1;
 const PX_TRANSFER: u8 = 2;
 
-
+use sdl2::pixels::{Color, PixelFormatEnum};
 use std::fs;
 
 
@@ -46,6 +46,8 @@ fn main(){
     };
 
     let mut window: Gui::Gui = Gui::Gui::new();
+    let creator = window.canvas.texture_creator();
+    let mut texture = creator.create_texture_streaming(PixelFormatEnum::RGB24, 160, 144).expect("Couldn't create texture");
 
     let mut gpu:Hardware::Gpu = Hardware::Gpu{
         screen : [[0;144];160],
@@ -99,7 +101,7 @@ fn main(){
         window.clear();
         controls.getKeyboard(&mut window);
         controls.updateRam(&mut ram);
-        window.pushMatrix(&gpu.screen);
+        window.pushMatrix(&gpu.screen,&mut texture);
         master.screen(&mut cpu, &mut gpu, &mut timer, &mut controls, &mut ram);
         gpu.buildBG(&ram);
         gpu.buildWindow(&ram);
