@@ -225,7 +225,7 @@ impl Cpu {
     //ticks voodoo magic
 
     pub fn set_ticks(&mut self,ticks :u8){
-        self.pending_ticks = ticks;
+        self.pending_ticks = self.pending_ticks.wrapping_add(ticks);
     }
 
     pub fn get_ticks(&mut self)-> u8{

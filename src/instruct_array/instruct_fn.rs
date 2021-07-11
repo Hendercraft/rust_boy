@@ -1221,9 +1221,10 @@ pub fn cpl(cpu: &mut Cpu) {
 
 //0xCB
 pub fn prefix(cpu: &mut Cpu, n: u8, ram: &mut [u8; 0x10000]) {
+    cpu.set_ticks(8);
     match n {
         0x27 => {
-            //Generlizer Sla?
+            //Generalize Sla?
             //println!("/!\\ SLA A operation occurred");
             cpu.clear_flag(H);
             cpu.clear_flag(N);
@@ -1300,6 +1301,7 @@ pub fn prefix(cpu: &mut Cpu, n: u8, ram: &mut [u8; 0x10000]) {
         0x46 => {
             //TODO TIMING
             //println!("/!\\ BIT 0 (HL) operation occurred");
+            cpu.set_ticks(8); //16bits register, take more time
             bit(cpu, ram[cpu.get_hl() as usize], 0);
         }
         0x47 => {
@@ -1333,6 +1335,7 @@ pub fn prefix(cpu: &mut Cpu, n: u8, ram: &mut [u8; 0x10000]) {
         0x4E => {
             //TODO TIMING
             //println!("/!\\ BIT 1 (HL) operation occurred");
+            cpu.set_ticks(8); //16bits register, take more time
             bit(cpu, ram[cpu.get_hl() as usize], 1);
         }
         0x4F => {
@@ -1366,6 +1369,7 @@ pub fn prefix(cpu: &mut Cpu, n: u8, ram: &mut [u8; 0x10000]) {
         0x56 => {
             //TODO Timing
             //println!("/!\\ BIT 2 (HL) operation occurred");
+            cpu.set_ticks(8); //16bits register, take more time
             bit(cpu, ram[cpu.get_hl() as usize], 2);
         }
         0x57 => {
@@ -1399,6 +1403,7 @@ pub fn prefix(cpu: &mut Cpu, n: u8, ram: &mut [u8; 0x10000]) {
         0x5E => {
             //TODO Timing
             //println!("/!\\ BIT 3 (HL) operation occurred");
+            cpu.set_ticks(8); //16bits register, take more time
             bit(cpu, ram[cpu.get_hl() as usize], 3);
         }
         0x5F => {
@@ -1432,6 +1437,7 @@ pub fn prefix(cpu: &mut Cpu, n: u8, ram: &mut [u8; 0x10000]) {
         0x66 => {
             //TODO timing
             //println!("/!\\ BIT 4 (HL) operation occurred");
+            cpu.set_ticks(8); //16bits register, take more time
             bit(cpu, ram[cpu.get_hl() as usize], 4);
         }
         0x67 => {
@@ -1465,6 +1471,7 @@ pub fn prefix(cpu: &mut Cpu, n: u8, ram: &mut [u8; 0x10000]) {
         0x6E => {
             //TODO Timing
             //println!("/!\\ BIT 5 (HL) operation occurred");
+            cpu.set_ticks(8); //16bits register, take more time
             bit(cpu, ram[cpu.get_hl() as usize], 5);
         }
         0x6F => {
@@ -1498,6 +1505,7 @@ pub fn prefix(cpu: &mut Cpu, n: u8, ram: &mut [u8; 0x10000]) {
         0x76 => {
             ////println!("/!\\ BIT 6 (HL) operation occurred");
             bit(cpu, ram[cpu.get_hl() as usize], 6);
+            cpu.set_ticks(8); //16bits register, take more time
         }
         0x77 => {
             //println!("/!\\ BIT 6 A operation occurred");
@@ -1529,6 +1537,7 @@ pub fn prefix(cpu: &mut Cpu, n: u8, ram: &mut [u8; 0x10000]) {
         }
         0x7E => {
             //println!("/!\\ BIT 7 (HL) operation occurred");
+            cpu.set_ticks(8); //16bits register, take more time
             bit(cpu, ram[cpu.get_hl() as usize], 7);
         }
         0x7F => {
@@ -1567,6 +1576,7 @@ pub fn prefix(cpu: &mut Cpu, n: u8, ram: &mut [u8; 0x10000]) {
 }
 
 fn bit(cpu: &mut Cpu, n: u8, bit: u8) {
+
     cpu.set_flag(H);
     cpu.clear_flag(N);
     if n & (1 << bit) == 0 {

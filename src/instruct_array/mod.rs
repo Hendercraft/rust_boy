@@ -272,7 +272,7 @@ pub fn create_operations() -> Vec<Instruct> {
     out[0x17] = Instruct::build_instruct(0x17, String::from("RLA /!\\"), String::from("Rotate A left through C flag."), 0, 4, Op::No(instruct_fn::nop));
     out[0x0F] = Instruct::build_instruct(0x0F, String::from("RCCA /!\\"), String::from("Rotate A right, old bit 0 to C flag."), 0, 4, Op::No(instruct_fn::nop));
     out[0x1F] = Instruct::build_instruct(0x1F, String::from("RCA /!\\"), String::from("Rotate A right through C flag."), 0, 4, Op::No(instruct_fn::nop));
-    out[0xCB] = Instruct::build_instruct(0xCB, String::from("PREFIX 5/256/!\\"), String::from("My personal favourite <3"), 1, 12, Op::RamU8(instruct_fn::prefix));//TODO TIMING
+    out[0xCB] = Instruct::build_instruct(0xCB, String::from("PREFIX 5/256/!\\"), String::from("My personal favourite <3"), 1, 4, Op::RamU8(instruct_fn::prefix));//TODO TIMING
     //(Synthé keyboard) MIGHT AS WELL JUMP (JUMP)
     out[0xC3] = Instruct::build_instruct(0xC3, String::from("JP nn"), String::from("Jump to nn"), 2, 16, Op::U16(instruct_fn::jp_u16));
     out[0xC2] = Instruct::build_instruct(0xC2, String::from("JP NZ nn"), String::from("Jump to nn if Z=0"), 2, 12, Op::U16(instruct_fn::jp_nz_u16));
