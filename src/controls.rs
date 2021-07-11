@@ -1,5 +1,4 @@
-use crate::Gui::Gui;
-use sdl2::event::Event;
+use crate::gui::Gui;
 use sdl2::keyboard::*;
 
 pub struct Controls {
@@ -14,7 +13,7 @@ pub struct Controls {
 }
 
 impl Controls {
-    pub fn getKeyboard(&mut self, gui: &mut Gui) {
+    pub fn get_keyboard(&mut self, gui: &mut Gui) {
         self.up = 1;
         self.down = 1;
         self.left = 1;
@@ -63,7 +62,7 @@ impl Controls {
         }
     }
 
-    pub fn updateRam(&self, ram: &mut [u8; 0x10000]) {
+    pub fn update_ram(&self, ram: &mut [u8; 0x10000]) {
         let mut n = ram[0xff00];
         if n & 0b00100000 > 0 {
             //cross

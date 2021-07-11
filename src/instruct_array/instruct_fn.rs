@@ -1,15 +1,9 @@
-#![allow(non_snake_case)]
-#![allow(non_camel_case_types)]
-#![allow(unused_variables)]
-#![allow(unused_imports)]
-
-use crate::Hardware;
-use crate::Hardware::Cpu;
-use crate::Hardware::Flag::*;
+use crate::hardware::Cpu;
+use crate::hardware::Flag::*;
 use std::io::{stdin, stdout, Read, Write};
 
 //0x00
-pub fn nop(cpu: &mut Cpu) {}
+pub fn nop(_cpu: &mut Cpu) {}
 
 /*****************8 bit direct load***********************/
 //0x3E
@@ -427,7 +421,7 @@ pub fn di(cpu: &mut Cpu) {
 }
 
 //0xFB (4tics)
-pub fn ei(cpu: &mut Cpu) {
+pub fn ei(_cpu: &mut Cpu) {
     //Since you there is a delay of instruction
     //before enabling interrupts it's handle in the Master::step method
 }
@@ -485,25 +479,25 @@ pub fn jp_u16(cpu: &mut Cpu, h: u8, l: u8) {
 }
 //0xC2
 pub fn jp_nz_u16(cpu: &mut Cpu, h: u8, l: u8) {
-    if !cpu.get_flags().Z {
+    if !cpu.get_flags().z {
         jp_u16(cpu, h, l);
     }
 }
 //0xCA
 pub fn jp_z_u16(cpu: &mut Cpu, h: u8, l: u8) {
-    if cpu.get_flags().Z {
+    if cpu.get_flags().z {
         jp_u16(cpu, h, l);
     }
 }
 //0xD2
 pub fn jp_nc_u16(cpu: &mut Cpu, h: u8, l: u8) {
-    if !cpu.get_flags().C {
+    if !cpu.get_flags().c {
         jp_u16(cpu, h, l);
     }
 }
 //0xDA
 pub fn jp_c_u16(cpu: &mut Cpu, h: u8, l: u8) {
-    if cpu.get_flags().C {
+    if cpu.get_flags().c {
         jp_u16(cpu, h, l);
     }
 }
@@ -519,25 +513,25 @@ pub fn jpr(cpu: &mut Cpu, n: u8) {
 
 //Ox20
 pub fn jpr_nz(cpu: &mut Cpu, n: u8) {
-    if !cpu.get_flags().Z {
+    if !cpu.get_flags().z {
         jpr(cpu, n);
     }
 }
 //0x28
 pub fn jpr_z(cpu: &mut Cpu, n: u8) {
-    if cpu.get_flags().Z {
+    if cpu.get_flags().z {
         jpr(cpu, n);
     }
 }
 //0x30
 pub fn jpr_nc(cpu: &mut Cpu, n: u8) {
-    if !cpu.get_flags().C {
+    if !cpu.get_flags().c {
         jpr(cpu, n);
     }
 }
 //0x38
 pub fn jpr_c(cpu: &mut Cpu, n: u8) {
-    if cpu.get_flags().C {
+    if cpu.get_flags().c {
         jpr(cpu, n);
     }
 }
@@ -951,25 +945,25 @@ pub fn call_u16(cpu: &mut Cpu, h: u8, l: u8, ram: &mut [u8; 0x10000]) {
 }
 //C4
 pub fn call_nz_u16(cpu: &mut Cpu, h: u8, l: u8, ram: &mut [u8; 0x10000]) {
-    if !cpu.get_flags().Z {
+    if !cpu.get_flags().z {
         call_u16(cpu, h, l, ram);
     }
 }
 //CC
 pub fn call_z_u16(cpu: &mut Cpu, h: u8, l: u8, ram: &mut [u8; 0x10000]) {
-    if cpu.get_flags().Z {
+    if cpu.get_flags().z {
         call_u16(cpu, h, l, ram);
     }
 }
 //D4
 pub fn call_nc_u16(cpu: &mut Cpu, h: u8, l: u8, ram: &mut [u8; 0x10000]) {
-    if !cpu.get_flags().C {
+    if !cpu.get_flags().c {
         call_u16(cpu, h, l, ram);
     }
 }
 //DC
 pub fn call_c_u16(cpu: &mut Cpu, h: u8, l: u8, ram: &mut [u8; 0x10000]) {
-    if cpu.get_flags().C {
+    if cpu.get_flags().c {
         call_u16(cpu, h, l, ram);
     }
 }
@@ -1060,25 +1054,25 @@ pub fn ret(cpu: &mut Cpu, ram: &mut [u8; 0x10000]) {
 }
 //0xC0
 pub fn ret_nz(cpu: &mut Cpu, ram: &mut [u8; 0x10000]) {
-    if !cpu.get_flags().Z {
+    if !cpu.get_flags().z {
         ret(cpu, ram);
     }
 }
 //0xC8
 pub fn ret_z(cpu: &mut Cpu, ram: &mut [u8; 0x10000]) {
-    if cpu.get_flags().Z {
+    if cpu.get_flags().z {
         ret(cpu, ram);
     }
 }
 //0xD0
 pub fn ret_nc(cpu: &mut Cpu, ram: &mut [u8; 0x10000]) {
-    if !cpu.get_flags().C {
+    if !cpu.get_flags().c {
         ret(cpu, ram);
     }
 }
 //0xD8
 pub fn ret_c(cpu: &mut Cpu, ram: &mut [u8; 0x10000]) {
-    if cpu.get_flags().C {
+    if cpu.get_flags().c {
         ret(cpu, ram);
     }
 }
@@ -1175,19 +1169,19 @@ pub fn and_u8(cpu: &mut Cpu, n: u8) {
 
 //0x27
 pub fn daa(cpu: &mut Cpu) {
-    if !cpu.get_flags().N {
-        if cpu.get_flags().C || cpu.get_a() > 0x99 {
+    if !cpu.get_flags().n {
+        if cpu.get_flags().c || cpu.get_a() > 0x99 {
             cpu.set_a(cpu.get_a().wrapping_add(0x60));
             cpu.set_flag(C);
         }
-        if cpu.get_flags().H || (cpu.get_a() & 0x0f) > 0x09 {
+        if cpu.get_flags().h || (cpu.get_a() & 0x0f) > 0x09 {
             cpu.set_a(cpu.get_a().wrapping_add(0x06));
         }
     } else {
-        if cpu.get_flags().C {
+        if cpu.get_flags().c {
             cpu.set_a(cpu.get_a().wrapping_sub(0x60));
         }
-        if cpu.get_flags().H {
+        if cpu.get_flags().h {
             cpu.set_a(cpu.get_a().wrapping_sub(0x6));
         }
     }
@@ -1783,7 +1777,7 @@ pub fn rlca(cpu: &mut Cpu) {
 }
 //0xCE
 pub fn adc_u8(cpu: &mut Cpu, n: u8) {
-    if cpu.get_flags().C {
+    if cpu.get_flags().c {
         add_u8(cpu, n.wrapping_add(1));
     } else {
         add_u8(cpu, n);
@@ -1824,7 +1818,7 @@ pub fn adc_hlp(cpu: &mut Cpu, ram: &mut [u8; 0x10000]) {
 
 //0xDE
 pub fn sbc_u8(cpu: &mut Cpu, n: u8) {
-    if cpu.get_flags().C {
+    if cpu.get_flags().c {
         sub_u8(cpu, n.wrapping_add(1));
     } else {
         sub_u8(cpu, n);

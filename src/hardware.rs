@@ -1,27 +1,21 @@
-#![allow(non_snake_case)]
-#![allow(non_camel_case_types)]
-#![allow(unused_variables)]
-#![allow(unused_imports)]
-
-use std::num::Wrapping;
 const BG: u8 = 1;
 const SPRITE: u8 = 3;
 const WINDOW: u8 = 2;
 
 pub enum Op {
-    no(fn(&mut Cpu)),
-    u8(fn(&mut Cpu, u8)),
-    u16(fn(&mut Cpu, u8, u8)), //High, low
-    ram(fn(&mut Cpu, &mut [u8; 0x10000])),
-    ramu8(fn(&mut Cpu, u8, &mut [u8; 0x10000])),
-    ramu16(fn(&mut Cpu, u8, u8, &mut [u8; 0x10000])), //High, low, ram
+    No(fn(&mut Cpu)),
+    U8(fn(&mut Cpu, u8)),
+    U16(fn(&mut Cpu, u8, u8)), //High, low
+    Ram(fn(&mut Cpu, &mut [u8; 0x10000])),
+    RamU8(fn(&mut Cpu, u8, &mut [u8; 0x10000])),
+    RamU16(fn(&mut Cpu, u8, u8, &mut [u8; 0x10000])), //High, low, ram
 }
 
 pub struct Flags {
-    pub Z: bool,
-    pub N: bool,
-    pub H: bool,
-    pub C: bool,
+    pub z: bool,
+    pub n: bool,
+    pub h: bool,
+    pub c: bool,
 }
 
 pub struct Cpu {
@@ -149,10 +143,10 @@ impl Cpu {
     pub fn get_flags(&self) -> Flags {
         let temp = self.f >> 4;
         let output: Flags = Flags {
-            Z: temp & 0b1000 > 0, //get upper
-            N: temp & 0b0100 > 0,
-            H: temp & 0b0010 > 0,
-            C: temp & 0b0001 > 0,
+            z: temp & 0b1000 > 0, //get upper
+            n: temp & 0b0100 > 0,
+            h: temp & 0b0010 > 0,
+            c: temp & 0b0001 > 0,
         };
         return output;
     }
@@ -181,16 +175,16 @@ impl Cpu {
 
     pub fn exec(&mut self, i: u16, ram: &mut [u8; 0x10000]) {
         match self.instructs[i as usize].exec {
-            Op::no(instruct) => instruct(self),
-            Op::u8(instruct) => instruct(self, ram[(self.pc + 1) as usize]),
-            Op::u16(instruct) => instruct(
+            Op::No(instruct) => instruct(self),
+            Op::U8(instruct) => instruct(self, ram[(self.pc + 1) as usize]),
+            Op::U16(instruct) => instruct(
                 self,
                 ram[(self.pc + 2) as usize],
                 ram[(self.pc + 1) as usize],
             ),
-            Op::ram(instruct) => instruct(self, ram),
-            Op::ramu8(instruct) => instruct(self, ram[(self.pc + 1) as usize], ram),
-            Op::ramu16(instruct) => instruct(
+            Op::Ram(instruct) => instruct(self, ram),
+            Op::RamU8(instruct) => instruct(self, ram[(self.pc + 1) as usize], ram),
+            Op::RamU16(instruct) => instruct(
                 self,
                 ram[(self.pc + 2) as usize],
                 ram[(self.pc + 1) as usize],
@@ -237,14 +231,14 @@ pub enum Flag {
 
 pub struct Gpu {
     pub screen: [[u8; 144]; 160],
-    pub bgMatrix: [[u8; 256]; 256],
-    pub windowMatrix: [[u8; 256]; 256],
-    pub spriteMatrix: [[u8; 256]; 256],
+    pub bg_matrix: [[u8; 256]; 256],
+    pub window_matrix: [[u8; 256]; 256],
+    pub sprite_matrix: [[u8; 256]; 256],
     pub line: u8,
 }
 
 impl Gpu {
-    fn getTileMethod(&self, ram: &[u8; 0x10000]) -> u16 {
+    fn get_tile_method(&self, ram: &[u8; 0x10000]) -> u16 {
         if ram[0xff40] & 0b00010000 > 0 {
             //println!("0x8000");
             return 0x8000;
@@ -254,7 +248,7 @@ impl Gpu {
         }
     }
 
-    fn getBgMapIndex(&self, ram: &[u8; 0x10000]) -> u16 {
+    fn get_bg_map_index(&self, ram: &[u8; 0x10000]) -> u16 {
         if ram[0xff40] & 0b00001000 > 0 {
             //println!("0x9c00");
             return 0x9c00;
@@ -264,7 +258,7 @@ impl Gpu {
         }
     }
 
-    fn getWindowMapIndex(&self, ram: &[u8; 0x10000]) -> u16 {
+    fn get_window_map_index(&self, ram: &[u8; 0x10000]) -> u16 {
         if ram[0xff40] & 0b01000000 > 0 {
             //println!("0x9c00");
             return 0x9c00;
@@ -274,7 +268,7 @@ impl Gpu {
         }
     }
 
-    fn getTile(&self, method: u16, mut index: u8, ram: &[u8; 0x10000]) -> u16 {
+    fn get_tile(&self, method: u16, mut index: u8, _ram: &[u8; 0x10000]) -> u16 {
         if method == 0x8000 {
             return 0x8000 + (index as u16) * 16;
         } else {
@@ -287,14 +281,14 @@ impl Gpu {
         }
     }
 
-    fn displayTile(&mut self, dest: u8, x: u8, y: u8, location: u16, ram: &[u8; 0x10000]) {
+    fn display_tile(&mut self, dest: u8, x: u8, y: u8, location: u16, ram: &[u8; 0x10000]) {
         let &mut mat;
         if dest == WINDOW {
-            mat = &mut self.windowMatrix;
+            mat = &mut self.window_matrix;
         } else if dest == SPRITE {
-            mat = &mut self.spriteMatrix;
+            mat = &mut self.sprite_matrix;
         } else {
-            mat = &mut self.bgMatrix;
+            mat = &mut self.bg_matrix;
         }
         for i in 0..8 {
             let mut value: u8 = 0b10000000;
@@ -310,19 +304,19 @@ impl Gpu {
         }
     }
 
-    pub fn buildBG(&mut self, ram: &[u8; 0x10000]) {
+    pub fn build_bg(&mut self, ram: &[u8; 0x10000]) {
         let mut n: u16 = 0;
 
-        let index = self.getBgMapIndex(&ram);
-        let method: u16 = self.getTileMethod(&ram);
+        let index = self.get_bg_map_index(&ram);
+        let method: u16 = self.get_tile_method(&ram);
 
         for i in 0..32 {
             for j in 0..32 {
-                self.displayTile(
+                self.display_tile(
                     BG,
                     j * 8 as u8,
                     i * 8 as u8,
-                    self.getTile(method, ram[(index + n) as usize], &ram),
+                    self.get_tile(method, ram[(index + n) as usize], &ram),
                     &ram,
                 );
                 n += 1;
@@ -330,20 +324,20 @@ impl Gpu {
         }
     }
 
-    pub fn buildWindow(&mut self, ram: &[u8; 0x10000]) {
+    pub fn build_window(&mut self, ram: &[u8; 0x10000]) {
         let mut n: u16 = 0;
 
-        let index = self.getWindowMapIndex(&ram);
-        let method: u16 = self.getTileMethod(&ram);
+        let index = self.get_window_map_index(&ram);
+        let method: u16 = self.get_tile_method(&ram);
 
         for i in 0..32 {
             for j in 0..32 {
                 //println!("Map adress: 0x{:x}",index+n);
-                self.displayTile(
+                self.display_tile(
                     WINDOW,
                     (j * 8) as u8,
                     (i * 8) as u8,
-                    self.getTile(method, ram[(index + n) as usize], &ram),
+                    self.get_tile(method, ram[(index + n) as usize], &ram),
                     &ram,
                 );
                 n += 1;
@@ -351,48 +345,48 @@ impl Gpu {
         }
     }
 
-    pub fn buildSprite(&mut self, ram: &[u8; 0x10000]) {
+    pub fn build_sprite(&mut self, ram: &[u8; 0x10000]) {
         for i in 0..255 {
             for j in 0..255 {
-                self.spriteMatrix[i][j] = 0;
+                self.sprite_matrix[i][j] = 0;
             }
         }
 
         let method: u16 = 0x8000;
-        let mut spriteIndex: u16;
+        let mut sprite_index: u16;
         let mut x: u8;
         let mut y: u8;
         let mut index: u8;
 
         for i in 0..40 {
-            spriteIndex = (0xFE00 + (4 * i)) as u16;
-            x = ram[(spriteIndex + 1) as usize].wrapping_sub(8);
-            y = ram[(spriteIndex) as usize].wrapping_sub(16);
-            index = ram[(spriteIndex + 2) as usize];
-            self.displayTile(SPRITE, x, y, self.getTile(method, index, &ram), &ram);
+            sprite_index = (0xFE00 + (4 * i)) as u16;
+            x = ram[(sprite_index + 1) as usize].wrapping_sub(8);
+            y = ram[(sprite_index) as usize].wrapping_sub(16);
+            index = ram[(sprite_index + 2) as usize];
+            self.display_tile(SPRITE, x, y, self.get_tile(method, index, &ram), &ram);
         }
     }
 
-    pub fn pushLine(&mut self, ram: &[u8; 0x10000]) {
-        let scrollX: u8 = ram[0xff43];
-        let scrollY: u8 = ram[0xff42];
-        let winX: u8 = ram[0xff4b].wrapping_sub(7);
-        let winY: u8 = ram[0xff4a];
+    pub fn push_line(&mut self, ram: &[u8; 0x10000]) {
+        let scroll_x: u8 = ram[0xff43];
+        let scroll_y: u8 = ram[0xff42];
+        let win_x: u8 = ram[0xff4b].wrapping_sub(7);
+        let win_y: u8 = ram[0xff4a];
 
         if ram[0xff40] & 0b10000000 > 0 {
             for i in 0..160 {
-                if winX <= i && winY <= self.line && false {
+                if win_x <= i && win_y <= self.line && false {
                     // && false{
                     self.screen[i as usize][self.line as usize] =
-                        self.windowMatrix[(i - winX) as usize][(self.line - winY) as usize];
+                        self.window_matrix[(i - win_x) as usize][(self.line - win_y) as usize];
                 } else {
-                    self.screen[i as usize][self.line as usize] = self.bgMatrix
-                        [(scrollX.wrapping_add(i)) as usize]
-                        [(scrollY.wrapping_add(self.line)) as usize];
+                    self.screen[i as usize][self.line as usize] = self.bg_matrix
+                        [(scroll_x.wrapping_add(i)) as usize]
+                        [(scroll_y.wrapping_add(self.line)) as usize];
                 }
-                if self.spriteMatrix[i as usize][self.line as usize] != 0 {
+                if self.sprite_matrix[i as usize][self.line as usize] != 0 {
                     self.screen[i as usize][self.line as usize] =
-                        self.spriteMatrix[i as usize][self.line as usize];
+                        self.sprite_matrix[i as usize][self.line as usize];
                 }
             }
         } else {
@@ -422,7 +416,7 @@ impl Instruct {
         name: String,
         desc: String,
         argc: u8,
-        tics: u8,
+        ticks: u8,
         exec: Op,
     ) -> Instruct {
         Instruct {
@@ -430,7 +424,7 @@ impl Instruct {
             name,
             desc,
             argc,
-            ticks: tics,
+            ticks: ticks,
             exec,
         }
     }

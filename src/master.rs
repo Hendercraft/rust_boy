@@ -1,4 +1,4 @@
-use crate::{Controls, Dma, Hardware, InstrucArr, Interrupts, Timer};
+use crate::{controls, dma, hardware, interrupts, timer};
 use std::io::{stdin, stdout, Read, Write};
 
 const H_BLANK: u8 = 0;
@@ -18,16 +18,16 @@ pub struct Master {
 impl Master {
     pub fn step(
         &mut self,
-        cpu: &mut Hardware::Cpu,
-        gpu: &mut Hardware::Gpu,
-        timer: &mut Timer::Timer,
-        controls: &mut Controls::Controls,
+        cpu: &mut hardware::Cpu,
+        gpu: &mut hardware::Gpu,
+        timer: &mut timer::Timer,
+        controls: &mut controls::Controls,
         ram: &mut [u8; 0x10000],
     ) {
         //Check for interrupts, if none juste add 1 to PC
         //if cpu.get_pc() == 0x2000 { self.step_by_step = true;self.log=true;}
-        Interrupts::interrupt_check(cpu, ram);
-        let instruct: &Hardware::Instruct = cpu.fetch(ram[cpu.get_pc() as usize]);
+        interrupts::interrupt_check(cpu, ram);
+        let instruct: &hardware::Instruct = cpu.fetch(ram[cpu.get_pc() as usize]);
         let argc: u8 = instruct.argc;
 
         if instruct.name.contains("/!\\")
@@ -35,7 +35,7 @@ impl Master {
             || self.step_by_step
         {
             self.log = true;
-            self.maxi_debug_print(&cpu, &gpu, &timer, &ram, &controls, &instruct);
+            self.maxi_debug_print(&cpu, &timer, &ram, &controls, &instruct);
             wait();
         }
         //println!("Pc: {:#06x}", cpu.get_pc());
@@ -44,7 +44,7 @@ impl Master {
 
         timer.update(instruct.ticks, ram);
 
-        controls.updateRam(ram);
+        controls.update_ram(ram);
 
         let opcode = instruct.opcode;
         cpu.exec(opcode, ram);
@@ -57,7 +57,7 @@ impl Master {
 
         cpu.set_pc(cpu.get_pc().wrapping_add((argc as u16) + 1));
 
-        Dma::update_dma(ram);
+        dma::update_dma(ram);
 
         if delay {
             self.step(cpu, gpu, timer, controls, ram);
@@ -67,10 +67,10 @@ impl Master {
 
     pub fn screen(
         &mut self,
-        cpu: &mut Hardware::Cpu,
-        gpu: &mut Hardware::Gpu,
-        timer: &mut Timer::Timer,
-        controls: &mut Controls::Controls,
+        cpu: &mut hardware::Cpu,
+        gpu: &mut hardware::Gpu,
+        timer: &mut timer::Timer,
+        controls: &mut controls::Controls,
         ram: &mut [u8; 0x10000],
     ) {
         ram[0xFF44] = 0;
@@ -94,7 +94,7 @@ impl Master {
                 }
             }
             self.tick = 0;
-            gpu.pushLine(ram);
+            gpu.push_line(ram);
 
             if self.line_by_line {
                 wait();
@@ -106,7 +106,7 @@ impl Master {
         ram[0xFF0F] = ram[0xFF0F] | 0b1;
         self.mode = V_BLANK;
 
-        for j in 0..10 {
+        for _j in 0..10 {
             while self.tick < 114 {
                 //print!("{esc}c", esc = 27 as char);
                 //println!("SCREEN STATE__________________________________");
@@ -133,12 +133,11 @@ impl Master {
 
     pub fn maxi_debug_print(
         &self,
-        cpu: &Hardware::Cpu,
-        gpu: &Hardware::Gpu,
-        timer: &Timer::Timer,
+        cpu: &hardware::Cpu,
+        timer: &timer::Timer,
         ram: &[u8; 0x10000],
-        controls: &Controls::Controls,
-        instruc: &Hardware::Instruct,
+        controls: &controls::Controls,
+        instruc: &hardware::Instruct,
     ) {
         if self.log {
             println!("Pc: {:#06x}", cpu.get_pc());
@@ -171,10 +170,10 @@ impl Master {
             println!();
             println!("FLAGS STATE__________________________________");
             let flags = cpu.get_flags();
-            println!("Z:{}", flags.Z);
-            println!("N:{}", flags.N);
-            println!("H:{}", flags.H);
-            println!("C:{}", flags.C);
+            println!("Z:{}", flags.z);
+            println!("N:{}", flags.n);
+            println!("H:{}", flags.h);
+            println!("C:{}", flags.c);
             println!();
             println!("TIMER STATE__________________________________");
             println!("Divider:{:#04x}", ram[0xff04]);

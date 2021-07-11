@@ -1,15 +1,6 @@
-#![allow(non_snake_case)]
-#![allow(non_camel_case_types)]
-#![allow(unused_variables)]
-#![allow(unused_imports)]
-
 use sdl2::event::Event;
-use sdl2::keyboard::Keycode;
-use sdl2::pixels::Color;
-use sdl2::rect::{Point, Rect};
 use sdl2::render::{Texture, WindowCanvas};
-use sdl2::video::WindowContext;
-use sdl2::{EventPump, Sdl, VideoSubsystem};
+use sdl2::EventPump;
 
 pub struct Gui {
     pub canvas: WindowCanvas,
@@ -66,7 +57,7 @@ impl Gui {
         }
     }
 
-    pub fn pushMatrix(&mut self, mat: &[[u8; 144]; 160], texture: &mut Texture) {
+    pub fn push_matrix(&mut self, mat: &[[u8; 144]; 160], texture: &mut Texture) {
         let mut pixel_data: [u8; 69120] = [0; 69120]; //BGR
         let mut offset: u32;
         let mut r: u8;
