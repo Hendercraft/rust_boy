@@ -31,6 +31,7 @@ pub struct Cpu {
     pub pc: u16,
     pub mie: bool,
     pub instructs: Vec<Instruct>,
+    pub pending_ticks : u8,
 }
 
 impl Cpu {
@@ -220,6 +221,19 @@ impl Cpu {
         self.set_sp(self.get_sp().wrapping_add(2));
         return value;
     }
+
+    //ticks voodoo magic
+
+    pub fn set_ticks(&mut self,ticks :u8){
+        self.pending_ticks = ticks;
+    }
+
+    pub fn get_ticks(&mut self)-> u8{
+        let temp :u8 = self.pending_ticks;
+        self.pending_ticks =0;
+        return temp;
+    }
+
 }
 
 pub enum Flag {

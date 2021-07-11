@@ -481,24 +481,28 @@ pub fn jp_u16(cpu: &mut Cpu, h: u8, l: u8) {
 pub fn jp_nz_u16(cpu: &mut Cpu, h: u8, l: u8) {
     if !cpu.get_flags().z {
         jp_u16(cpu, h, l);
+        cpu.set_ticks(4);
     }
 }
 //0xCA
 pub fn jp_z_u16(cpu: &mut Cpu, h: u8, l: u8) {
     if cpu.get_flags().z {
         jp_u16(cpu, h, l);
+        cpu.set_ticks(4);
     }
 }
 //0xD2
 pub fn jp_nc_u16(cpu: &mut Cpu, h: u8, l: u8) {
     if !cpu.get_flags().c {
         jp_u16(cpu, h, l);
+        cpu.set_ticks(4);
     }
 }
 //0xDA
 pub fn jp_c_u16(cpu: &mut Cpu, h: u8, l: u8) {
     if cpu.get_flags().c {
         jp_u16(cpu, h, l);
+        cpu.set_ticks(4);
     }
 }
 //0xE9
@@ -508,31 +512,38 @@ pub fn jp_hl(cpu: &mut Cpu) {
 //0x18
 pub fn jpr(cpu: &mut Cpu, n: u8) {
     cpu.set_pc((cpu.get_pc() as i16).wrapping_add((n as i8) as i16) as u16);
-    //TODO: Timing ?
+    //TODO: Timing done?
 }
 
 //Ox20
 pub fn jpr_nz(cpu: &mut Cpu, n: u8) {
     if !cpu.get_flags().z {
         jpr(cpu, n);
+        cpu.set_ticks(4);
     }
 }
 //0x28
 pub fn jpr_z(cpu: &mut Cpu, n: u8) {
     if cpu.get_flags().z {
         jpr(cpu, n);
+        cpu.set_ticks(4);
+
     }
 }
 //0x30
 pub fn jpr_nc(cpu: &mut Cpu, n: u8) {
     if !cpu.get_flags().c {
         jpr(cpu, n);
+        cpu.set_ticks(4);
+
     }
 }
 //0x38
 pub fn jpr_c(cpu: &mut Cpu, n: u8) {
     if cpu.get_flags().c {
         jpr(cpu, n);
+        cpu.set_ticks(4);
+
     }
 }
 
@@ -936,7 +947,7 @@ pub fn inc_hlp(cpu: &mut Cpu, ram: &mut [u8; 0x10000]) {
     } //zero flag
     cpu.clear_flag(N); //clearing N flag
 }
-//TODO: timing
+//TODO: timing done ?
 /*CALLS____________________________________________________________________________*/
 //0xCD
 pub fn call_u16(cpu: &mut Cpu, h: u8, l: u8, ram: &mut [u8; 0x10000]) {
@@ -947,24 +958,28 @@ pub fn call_u16(cpu: &mut Cpu, h: u8, l: u8, ram: &mut [u8; 0x10000]) {
 pub fn call_nz_u16(cpu: &mut Cpu, h: u8, l: u8, ram: &mut [u8; 0x10000]) {
     if !cpu.get_flags().z {
         call_u16(cpu, h, l, ram);
+        cpu.set_ticks(12);
     }
 }
 //CC
 pub fn call_z_u16(cpu: &mut Cpu, h: u8, l: u8, ram: &mut [u8; 0x10000]) {
     if cpu.get_flags().z {
         call_u16(cpu, h, l, ram);
+        cpu.set_ticks(12);
     }
 }
 //D4
 pub fn call_nc_u16(cpu: &mut Cpu, h: u8, l: u8, ram: &mut [u8; 0x10000]) {
     if !cpu.get_flags().c {
         call_u16(cpu, h, l, ram);
+        cpu.set_ticks(12);
     }
 }
 //DC
 pub fn call_c_u16(cpu: &mut Cpu, h: u8, l: u8, ram: &mut [u8; 0x10000]) {
     if cpu.get_flags().c {
         call_u16(cpu, h, l, ram);
+        cpu.set_ticks(12);
     }
 }
 /*****************DEC 16 bits***********************/
@@ -1056,24 +1071,28 @@ pub fn ret(cpu: &mut Cpu, ram: &mut [u8; 0x10000]) {
 pub fn ret_nz(cpu: &mut Cpu, ram: &mut [u8; 0x10000]) {
     if !cpu.get_flags().z {
         ret(cpu, ram);
+        cpu.set_ticks(12);
     }
 }
 //0xC8
 pub fn ret_z(cpu: &mut Cpu, ram: &mut [u8; 0x10000]) {
     if cpu.get_flags().z {
         ret(cpu, ram);
+        cpu.set_ticks(12);
     }
 }
 //0xD0
 pub fn ret_nc(cpu: &mut Cpu, ram: &mut [u8; 0x10000]) {
     if !cpu.get_flags().c {
         ret(cpu, ram);
+        cpu.set_ticks(12);
     }
 }
 //0xD8
 pub fn ret_c(cpu: &mut Cpu, ram: &mut [u8; 0x10000]) {
     if cpu.get_flags().c {
         ret(cpu, ram);
+        cpu.set_ticks(12);
     }
 }
 //0xD9

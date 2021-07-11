@@ -62,6 +62,7 @@ fn main() {
         mie: true,
         //flags : Flags,
         instructs: instruct_array::create_operations(),
+        pending_ticks: 0,
     };
 
     let mut timer: timer::Timer = timer::Timer {

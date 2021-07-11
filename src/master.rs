@@ -49,6 +49,9 @@ impl Master {
         let opcode = instruct.opcode;
         cpu.exec(opcode, ram);
 
+        //adding temporary ticks from the cpu
+        self.tick = self.tick.wrapping_add(cpu.get_ticks() as u64);
+
         let mut delay = false;
         //Ie delay
         if ram[cpu.get_pc() as usize] == 0xFB {
