@@ -22,14 +22,16 @@ impl Gui {
         let mut canvas = window
             .into_canvas()
             .accelerated()
-            .present_vsync()
+            //.present_vsync()
             .build()
             .expect("could not make a canvas");
 
         canvas
             .set_scale(3.0, 3.0)
             .expect("Could not set canvas scale");
+
         canvas.clear();
+
         let event_pump = sdl_context.event_pump().unwrap();
         Gui {
             //context: sdl_context,

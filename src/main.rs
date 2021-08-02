@@ -9,6 +9,7 @@ mod timer;
 const PX_TRANSFER: u8 = 2;
 
 use sdl2::pixels::PixelFormatEnum;
+use sdl2::gfx::framerate::FPSManager;
 use std::fs;
 
 fn load(path: String) -> [u8; 0x10000] {
@@ -88,6 +89,9 @@ fn main() {
     //ram[0xFF41] = 255;
     //ram[0xFF45] = 1;
 
+    let mut frm = FPSManager::new();
+    frm.set_framerate(60);
+
     while window.update() {
         window.clear();
         controls.get_keyboard(&mut window);
@@ -97,5 +101,6 @@ fn main() {
         gpu.build_bg(&ram);
         gpu.build_window(&ram);
         gpu.build_sprite(&ram);
+        frm.delay();
     }
 }
