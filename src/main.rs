@@ -90,7 +90,7 @@ fn main() {
     //ram[0xFF45] = 1;
 
     let mut frm = FPSManager::new();
-    frm.set_framerate(60);
+    frm.set_framerate(60).expect("couldn't set FPS");
 
     while window.update() {
         window.clear();
