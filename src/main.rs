@@ -11,21 +11,10 @@ const PX_TRANSFER: u8 = 2;
 
 use sdl2::pixels::PixelFormatEnum;
 use sdl2::gfx::framerate::FPSManager;
-use std::fs;
-
-fn load(path: String) -> [u8; 0x10000] {
-    let contents = fs::read(path).expect("Something went wrong reading the file");
-    let mut ram: [u8; 0x10000] = [0; 0x10000];
-    for i in 0..contents.len() {
-        ram[i] = contents[i];
-    }
-    return ram;
-}
 
 fn main() {
-    let mut ram = load(String::from("rom.gb"));
 
-    let mut rom = load::load(String::from("rom.gb"));
+    let rom = load::load(String::from("rom.gb"));
     let mut ram = load::init_ram(&rom);
 
     let mut controls: controls::Controls = controls::Controls {
