@@ -6,6 +6,7 @@ mod instruct_array;
 mod interrupts;
 mod master;
 mod timer;
+mod load;
 const PX_TRANSFER: u8 = 2;
 
 use sdl2::pixels::PixelFormatEnum;
@@ -23,6 +24,9 @@ fn load(path: String) -> [u8; 0x10000] {
 
 fn main() {
     let mut ram = load(String::from("rom.gb"));
+
+    let mut rom = load::load(String::from("rom.gb"));
+    let mut ram = load::init_ram(&rom);
 
     let mut controls: controls::Controls = controls::Controls {
         up: 0,
