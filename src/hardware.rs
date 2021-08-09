@@ -228,11 +228,16 @@ impl Cpu {
         self.pending_ticks = self.pending_ticks.wrapping_add(ticks);
     }
 
-    pub fn get_ticks(&mut self)-> u8{
+    pub fn get_ticks(& self)-> u8{
         let temp :u8 = self.pending_ticks;
-        self.pending_ticks =0;
         return temp;
     }
+
+    pub fn clear_ticks(&mut self){
+        self.pending_ticks = 0;
+    }
+
+
 
 }
 

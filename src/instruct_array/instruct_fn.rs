@@ -954,28 +954,28 @@ pub fn call_u16(cpu: &mut Cpu, h: u8, l: u8, ram: &mut [u8; 0x10000]) {
     cpu.write_u16_to_stack(cpu.get_pc().wrapping_add(3), ram);
     cpu.set_pc(Cpu::get_u16(h, l).wrapping_sub(3));
 }
-//C4
+//0xC4
 pub fn call_nz_u16(cpu: &mut Cpu, h: u8, l: u8, ram: &mut [u8; 0x10000]) {
     if !cpu.get_flags().z {
         call_u16(cpu, h, l, ram);
         cpu.set_ticks(12);
     }
 }
-//CC
+//0xCC
 pub fn call_z_u16(cpu: &mut Cpu, h: u8, l: u8, ram: &mut [u8; 0x10000]) {
     if cpu.get_flags().z {
         call_u16(cpu, h, l, ram);
         cpu.set_ticks(12);
     }
 }
-//D4
+//0xD4
 pub fn call_nc_u16(cpu: &mut Cpu, h: u8, l: u8, ram: &mut [u8; 0x10000]) {
     if !cpu.get_flags().c {
         call_u16(cpu, h, l, ram);
         cpu.set_ticks(12);
     }
 }
-//DC
+//0xDC
 pub fn call_c_u16(cpu: &mut Cpu, h: u8, l: u8, ram: &mut [u8; 0x10000]) {
     if cpu.get_flags().c {
         call_u16(cpu, h, l, ram);
@@ -1546,6 +1546,7 @@ pub fn prefix(cpu: &mut Cpu, n: u8, ram: &mut [u8; 0x10000]) {
         }
         0x86 => {
             //println!("/!\\ Res 0 (HL) operation occurred");
+            cpu.set_ticks(8); // takes more time
             cpu.write(ram, ram[cpu.get_hl() as usize] & 0xfe, cpu.get_hl());
         }
         0x87 => {
@@ -1554,18 +1555,22 @@ pub fn prefix(cpu: &mut Cpu, n: u8, ram: &mut [u8; 0x10000]) {
         }
         0x9e => {
             //println!("/!\\ Res 3 (HL) operation occurred");
+            cpu.set_ticks(8); //takes more tile hl is 16bit
             cpu.write(ram, ram[cpu.get_hl() as usize] & 0b11110111, cpu.get_hl());
         }
         0xBE => {
             //println!("/!\\ Res 7 (hl) operation occurred");
+            cpu.set_ticks(8); //16bit
             cpu.write(ram, ram[cpu.get_hl() as usize] & 0xef, cpu.get_hl());
         }
         0xDE => {
             //println!("/!\\ SET 3 (HL) operation occurred");
+            cpu.set_ticks(8); //16bit more time
             cpu.write(ram, ram[cpu.get_hl() as usize] | 0b1000, cpu.get_hl());
         }
         0xFE => {
             //println!("/!\\ SET 7 (HL) operation occurred");
+            cpu.set_ticks(8); //16 bit
             cpu.write(ram, ram[cpu.get_hl() as usize] | 0b10000000, cpu.get_hl());
         }
         _ => {

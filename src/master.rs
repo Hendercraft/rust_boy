@@ -27,6 +27,7 @@ impl Master {
         //Check for interrupts, if none juste add 1 to PC
         //if cpu.get_pc() == 0x2000 { self.step_by_step = true;self.log=true;}
         interrupts::interrupt_check(cpu, ram);
+        cpu.clear_ticks();
         let instruct: &hardware::Instruct = cpu.fetch(ram[cpu.get_pc() as usize]);
         let argc: u8 = instruct.argc;
 
@@ -39,8 +40,11 @@ impl Master {
             wait();
         }
         //println!("Pc: {:#06x}", cpu.get_pc());
+        //self.log = true;
 
+        //self.maxi_debug_print(&cpu, &timer, &ram, &controls, &instruct);
         self.tick = self.tick.wrapping_add(instruct.ticks as u64);
+        self.tick = self.tick.wrapping_add((cpu.get_ticks()) as u64);
 
         timer.update(instruct.ticks, ram);
 
@@ -50,7 +54,6 @@ impl Master {
         cpu.exec(opcode, ram);
 
         //adding temporary ticks from the cpu
-        self.tick = self.tick.wrapping_add(cpu.get_ticks() as u64);
 
         let mut delay = false;
         //Ie delay
