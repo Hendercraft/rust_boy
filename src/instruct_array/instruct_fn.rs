@@ -1551,27 +1551,35 @@ pub fn prefix(cpu: &mut Cpu, n: u8, ram: &mut [u8; 0x10000]) {
         }
         0x87 => {
             //println!("/!\\ Res 0 A operation occurred");
-            cpu.set_a(cpu.get_a() & 0xfe);
+            cpu.set_a(cpu.get_a() & 0b1111_1110);
         }
         0x9e => {
             //println!("/!\\ Res 3 (HL) operation occurred");
             cpu.set_ticks(8); //takes more tile hl is 16bit
-            cpu.write(ram, ram[cpu.get_hl() as usize] & 0b11110111, cpu.get_hl());
+            cpu.write(ram, ram[cpu.get_hl() as usize] & 0b1111_0111, cpu.get_hl());
         }
         0xBE => {
             //println!("/!\\ Res 7 (hl) operation occurred");
             cpu.set_ticks(8); //16bit
             cpu.write(ram, ram[cpu.get_hl() as usize] & 0xef, cpu.get_hl());
         }
+        0xD8 => {
+            //println!("/!\\ Set 3 B operation occurred");
+            cpu.set_b(cpu.get_b() | 0b0000_1000);
+        }
         0xDE => {
             //println!("/!\\ SET 3 (HL) operation occurred");
             cpu.set_ticks(8); //16bit more time
             cpu.write(ram, ram[cpu.get_hl() as usize] | 0b1000, cpu.get_hl());
         }
+        0xF8 => {
+            //println!("/!\\ Set 7 B operation occurred");
+            cpu.set_b(cpu.get_b() | 0b1000_0000);
+        }
         0xFE => {
             //println!("/!\\ SET 7 (HL) operation occurred");
             cpu.set_ticks(8); //16 bit
-            cpu.write(ram, ram[cpu.get_hl() as usize] | 0b10000000, cpu.get_hl());
+            cpu.write(ram, ram[cpu.get_hl() as usize] | 0b1000_0000, cpu.get_hl());
         }
         _ => {
             println!("/!\\ {:#04x} Not done yet", n);
