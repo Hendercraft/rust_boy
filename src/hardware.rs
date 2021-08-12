@@ -31,7 +31,7 @@ pub struct Cpu {
     pub pc: u16,
     pub mie: bool,
     pub instructs: Vec<Instruct>,
-    pub pending_ticks : u8,
+    pub pending_ticks: u8,
 }
 
 impl Cpu {
@@ -224,21 +224,18 @@ impl Cpu {
 
     //ticks voodoo magic
 
-    pub fn set_ticks(&mut self,ticks :u8){
+    pub fn set_ticks(&mut self, ticks: u8) {
         self.pending_ticks = self.pending_ticks.wrapping_add(ticks);
     }
 
-    pub fn get_ticks(& self)-> u8{
-        let temp :u8 = self.pending_ticks;
+    pub fn get_ticks(&self) -> u8 {
+        let temp: u8 = self.pending_ticks;
         return temp;
     }
 
-    pub fn clear_ticks(&mut self){
+    pub fn clear_ticks(&mut self) {
         self.pending_ticks = 0;
     }
-
-
-
 }
 
 pub enum Flag {

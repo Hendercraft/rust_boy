@@ -527,7 +527,6 @@ pub fn jpr_z(cpu: &mut Cpu, n: u8) {
     if cpu.get_flags().z {
         jpr(cpu, n);
         cpu.set_ticks(4);
-
     }
 }
 //0x30
@@ -535,7 +534,6 @@ pub fn jpr_nc(cpu: &mut Cpu, n: u8) {
     if !cpu.get_flags().c {
         jpr(cpu, n);
         cpu.set_ticks(4);
-
     }
 }
 //0x38
@@ -543,7 +541,6 @@ pub fn jpr_c(cpu: &mut Cpu, n: u8) {
     if cpu.get_flags().c {
         jpr(cpu, n);
         cpu.set_ticks(4);
-
     }
 }
 
@@ -1589,7 +1586,6 @@ pub fn prefix(cpu: &mut Cpu, n: u8, ram: &mut [u8; 0x10000]) {
 }
 
 fn bit(cpu: &mut Cpu, n: u8, bit: u8) {
-
     cpu.set_flag(H);
     cpu.clear_flag(N);
     if n & (1 << bit) == 0 {

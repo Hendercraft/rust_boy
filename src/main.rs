@@ -4,13 +4,13 @@ mod gui;
 mod hardware;
 mod instruct_array;
 mod interrupts;
+mod load;
 mod master;
 mod timer;
-mod load;
 const PX_TRANSFER: u8 = 2;
 
-use sdl2::pixels::PixelFormatEnum;
 use sdl2::gfx::framerate::FPSManager;
+use sdl2::pixels::PixelFormatEnum;
 use std::cmp;
 
 #[macro_use]
@@ -44,9 +44,12 @@ fn main() {
     let framerate = value_t!(matches, "framerate", u32).unwrap_or_else(|e| match e.kind {
         clap::ErrorKind::ArgumentNotFound => 60,
         clap::ErrorKind::ValueValidation => {
-            println!("Warning: \"{}\" is not a valid FPS value, defaulted to 60.", matches.value_of("framerate").unwrap());
+            println!(
+                "Warning: \"{}\" is not a valid FPS value, defaulted to 60.",
+                matches.value_of("framerate").unwrap()
+            );
             60
-        },
+        }
         _ => e.exit(),
     });
 
@@ -131,7 +134,8 @@ fn main() {
 
     let mut frm = FPSManager::new();
     if config.framerate > 0 {
-        frm.set_framerate(config.framerate).expect("Couldn't set framerate");
+        frm.set_framerate(config.framerate)
+            .expect("Couldn't set framerate");
     }
 
     while window.update() {
