@@ -11,10 +11,57 @@ const PX_TRANSFER: u8 = 2;
 
 use sdl2::pixels::PixelFormatEnum;
 use sdl2::gfx::framerate::FPSManager;
+use std::cmp;
+
+#[macro_use]
+extern crate clap;
+
+pub struct Config {
+    pub debug: u32,
+    pub full_screen: bool,
+    pub framerate: u32,
+}
 
 fn main() {
+    let matches = clap_app!(rust_boy =>
+        (version: crate_version!())
+        (author: crate_authors!(", "))
+        (about: crate_description!())
+        (@arg ROM: +required "Sets the ROM to use")
+        (@arg debug: -d ... "Sets the level of debugging information")
+        (@arg fullscreen: -F --fullscreen "Runs the emulator in full screen mode")
+        (@arg framerate: -f --framerate +takes_value "Sets FPS. Default is 60, use 0 for unlimited. Note: this changes the game speed as well")
+    )
+    .get_matches();
 
-    let rom = load::load(String::from("rom.gb"));
+    // Calling .unwrap() is safe here because "INPUT" is required
+    let input_file = matches.value_of("ROM").unwrap();
+
+    // Vary the output based on how many times the user used the "debug" flag
+    // (i.e. 'rust_boy -d -d -d' or 'rust_boy -ddd' vs 'rust_boy -d'
+    let debug = cmp::min(matches.occurrences_of("debug") as u32, 2);
+
+    let framerate = value_t!(matches, "framerate", u32).unwrap_or_else(|e| match e.kind {
+        clap::ErrorKind::ArgumentNotFound => 60,
+        clap::ErrorKind::ValueValidation => {
+            println!("Warning: \"{}\" is not a valid FPS value, defaulted to 60.", matches.value_of("framerate").unwrap());
+            60
+        },
+        _ => e.exit(),
+    });
+
+    let config = Config {
+        debug,
+        full_screen: matches.is_present("fullscreen"),
+        framerate,
+    };
+
+    if config.debug >= 1 {
+        println!("Debug mode enabled, level: {}", config.debug);
+    }
+
+    // Initialize both ROM and RAM
+    let rom = load::load(&config, String::from(input_file));
     let mut ram = load::init_ram(&rom);
 
     let mut controls: controls::Controls = controls::Controls {
@@ -28,7 +75,7 @@ fn main() {
         start: 0,
     };
 
-    let mut window: gui::Gui = gui::Gui::new();
+    let mut window: gui::Gui = gui::Gui::new(&config);
     let creator = window.canvas.texture_creator();
     let mut texture = creator
         .create_texture_streaming(PixelFormatEnum::RGB24, 160, 144)
@@ -83,7 +130,9 @@ fn main() {
     //ram[0xFF45] = 1;
 
     let mut frm = FPSManager::new();
-    frm.set_framerate(60).expect("couldn't set FPS");
+    if config.framerate > 0 {
+        frm.set_framerate(config.framerate).expect("Couldn't set framerate");
+    }
 
     while window.update() {
         window.clear();
@@ -94,6 +143,8 @@ fn main() {
         gpu.build_bg(&ram);
         gpu.build_window(&ram);
         gpu.build_sprite(&ram);
-        frm.delay();
+        if config.framerate > 0 {
+            frm.delay();
+        }
     }
 }
