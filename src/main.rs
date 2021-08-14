@@ -2,7 +2,7 @@ mod controls;
 mod dma;
 mod gui;
 mod hardware;
-mod instruct_array;
+mod instructions;
 mod interrupts;
 mod load;
 mod master;
@@ -104,8 +104,6 @@ fn main() {
         sp: 0,     //0xfffe, // default value
         pc: 0x100, //default valueS
         mie: true,
-        //flags : Flags,
-        instructs: instruct_array::create_operations(),
         pending_ticks: 0,
     };
 
