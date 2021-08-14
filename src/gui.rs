@@ -2,18 +2,25 @@ use sdl2::event::Event;
 use sdl2::render::{Texture, WindowCanvas};
 use sdl2::EventPump;
 
+use crate::Config;
+
 pub struct Gui {
     pub canvas: WindowCanvas,
     pub events: EventPump,
 }
 
 impl Gui {
-    pub fn new() -> Gui {
+    pub fn new(config: &Config) -> Gui {
         let sdl_context = sdl2::init().unwrap();
         let video_subsystem = sdl_context.video().unwrap();
 
-        let window = video_subsystem
-            .window("Rustboy", 480, 432) //160X144
+        let mut window = video_subsystem.window("Rustboy", 480, 432); //160X144
+
+        if config.full_screen {
+            window.fullscreen();
+        }
+
+        let window = window
             .position_centered()
             .opengl()
             .build()
