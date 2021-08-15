@@ -1,4 +1,6 @@
 use crate::gui::Gui;
+use crate::Config;
+use crate::hardware::Cpu;
 use sdl2::keyboard::*;
 
 pub struct Controls {
@@ -13,7 +15,7 @@ pub struct Controls {
 }
 
 impl Controls {
-    pub fn get_keyboard(&mut self, gui: &mut Gui) {
+    pub fn get_keyboard(&mut self, config: &Config, cpu: &mut Cpu, ram: &mut [u8; 0x10000], gui: &mut Gui) {
         self.up = 1;
         self.down = 1;
         self.left = 1;
@@ -56,6 +58,12 @@ impl Controls {
                 Scancode::Backspace => {
                     //println!("select");
                     self.select = 0;
+                }
+                Scancode::F2 => {
+                    crate::file_io::create_savestate(config, cpu, ram);
+                }
+                Scancode::F3 => {
+                    crate::file_io::load_savestate(config, cpu, ram);
                 }
                 _ => {}
             }

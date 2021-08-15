@@ -4,7 +4,7 @@ mod gui;
 mod hardware;
 mod instructions;
 mod interrupts;
-mod load;
+mod file_io;
 mod master;
 mod timer;
 const PX_TRANSFER: u8 = 2;
@@ -12,11 +12,13 @@ const PX_TRANSFER: u8 = 2;
 use sdl2::gfx::framerate::FPSManager;
 use sdl2::pixels::PixelFormatEnum;
 use std::cmp;
+use std::path::Path;
 
 #[macro_use]
 extern crate clap;
 
-pub struct Config {
+pub struct Config<'a> {
+    pub rom_path: &'a Path,
     pub debug: u32,
     pub full_screen: bool,
     pub framerate: u32,
@@ -35,7 +37,7 @@ fn main() {
     .get_matches();
 
     // Calling .unwrap() is safe here because "INPUT" is required
-    let input_file = matches.value_of("ROM").unwrap();
+    let rom_path = Path::new(matches.value_of("ROM").unwrap());
 
     // Vary the output based on how many times the user used the "debug" flag
     // (i.e. 'rust_boy -d -d -d' or 'rust_boy -ddd' vs 'rust_boy -d'
@@ -54,6 +56,7 @@ fn main() {
     });
 
     let config = Config {
+        rom_path,
         debug,
         full_screen: matches.is_present("fullscreen"),
         framerate,
@@ -64,8 +67,8 @@ fn main() {
     }
 
     // Initialize both ROM and RAM
-    let rom = load::load(&config, String::from(input_file));
-    let mut ram = load::init_ram(&rom);
+    let rom = file_io::load_rom(&config);
+    let mut ram = file_io::init_ram(&rom);
 
     let mut controls: controls::Controls = controls::Controls {
         up: 0,
@@ -138,7 +141,7 @@ fn main() {
 
     while window.update() {
         window.clear();
-        controls.get_keyboard(&mut window);
+        controls.get_keyboard(&config, &mut cpu, &mut ram, &mut window);
         controls.update_ram(&mut ram);
         window.push_matrix(&gpu.screen, &mut texture);
         master.screen(&mut cpu, &mut gpu, &mut timer, &mut controls, &mut ram);

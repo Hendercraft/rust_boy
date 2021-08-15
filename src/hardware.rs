@@ -1,3 +1,5 @@
+use serde::{Serialize, Deserialize};
+
 const BG: u8 = 1;
 const SPRITE: u8 = 3;
 const WINDOW: u8 = 2;
@@ -18,6 +20,7 @@ pub struct Flags {
     pub c: bool,
 }
 
+#[derive(Debug, Serialize, Deserialize)]
 pub struct Cpu {
     pub a: u8,
     pub f: u8,
