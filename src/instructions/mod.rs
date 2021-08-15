@@ -15,7 +15,7 @@ pub struct Instruct {
 impl Instruct {
     pub fn fetch(opcode: u8) -> Instruct {
         macro_rules! instruct {
-            ($name:expr, $desc:expr, $argc:expr, $ticks:expr, $exec:expr) => ({ 
+            ($name:expr, $desc:expr, $argc:expr, $ticks:expr, $exec:expr) => { 
                 Instruct {
                     opcode,
                     name: String::from($name),
@@ -24,9 +24,9 @@ impl Instruct {
                     ticks: $ticks,
                     exec: $exec,
                 }
-            });
+            };
         }
-        
+
         match opcode {
             //8 bit direct load
             0x3E => instruct!("LD A n", "Load n in A", 1, 8, Op::U8(instruct_fn::ld_a_u8)),

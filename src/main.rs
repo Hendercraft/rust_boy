@@ -1,10 +1,10 @@
 mod controls;
 mod dma;
+mod file_io;
 mod gui;
 mod hardware;
 mod instructions;
 mod interrupts;
-mod file_io;
 mod master;
 mod timer;
 const PX_TRANSFER: u8 = 2;

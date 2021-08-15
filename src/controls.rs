@@ -1,6 +1,6 @@
 use crate::gui::Gui;
-use crate::Config;
 use crate::hardware::Cpu;
+use crate::Config;
 use sdl2::keyboard::*;
 
 pub struct Controls {
@@ -15,7 +15,13 @@ pub struct Controls {
 }
 
 impl Controls {
-    pub fn get_keyboard(&mut self, config: &Config, cpu: &mut Cpu, ram: &mut [u8; 0x10000], gui: &mut Gui) {
+    pub fn get_keyboard(
+        &mut self,
+        config: &Config,
+        cpu: &mut Cpu,
+        ram: &mut [u8; 0x10000],
+        gui: &mut Gui,
+    ) {
         self.up = 1;
         self.down = 1;
         self.left = 1;
