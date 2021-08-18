@@ -6,6 +6,7 @@ const V_BLANK: u8 = 1;
 const PX_TRANSFER: u8 = 2;
 
 pub struct Master {
+    pub nb_steps: u64,
     pub tick: u64,
     pub mode: u8,
     pub previous_mode: u8,
@@ -24,6 +25,10 @@ impl Master {
         controls: &mut controls::Controls,
         ram: &mut [u8; 0x10000],
     ) {
+        self.nb_steps += 1;
+        if self.nb_steps % 10_000 == 0 {
+            println!("{}", self.nb_steps);
+        }
         //Check for interrupts, if none juste add 1 to PC
         //if cpu.get_pc() == 0x2000 { self.step_by_step = true;self.log=true;}
         interrupts::interrupt_check(cpu, ram);

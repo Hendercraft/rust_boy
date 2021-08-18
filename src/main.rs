@@ -118,6 +118,7 @@ fn main() {
     };
 
     let mut master: master::Master = master::Master {
+        nb_steps: 0,
         tick: 0,
         mode: PX_TRANSFER,
         previous_mode: PX_TRANSFER,
