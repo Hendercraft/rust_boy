@@ -1,3 +1,5 @@
+use serde::{Deserialize, Serialize};
+
 const BG: u8 = 1;
 const SPRITE: u8 = 3;
 const WINDOW: u8 = 2;
@@ -18,6 +20,7 @@ pub struct Flags {
     pub c: bool,
 }
 
+#[derive(Debug, Serialize, Deserialize)]
 pub struct Cpu {
     pub a: u8,
     pub f: u8,
@@ -30,7 +33,6 @@ pub struct Cpu {
     pub sp: u16,
     pub pc: u16,
     pub mie: bool,
-    pub instructs: Vec<Instruct>,
     pub pending_ticks: u8,
 }
 
@@ -170,12 +172,8 @@ impl Cpu {
         }
     }
 
-    pub fn fetch(&self, i: u8) -> &Instruct {
-        self.instructs.get(i as usize).unwrap()
-    }
-
-    pub fn exec(&mut self, i: u16, ram: &mut [u8; 0x10000]) {
-        match self.instructs[i as usize].exec {
+    pub fn exec(&mut self, operands: Op, ram: &mut [u8; 0x10000]) {
+        match operands {
             Op::No(instruct) => instruct(self),
             Op::U8(instruct) => instruct(self, ram[(self.pc + 1) as usize]),
             Op::U16(instruct) => instruct(
@@ -413,35 +411,6 @@ impl Gpu {
         self.line += 1;
         if self.line == 144 {
             self.line = 0;
-        }
-    }
-}
-
-pub struct Instruct {
-    pub opcode: u16,
-    pub name: String,
-    pub desc: String,
-    pub argc: u8,
-    pub ticks: u8,
-    pub exec: Op,
-}
-
-impl Instruct {
-    pub fn build_instruct(
-        opcode: u16,
-        name: String,
-        desc: String,
-        argc: u8,
-        ticks: u8,
-        exec: Op,
-    ) -> Instruct {
-        Instruct {
-            opcode,
-            name,
-            desc,
-            argc,
-            ticks: ticks,
-            exec,
         }
     }
 }

@@ -1,4 +1,4 @@
-use crate::{controls, dma, hardware, interrupts, timer};
+use crate::{controls, dma, hardware, instructions, interrupts, timer};
 use std::io::{stdin, stdout, Read, Write};
 
 const H_BLANK: u8 = 0;
@@ -28,7 +28,7 @@ impl Master {
         //if cpu.get_pc() == 0x2000 { self.step_by_step = true;self.log=true;}
         interrupts::interrupt_check(cpu, ram);
         cpu.clear_ticks();
-        let instruct: &hardware::Instruct = cpu.fetch(ram[cpu.get_pc() as usize]);
+        let instruct = instructions::Instruct::fetch(ram[cpu.get_pc() as usize]);
         let argc: u8 = instruct.argc;
 
         if instruct.name.contains("/!\\")
@@ -50,8 +50,7 @@ impl Master {
 
         controls.update_ram(ram);
 
-        let opcode = instruct.opcode;
-        cpu.exec(opcode, ram);
+        cpu.exec(instruct.exec, ram);
 
         //adding temporary ticks from the cpu
 
@@ -143,7 +142,7 @@ impl Master {
         timer: &timer::Timer,
         ram: &[u8; 0x10000],
         controls: &controls::Controls,
-        instruc: &hardware::Instruct,
+        instruct: &instructions::Instruct,
     ) {
         if self.log {
             println!("Pc: {:#06x}", cpu.get_pc());
@@ -156,9 +155,9 @@ impl Master {
                 ram[(cpu.get_pc() + 1) as usize],
                 ram[(cpu.get_pc() + 2) as usize]
             );
-            println!("Name:{}", &instruc.name);
-            println!("Instruction: {}", &instruc.desc);
-            println!("Ticks: {}", &instruc.ticks);
+            println!("Name:{}", &instruct.name);
+            println!("Instruction: {}", &instruct.desc);
+            println!("Ticks: {}", &instruct.ticks);
             println!();
             println!("CPU STATE____________________________________");
             println!("a:{} / {:#04x}", cpu.get_a(), cpu.get_a());
