@@ -24,6 +24,8 @@ impl Master {
         controls: &mut controls::Controls,
         ram: &mut [u8; 0x10000],
     ) {
+        self.nb_steps += 1;
+
         interrupts::interrupt_check(cpu, ram);
         cpu.clear_ticks();
 
@@ -31,7 +33,7 @@ impl Master {
         cpu.pc = cpu.pc.wrapping_add(1);
 
         // println!("Step: {:#08}, PC: {:#06x}, OPCODE:{:#04x} => {:#04x} | {:#04x} | {:#04x} ({})", self.nb_steps, cpu.pc, instruct.opcode, 
-        //     ram[(cpu.get_pc() + 0) as usize], ram[(cpu.get_pc() + 1) as usize], ram[(cpu.get_pc() + 2) as usize], instruct.inst,
+        //     ram[(cpu.pc + 0) as usize], ram[(cpu.pc + 1) as usize], ram[(cpu.pc + 2) as usize], instruct.inst,
         // );
 
         if self.step_by_step {

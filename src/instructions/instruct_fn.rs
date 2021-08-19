@@ -2,20 +2,20 @@ use crate::hardware::Cpu;
 use crate::hardware::{Flag, Flag::*};
 use super::{RegU8, RegU16};
 
-pub fn load(cpu: &mut Cpu, ram: &mut [u8; 0x10000], dest: &RegU8, src: &RegU8) {
+pub fn load(cpu: &mut Cpu, ram: &mut [u8; 0x10000], src: &RegU8, dest: &RegU8) {
     let value = cpu.get_reg_u8(ram, src);
     cpu.set_reg_u8(ram, dest, value);
 }
 
-pub fn load_plus(cpu: &mut Cpu, ram: &mut [u8; 0x10000], dest: &RegU8, src: &RegU8, inc: bool) {
-    load(cpu, ram, dest, src);
+pub fn load_plus(cpu: &mut Cpu, ram: &mut [u8; 0x10000], src: &RegU8, dest: &RegU8, inc: bool) {
+    load(cpu, ram, src, dest);
     match inc {
         true => inc_u16(cpu, ram, &RegU16::HL),
         false => dec_u16(cpu, ram, &RegU16::HL),
     }
 }
 
-pub fn load_u16(cpu: &mut Cpu, ram: &mut [u8; 0x10000], dest: &RegU16, src: &RegU16) {
+pub fn load_u16(cpu: &mut Cpu, ram: &mut [u8; 0x10000], src: &RegU16, dest: &RegU16) {
     let value = cpu.get_reg_u16(ram, src);
     cpu.set_reg_u16(ram, dest, value);
 }
