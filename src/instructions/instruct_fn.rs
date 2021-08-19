@@ -1,11 +1,444 @@
+#![allow(dead_code)]
+
 use crate::hardware::Cpu;
-use crate::hardware::Flag::*;
+use crate::hardware::{Flag, Flag::*};
 use std::io::{stdin, stdout, Read, Write};
+use super::{RegU8, RegU16};
 
-//0x00
-pub fn nop(_cpu: &mut Cpu) {}
+pub fn load(cpu: &mut Cpu, ram: &mut [u8; 0x10000], dest: &RegU8, src: &RegU8) {
+    let value = cpu.get_reg_u8(ram, src);
+    cpu.set_reg_u8(ram, dest, value);
+}
 
-/*****************8 bit direct load***********************/
+pub fn load_plus(cpu: &mut Cpu, ram: &mut [u8; 0x10000], dest: &RegU8, src: &RegU8, inc: bool) {
+    load(cpu, ram, dest, src);
+    match inc {
+        true => inc_u16(cpu, ram, &RegU16::HL),
+        false => dec_u16(cpu, ram, &RegU16::HL),
+    }
+}
+
+pub fn load_u16(cpu: &mut Cpu, ram: &mut [u8; 0x10000], dest: &RegU16, src: &RegU16) {
+    let value = cpu.get_reg_u16(ram, src);
+    cpu.set_reg_u16(ram, dest, value);
+}
+
+pub fn push(cpu: &mut Cpu, ram: &mut [u8; 0x10000], src: &RegU16) {
+    let value = cpu.get_reg_u16(ram, src);
+    cpu.write_u16_to_stack(value, ram);
+}
+
+pub fn pop(cpu: &mut Cpu, ram: &mut [u8; 0x10000], dest: &RegU16) {
+    let value = cpu.read_u16_from_stack(ram);
+    cpu.set_reg_u16(ram, dest, value);
+}
+
+macro_rules! check_zero {
+    ($cpu:ident, $n: expr) => {
+        if $n == 0 {
+            $cpu.set_flag(Z);
+        } else {
+            $cpu.clear_flag(Z);
+        }
+    };
+}
+
+pub fn add(cpu: &mut Cpu, ram: &mut [u8; 0x10000], src: &RegU8, carry: bool) {
+    let lhs = cpu.get_reg_u8(ram, &RegU8::A);
+    let mut rhs = cpu.get_reg_u8(ram, src);
+    
+    if carry & cpu.get_flag(C) {
+        rhs = rhs.wrapping_add(1);
+    }
+    
+    match lhs.checked_add(rhs) {
+        None => cpu.set_flag(C),
+        Some(_) => cpu.clear_flag(C),
+    }
+
+    if (lhs & 0x0f) + (rhs & 0x0f) > 0x0f {
+        cpu.set_flag(H);
+    } else {
+        cpu.clear_flag(H);
+    }
+
+    // Compute addition
+    let result = lhs.wrapping_add(rhs);
+    cpu.set_reg_u8(ram, &RegU8::A, result);
+    
+    check_zero!(cpu, result);
+
+    cpu.clear_flag(N);
+}
+
+pub fn sub(cpu: &mut Cpu, ram: &mut [u8; 0x10000], src: &RegU8, carry: bool) {
+    let result = cmp(cpu, ram, src, carry);
+    cpu.set_reg_u8(ram, &RegU8::A, result);
+}
+
+pub fn and(cpu: &mut Cpu, ram: &mut [u8; 0x10000], src: &RegU8) {
+    cpu.clear_flag(N);
+    cpu.set_flag(H);
+    cpu.clear_flag(C);
+
+    // Compute AND
+    let result = cpu.get_reg_u8(ram, &RegU8::A) & cpu.get_reg_u8(ram, src);
+    cpu.set_reg_u8(ram, &RegU8::A, result);
+
+    check_zero!(cpu, result);
+}
+
+pub fn or(cpu: &mut Cpu, ram: &mut [u8; 0x10000], src: &RegU8) {
+    cpu.clear_flag(N);
+    cpu.clear_flag(H);
+    cpu.clear_flag(C);
+
+    // Compute OR
+    let result = cpu.get_reg_u8(ram, &RegU8::A) | cpu.get_reg_u8(ram, src);
+    cpu.set_reg_u8(ram, &RegU8::A, result);
+    
+    check_zero!(cpu, result);
+}
+
+pub fn xor(cpu: &mut Cpu, ram: &mut [u8; 0x10000], src: &RegU8) {
+    cpu.clear_flag(N);
+    cpu.clear_flag(H);
+    cpu.clear_flag(C);
+
+    // Compute OR
+    let result = cpu.get_reg_u8(ram, &RegU8::A) ^ cpu.get_reg_u8(ram, src);
+    cpu.set_reg_u8(ram, &RegU8::A, result);
+
+    check_zero!(cpu, result);
+}
+
+// Returns A - RegU8 (carry is used by sub())
+pub fn cmp(cpu: &mut Cpu, ram: &mut [u8; 0x10000], src: &RegU8, carry: bool) -> u8 {
+    let lhs = cpu.get_reg_u8(ram, &RegU8::A);
+    let mut rhs = cpu.get_reg_u8(ram, src);
+
+    if carry & cpu.get_flag(C) {
+        rhs = rhs.wrapping_add(1);
+    }
+
+    if lhs < rhs {
+        cpu.set_flag(C);
+    } else {
+        cpu.clear_flag(C);
+    }
+
+    if lhs & 0x0f < rhs & 0x0f {
+        cpu.set_flag(H);
+    } else {
+        cpu.clear_flag(H);
+    }
+
+    // Compute substraction
+    let result = lhs.wrapping_sub(rhs);
+
+    check_zero!(cpu, result);
+
+    cpu.set_flag(N);
+    result
+}
+
+pub fn inc(cpu: &mut Cpu, ram: &mut [u8; 0x10000], reg: &RegU8) {
+    let reg_val = cpu.get_reg_u8(ram, reg);
+    
+    if reg_val & 0x0f == 0x0f {
+        cpu.set_flag(H);
+    } else {
+        cpu.clear_flag(H)
+    }
+
+    // Compute increment
+    let result = reg_val.wrapping_add(1);
+    cpu.set_reg_u8(ram, reg, result);
+
+    check_zero!(cpu, result);
+
+    cpu.clear_flag(N);
+}
+
+pub fn dec(cpu: &mut Cpu, ram: &mut [u8; 0x10000], reg: &RegU8) {
+    let reg_val = cpu.get_reg_u8(ram, reg);
+    
+    if reg_val & 0x0f == 0x00 {
+        cpu.set_flag(H);
+        // We have no bits in the lower nibble
+        // We have to "borrow" some bits of the lower nibble:
+        // I.e 0xf0 - 0x01 = 0xef
+    } else {
+        cpu.clear_flag(H);
+    }
+
+    // Compute decrement
+    let result = reg_val.wrapping_sub(1);
+    cpu.set_reg_u8(ram, reg, result);
+
+    check_zero!(cpu, result);
+
+    cpu.set_flag(N);
+}
+
+pub fn add_u16(cpu: &mut Cpu, ram: &mut [u8; 0x10000], src: &RegU16) {
+    let lhs = cpu.get_reg_u16(ram, &RegU16::HL);
+    let rhs = cpu.get_reg_u16(ram, src);
+
+    match lhs.checked_add(rhs) {
+        None => cpu.set_flag(C),
+        Some(_) => cpu.clear_flag(C),
+    }
+
+    if (lhs & 0x0fff) + (rhs & 0x0fff) > 0x0fff {
+        cpu.set_flag(H);
+    } else {
+        cpu.clear_flag(H);
+    }
+
+    cpu.set_reg_u16(ram, &RegU16::HL, lhs.wrapping_add(rhs));
+
+    cpu.clear_flag(N);
+}
+
+pub fn add_u16_i8(cpu: &mut Cpu, ram: &mut [u8; 0x10000], dest: &RegU16, offset: &RegU16) {
+    let lhs = cpu.get_reg_u16(ram, dest);
+    let rhs = cpu.get_reg_u16(ram, offset);
+
+    match lhs.checked_add(rhs) {
+        None => cpu.set_flag(C),
+        Some(_) => cpu.clear_flag(C),
+    }
+
+    if (lhs & 0x000f) + (rhs & 0x000f) > 0x000f {
+        cpu.set_flag(H);
+    } else {
+        cpu.clear_flag(H);
+    }
+    
+    cpu.set_reg_u16(ram, dest, lhs.wrapping_add(rhs));
+
+    cpu.clear_flag(Z);
+    cpu.clear_flag(N);
+}
+
+pub fn inc_u16(cpu: &mut Cpu, ram: &mut [u8; 0x10000], reg: &RegU16) {
+    let value = cpu.get_reg_u16(ram, reg);
+    cpu.set_reg_u16(ram, reg, value.wrapping_add(1));
+}
+
+pub fn dec_u16(cpu: &mut Cpu, ram: &mut [u8; 0x10000], reg: &RegU16) {
+    let value = cpu.get_reg_u16(ram, reg);
+    cpu.set_reg_u16(ram, reg, value.wrapping_sub(1));
+}
+
+pub fn daa(cpu: &mut Cpu, ram: &mut [u8; 0x10000]) {
+    let value = cpu.get_reg_u8(ram, &RegU8::A);
+    let n_flag = cpu.get_flag(N);
+    let mut correction = 0x00;
+    
+    if cpu.get_flag(C) || (!n_flag && value > 0x99) {
+        correction |= 0x60;
+        cpu.set_flag(C);
+    }
+
+    if cpu.get_flag(H) || (!n_flag && (value & 0x0f > 0x09)) {
+        correction |= 0x06;
+    }
+
+    let result = match n_flag {
+        false => value.wrapping_add(correction),
+        true => value.wrapping_sub(correction),
+    };
+    cpu.set_reg_u8(ram, &RegU8::A, result);
+
+    check_zero!(cpu, result);
+
+    cpu.clear_flag(H);
+}
+
+pub fn cpl(cpu: &mut Cpu, ram: &mut [u8; 0x10000]) {
+    cpu.set_flag(H);
+    cpu.set_flag(N);
+
+    let value = cpu.get_reg_u8(ram, &RegU8::A);
+    cpu.set_reg_u8(ram, &RegU8::A, !value);
+}
+
+pub fn set_carry(cpu: &mut Cpu, _ram: &mut [u8; 0x10000], flip: bool) {
+    cpu.clear_flag(H);
+    cpu.clear_flag(N);
+    if cpu.get_flag(C) && flip {
+        cpu.clear_flag(C);
+    } else {
+        cpu.set_flag(C);
+    }
+}
+
+pub fn change_mie(cpu: &mut Cpu, _ram: &mut [u8; 0x10000], enable: bool) {
+    cpu.pending_mie = Some(enable);
+}
+
+pub fn rotate(
+    cpu: &mut Cpu, 
+    ram: &mut [u8; 0x10000], 
+    reg: &RegU8,
+    left: bool,
+    through_carry: bool, 
+    update_z: bool,
+    shift: bool,
+    keep_msb: bool,
+) {
+    let value = cpu.get_reg_u8(ram, reg);
+    let old_carry = match cpu.get_flag(C) {
+        true => 0b1,
+        false => 0b0,
+    };
+    
+    cpu.clear_flag(H);
+    cpu.clear_flag(N);
+
+    let (new_carry, result) = match left {
+        true => {
+            let new_carry = value >> 7;
+            
+            let mut result = match shift {
+                true => value << 1,
+                false => value.rotate_left(1),
+            };
+
+            if through_carry {
+                result = (result & 0b1111_1110) | old_carry;
+            }
+
+            (new_carry, result)
+        },
+        false => {
+            let new_carry = value & 0b0000_0001;
+
+            let mut result = match shift {
+                true => value >> 1,
+                false => value.rotate_right(1),
+            };
+
+            if through_carry {
+                result = (result & 0b0111_1111) | (old_carry << 7);
+            }
+
+            if keep_msb {
+                result = (result & 0b0111_1111) | (value & 0b1000_0000)
+            }
+
+            (new_carry, result)
+        },
+    };
+
+    if new_carry == 0b0 {
+        cpu.clear_flag(C);
+    } else {
+        cpu.set_flag(C);
+    }
+
+    cpu.set_reg_u8(ram, reg, result);
+
+    if update_z {
+        check_zero!(cpu, result);
+    } else {
+        cpu.clear_flag(Z);
+    }
+}
+
+pub fn swap(cpu: &mut Cpu, ram: &mut [u8; 0x10000], reg: &RegU8) {
+    let value = cpu.get_reg_u8(ram, reg);
+    let upper_nible = value & 0b1111_0000;
+    let result = value << 4 | upper_nible >> 4;
+
+    cpu.set_reg_u8(ram, reg, result);
+
+    cpu.clear_flag(N);
+    cpu.clear_flag(H);
+    cpu.clear_flag(C);
+    check_zero!(cpu, result);
+}
+
+pub fn bit(cpu: &mut Cpu, ram: &mut [u8; 0x10000], reg: &RegU8, bit_pos: u8) {
+    cpu.clear_flag(N);
+    cpu.set_flag(H);
+
+    let value = cpu.get_reg_u8(ram, reg);
+    check_zero!(cpu, (value & 0b1 << bit_pos));
+}
+
+pub fn set_bit(cpu: &mut Cpu, ram: &mut [u8; 0x10000], reg: &RegU8, bit_pos: u8) {
+    let value = cpu.get_reg_u8(ram, reg);
+    let result = value | 0b1 << bit_pos;
+    cpu.set_reg_u8(ram, reg, result);
+}
+
+pub fn reset_bit(cpu: &mut Cpu, ram: &mut [u8; 0x10000], reg: &RegU8, bit_pos: u8) {
+    let value = cpu.get_reg_u8(ram, reg);
+    let result = value & !(0b1 << bit_pos);
+    cpu.set_reg_u8(ram, reg, result);
+}
+
+pub fn jump(cpu: &mut Cpu, ram: &mut [u8; 0x10000], addr: &RegU16, is_call: bool, flag: Option<&Flag>, is_set: bool) {
+    let mut jump = true;
+    
+    if let Some(flag) = flag {
+        if cpu.get_flag(*flag) != is_set {
+            jump = false;
+        } else {
+            // Jump condition is fulfilled; add ticks
+            match is_call {
+                false => cpu.add_ticks(4),
+                true => cpu.add_ticks(12),
+            }
+        }
+    }
+
+    let addr_unwrapped = cpu.get_reg_u16(ram, addr);
+
+    if jump {
+        if is_call {
+            cpu.write_u16_to_stack(cpu.get_pc(), ram);
+        }
+
+        match addr {
+            // Relative jump
+            RegU16::I8 => cpu.set_pc(cpu.get_pc().wrapping_add(addr_unwrapped)),
+            // Absolute jump
+            _ => cpu.set_pc(addr_unwrapped),
+        }
+    }
+}
+
+pub fn reset(cpu: &mut Cpu, ram: &mut [u8; 0x10000], nth_byte: u16) {
+    cpu.write_u16_to_stack(cpu.get_pc(), ram);
+    cpu.set_pc(nth_byte * 8);
+}
+
+pub fn ret(cpu: &mut Cpu, ram: &mut [u8; 0x10000], flag: Option<&Flag>, is_set: bool, i_enable: bool) {
+    let mut jump = true;
+    
+    if let Some(flag) = flag {
+        if cpu.get_flag(*flag) != is_set {
+            jump = false;
+        } else {
+            // Jump condition is fulfilled; add ticks
+            cpu.add_ticks(12);
+        }
+    }
+
+    if jump {
+        let addr = cpu.read_u16_from_stack(ram);
+        cpu.set_pc(addr);
+
+        if i_enable {
+            cpu.mie = true;
+        }
+    }
+}
+
 //0x3E
 pub fn ld_a_u8(cpu: &mut Cpu, n: u8) {
     cpu.set_a(n);
@@ -407,7 +840,7 @@ pub fn ld_hl_sp_i8(cpu: &mut Cpu, n: u8) {
 
     cpu.clear_flag(Z);
     cpu.clear_flag(N);
-    cpu.set_sp((cpu.get_sp() as i16).wrapping_add((n as i8) as i16) as u16);
+    cpu.set_hl((cpu.get_sp() as i16).wrapping_add((n as i8) as i16) as u16);
 }
 //0x08
 pub fn ld_u16_sp(cpu: &mut Cpu, h: u8, l: u8, ram: &mut [u8; 0x10000]) {
@@ -416,12 +849,12 @@ pub fn ld_u16_sp(cpu: &mut Cpu, h: u8, l: u8, ram: &mut [u8; 0x10000]) {
 }
 
 //0xF3 (4tics)
-pub fn di(cpu: &mut Cpu) {
+pub fn di_old(cpu: &mut Cpu) {
     cpu.set_mie(false);
 }
 
 //0xFB (4tics)
-pub fn ei(_cpu: &mut Cpu) {
+pub fn ei_old(_cpu: &mut Cpu) {
     //Since you there is a delay of instruction
     //before enabling interrupts it's handle in the Master::step method
 }
@@ -479,30 +912,30 @@ pub fn jp_u16(cpu: &mut Cpu, h: u8, l: u8) {
 }
 //0xC2
 pub fn jp_nz_u16(cpu: &mut Cpu, h: u8, l: u8) {
-    if !cpu.get_flags().z {
+    if !cpu.get_flag(Z) {
         jp_u16(cpu, h, l);
-        cpu.set_ticks(4);
+        cpu.add_ticks(4);
     }
 }
 //0xCA
 pub fn jp_z_u16(cpu: &mut Cpu, h: u8, l: u8) {
-    if cpu.get_flags().z {
+    if cpu.get_flag(Z) {
         jp_u16(cpu, h, l);
-        cpu.set_ticks(4);
+        cpu.add_ticks(4);
     }
 }
 //0xD2
 pub fn jp_nc_u16(cpu: &mut Cpu, h: u8, l: u8) {
-    if !cpu.get_flags().c {
+    if !cpu.get_flag(C) {
         jp_u16(cpu, h, l);
-        cpu.set_ticks(4);
+        cpu.add_ticks(4);
     }
 }
 //0xDA
 pub fn jp_c_u16(cpu: &mut Cpu, h: u8, l: u8) {
-    if cpu.get_flags().c {
+    if cpu.get_flag(C) {
         jp_u16(cpu, h, l);
-        cpu.set_ticks(4);
+        cpu.add_ticks(4);
     }
 }
 //0xE9
@@ -517,30 +950,30 @@ pub fn jpr(cpu: &mut Cpu, n: u8) {
 
 //Ox20
 pub fn jpr_nz(cpu: &mut Cpu, n: u8) {
-    if !cpu.get_flags().z {
+    if !cpu.get_flag(Z) {
         jpr(cpu, n);
-        cpu.set_ticks(4);
+        cpu.add_ticks(4);
     }
 }
 //0x28
 pub fn jpr_z(cpu: &mut Cpu, n: u8) {
-    if cpu.get_flags().z {
+    if cpu.get_flag(Z) {
         jpr(cpu, n);
-        cpu.set_ticks(4);
+        cpu.add_ticks(4);
     }
 }
 //0x30
 pub fn jpr_nc(cpu: &mut Cpu, n: u8) {
-    if !cpu.get_flags().c {
+    if !cpu.get_flag(C) {
         jpr(cpu, n);
-        cpu.set_ticks(4);
+        cpu.add_ticks(4);
     }
 }
 //0x38
 pub fn jpr_c(cpu: &mut Cpu, n: u8) {
-    if cpu.get_flags().c {
+    if cpu.get_flag(C) {
         jpr(cpu, n);
-        cpu.set_ticks(4);
+        cpu.add_ticks(4);
     }
 }
 
@@ -953,30 +1386,30 @@ pub fn call_u16(cpu: &mut Cpu, h: u8, l: u8, ram: &mut [u8; 0x10000]) {
 }
 //0xC4
 pub fn call_nz_u16(cpu: &mut Cpu, h: u8, l: u8, ram: &mut [u8; 0x10000]) {
-    if !cpu.get_flags().z {
+    if !cpu.get_flag(Z) {
         call_u16(cpu, h, l, ram);
-        cpu.set_ticks(12);
+        cpu.add_ticks(12);
     }
 }
 //0xCC
 pub fn call_z_u16(cpu: &mut Cpu, h: u8, l: u8, ram: &mut [u8; 0x10000]) {
-    if cpu.get_flags().z {
+    if cpu.get_flag(Z) {
         call_u16(cpu, h, l, ram);
-        cpu.set_ticks(12);
+        cpu.add_ticks(12);
     }
 }
 //0xD4
 pub fn call_nc_u16(cpu: &mut Cpu, h: u8, l: u8, ram: &mut [u8; 0x10000]) {
-    if !cpu.get_flags().c {
+    if !cpu.get_flag(C) {
         call_u16(cpu, h, l, ram);
-        cpu.set_ticks(12);
+        cpu.add_ticks(12);
     }
 }
 //0xDC
 pub fn call_c_u16(cpu: &mut Cpu, h: u8, l: u8, ram: &mut [u8; 0x10000]) {
-    if cpu.get_flags().c {
+    if cpu.get_flag(C) {
         call_u16(cpu, h, l, ram);
-        cpu.set_ticks(12);
+        cpu.add_ticks(12);
     }
 }
 /*****************DEC 16 bits***********************/
@@ -1060,36 +1493,36 @@ pub fn or_u8(cpu: &mut Cpu, n: u8) {
 }
 /*****************Returns***********************/
 //0xC9 //TODO TIMING
-pub fn ret(cpu: &mut Cpu, ram: &mut [u8; 0x10000]) {
+pub fn ret_old(cpu: &mut Cpu, ram: &mut [u8; 0x10000]) {
     let n = cpu.read_u16_from_stack(ram).wrapping_sub(1);
     cpu.set_pc(n);
 }
 //0xC0
 pub fn ret_nz(cpu: &mut Cpu, ram: &mut [u8; 0x10000]) {
-    if !cpu.get_flags().z {
-        ret(cpu, ram);
-        cpu.set_ticks(12);
+    if !cpu.get_flag(Z) {
+        ret_old(cpu, ram);
+        cpu.add_ticks(12);
     }
 }
 //0xC8
 pub fn ret_z(cpu: &mut Cpu, ram: &mut [u8; 0x10000]) {
-    if cpu.get_flags().z {
-        ret(cpu, ram);
-        cpu.set_ticks(12);
+    if cpu.get_flag(Z) {
+        ret_old(cpu, ram);
+        cpu.add_ticks(12);
     }
 }
 //0xD0
 pub fn ret_nc(cpu: &mut Cpu, ram: &mut [u8; 0x10000]) {
-    if !cpu.get_flags().c {
-        ret(cpu, ram);
-        cpu.set_ticks(12);
+    if !cpu.get_flag(C) {
+        ret_old(cpu, ram);
+        cpu.add_ticks(12);
     }
 }
 //0xD8
 pub fn ret_c(cpu: &mut Cpu, ram: &mut [u8; 0x10000]) {
-    if cpu.get_flags().c {
-        ret(cpu, ram);
-        cpu.set_ticks(12);
+    if cpu.get_flag(C) {
+        ret_old(cpu, ram);
+        cpu.add_ticks(12);
     }
 }
 //0xD9
@@ -1184,20 +1617,20 @@ pub fn and_u8(cpu: &mut Cpu, n: u8) {
 //MISC
 
 //0x27
-pub fn daa(cpu: &mut Cpu) {
-    if !cpu.get_flags().n {
-        if cpu.get_flags().c || cpu.get_a() > 0x99 {
+pub fn daa_old(cpu: &mut Cpu) {
+    if !cpu.get_flag(N) {
+        if cpu.get_flag(C) || cpu.get_a() > 0x99 {
             cpu.set_a(cpu.get_a().wrapping_add(0x60));
             cpu.set_flag(C);
         }
-        if cpu.get_flags().h || (cpu.get_a() & 0x0f) > 0x09 {
+        if cpu.get_flag(H) || (cpu.get_a() & 0x0f) > 0x09 {
             cpu.set_a(cpu.get_a().wrapping_add(0x06));
         }
     } else {
-        if cpu.get_flags().c {
+        if cpu.get_flag(C) {
             cpu.set_a(cpu.get_a().wrapping_sub(0x60));
         }
-        if cpu.get_flags().h {
+        if cpu.get_flag(H) {
             cpu.set_a(cpu.get_a().wrapping_sub(0x6));
         }
     }
@@ -1210,7 +1643,7 @@ pub fn daa(cpu: &mut Cpu) {
 }
 
 //0x2F
-pub fn cpl(cpu: &mut Cpu) {
+pub fn cpl_old(cpu: &mut Cpu) {
     cpu.set_flag(H);
     cpu.set_flag(N);
     cpu.set_a(!(cpu.get_a()));
@@ -1218,7 +1651,7 @@ pub fn cpl(cpu: &mut Cpu) {
 
 //0xCB
 pub fn prefix(cpu: &mut Cpu, n: u8, ram: &mut [u8; 0x10000]) {
-    cpu.set_ticks(8);
+    cpu.add_ticks(8);
     match n {
         0x27 => {
             //Generalize Sla?
@@ -1273,277 +1706,277 @@ pub fn prefix(cpu: &mut Cpu, n: u8, ram: &mut [u8; 0x10000]) {
 
         0x40 => {
             //println!("/!\\ BIT 0 B operation occurred");
-            bit(cpu, cpu.get_b(), 0);
+            bit_old(cpu, cpu.get_b(), 0);
         }
         0x41 => {
             //println!("/!\\ BIT 0 C operation occurred");
-            bit(cpu, cpu.get_c(), 0);
+            bit_old(cpu, cpu.get_c(), 0);
         }
         0x42 => {
             //println!("/!\\ BIT 0 D operation occurred");
-            bit(cpu, cpu.get_d(), 0);
+            bit_old(cpu, cpu.get_d(), 0);
         }
         0x43 => {
             //println!("/!\\ BIT 0 E operation occurred");
-            bit(cpu, cpu.get_e(), 0);
+            bit_old(cpu, cpu.get_e(), 0);
         }
         0x44 => {
             //println!("/!\\ BIT 0 H operation occurred");
-            bit(cpu, cpu.get_h(), 0);
+            bit_old(cpu, cpu.get_h(), 0);
         }
         0x45 => {
             //println!("/!\\ BIT 0 L operation occurred");
-            bit(cpu, cpu.get_l(), 0);
+            bit_old(cpu, cpu.get_l(), 0);
         }
         0x46 => {
             //TODO TIMING
             //println!("/!\\ BIT 0 (HL) operation occurred");
-            cpu.set_ticks(8); //16bits register, take more time
-            bit(cpu, ram[cpu.get_hl() as usize], 0);
+            cpu.add_ticks(8); //16bits register, take more time
+            bit_old(cpu, ram[cpu.get_hl() as usize], 0);
         }
         0x47 => {
             //println!("/!\\ BIT 0 A operation occurred");
-            bit(cpu, cpu.get_a(), 0);
+            bit_old(cpu, cpu.get_a(), 0);
         }
         0x48 => {
             //println!("/!\\ BIT 1 B operation occurred");
-            bit(cpu, cpu.get_b(), 1);
+            bit_old(cpu, cpu.get_b(), 1);
         }
         0x49 => {
             //println!("/!\\ BIT 1 C operation occurred");
-            bit(cpu, cpu.get_c(), 1);
+            bit_old(cpu, cpu.get_c(), 1);
         }
         0x4A => {
             //println!("/!\\ BIT 1 D operation occurred");
-            bit(cpu, cpu.get_d(), 1);
+            bit_old(cpu, cpu.get_d(), 1);
         }
         0x4B => {
             //println!("/!\\ BIT 1 E operation occurred");
-            bit(cpu, cpu.get_e(), 1);
+            bit_old(cpu, cpu.get_e(), 1);
         }
         0x4C => {
             //println!("/!\\ BIT 1 H operation occurred");
-            bit(cpu, cpu.get_h(), 1);
+            bit_old(cpu, cpu.get_h(), 1);
         }
         0x4D => {
             //println!("/!\\ BIT 1 L operation occurred");
-            bit(cpu, cpu.get_l(), 1);
+            bit_old(cpu, cpu.get_l(), 1);
         }
         0x4E => {
             //TODO TIMING
             //println!("/!\\ BIT 1 (HL) operation occurred");
-            cpu.set_ticks(8); //16bits register, take more time
-            bit(cpu, ram[cpu.get_hl() as usize], 1);
+            cpu.add_ticks(8); //16bits register, take more time
+            bit_old(cpu, ram[cpu.get_hl() as usize], 1);
         }
         0x4F => {
             //println!("/!\\ BIT 1 A operation occurred");
-            bit(cpu, cpu.get_a(), 1);
+            bit_old(cpu, cpu.get_a(), 1);
         }
         0x50 => {
             //println!("/!\\ BIT 2 B operation occurred");
-            bit(cpu, cpu.get_b(), 2);
+            bit_old(cpu, cpu.get_b(), 2);
         }
         0x51 => {
             //println!("/!\\ BIT 2 C operation occurred");
-            bit(cpu, cpu.get_c(), 2);
+            bit_old(cpu, cpu.get_c(), 2);
         }
         0x52 => {
             //println!("/!\\ BIT 2 D operation occurred");
-            bit(cpu, cpu.get_d(), 2);
+            bit_old(cpu, cpu.get_d(), 2);
         }
         0x53 => {
             //println!("/!\\ BIT 2 E operation occurred");
-            bit(cpu, cpu.get_e(), 2);
+            bit_old(cpu, cpu.get_e(), 2);
         }
         0x54 => {
             //println!("/!\\ BIT 2 H operation occurred");
-            bit(cpu, cpu.get_h(), 2);
+            bit_old(cpu, cpu.get_h(), 2);
         }
         0x55 => {
             //println!("/!\\ BIT 2 L operation occurred");
-            bit(cpu, cpu.get_l(), 2);
+            bit_old(cpu, cpu.get_l(), 2);
         }
         0x56 => {
             //TODO Timing
             //println!("/!\\ BIT 2 (HL) operation occurred");
-            cpu.set_ticks(8); //16bits register, take more time
-            bit(cpu, ram[cpu.get_hl() as usize], 2);
+            cpu.add_ticks(8); //16bits register, take more time
+            bit_old(cpu, ram[cpu.get_hl() as usize], 2);
         }
         0x57 => {
             //println!("/!\\ BIT 2 A operation occurred");
-            bit(cpu, cpu.get_a(), 2);
+            bit_old(cpu, cpu.get_a(), 2);
         }
         0x58 => {
             //println!("/!\\ BIT 3 B operation occurred");
-            bit(cpu, cpu.get_b(), 3);
+            bit_old(cpu, cpu.get_b(), 3);
         }
         0x59 => {
             //println!("/!\\ BIT 3 C operation occurred");
-            bit(cpu, cpu.get_c(), 3);
+            bit_old(cpu, cpu.get_c(), 3);
         }
         0x5A => {
             //println!("/!\\ BIT 3 D operation occurred");
-            bit(cpu, cpu.get_d(), 3);
+            bit_old(cpu, cpu.get_d(), 3);
         }
         0x5B => {
             //println!("/!\\ BIT 3 E operation occurred");
-            bit(cpu, cpu.get_e(), 3);
+            bit_old(cpu, cpu.get_e(), 3);
         }
         0x5C => {
             //println!("/!\\ BIT 3 H operation occurred");
-            bit(cpu, cpu.get_h(), 3);
+            bit_old(cpu, cpu.get_h(), 3);
         }
         0x5D => {
             //println!("/!\\ BIT 3 L operation occurred");
-            bit(cpu, cpu.get_l(), 3);
+            bit_old(cpu, cpu.get_l(), 3);
         }
         0x5E => {
             //TODO Timing
             //println!("/!\\ BIT 3 (HL) operation occurred");
-            cpu.set_ticks(8); //16bits register, take more time
-            bit(cpu, ram[cpu.get_hl() as usize], 3);
+            cpu.add_ticks(8); //16bits register, take more time
+            bit_old(cpu, ram[cpu.get_hl() as usize], 3);
         }
         0x5F => {
             //println!("/!\\ BIT 3 A operation occurred");
-            bit(cpu, cpu.get_a(), 3);
+            bit_old(cpu, cpu.get_a(), 3);
         }
         0x60 => {
             //println!("/!\\ BIT 4 B operation occurred");
-            bit(cpu, cpu.get_b(), 4);
+            bit_old(cpu, cpu.get_b(), 4);
         }
         0x61 => {
             //println!("/!\\ BIT 4 C operation occurred");
-            bit(cpu, cpu.get_c(), 4);
+            bit_old(cpu, cpu.get_c(), 4);
         }
         0x62 => {
             //println!("/!\\ BIT 4 D operation occurred");
-            bit(cpu, cpu.get_d(), 4);
+            bit_old(cpu, cpu.get_d(), 4);
         }
         0x63 => {
             //println!("/!\\ BIT 4 E operation occurred");
-            bit(cpu, cpu.get_e(), 4);
+            bit_old(cpu, cpu.get_e(), 4);
         }
         0x64 => {
             //println!("/!\\ BIT 4 H operation occurred");
-            bit(cpu, cpu.get_h(), 4);
+            bit_old(cpu, cpu.get_h(), 4);
         }
         0x65 => {
             //println!("/!\\ BIT 4 L operation occurred");
-            bit(cpu, cpu.get_l(), 4);
+            bit_old(cpu, cpu.get_l(), 4);
         }
         0x66 => {
             //TODO timing
             //println!("/!\\ BIT 4 (HL) operation occurred");
-            cpu.set_ticks(8); //16bits register, take more time
-            bit(cpu, ram[cpu.get_hl() as usize], 4);
+            cpu.add_ticks(8); //16bits register, take more time
+            bit_old(cpu, ram[cpu.get_hl() as usize], 4);
         }
         0x67 => {
             //println!("/!\\ BIT 4 A operation occurred");
-            bit(cpu, cpu.get_a(), 4);
+            bit_old(cpu, cpu.get_a(), 4);
         }
         0x68 => {
             //println!("/!\\ BIT 5 B operation occurred");
-            bit(cpu, cpu.get_b(), 5);
+            bit_old(cpu, cpu.get_b(), 5);
         }
         0x69 => {
             //println!("/!\\ BIT 5 C operation occurred");
-            bit(cpu, cpu.get_c(), 5);
+            bit_old(cpu, cpu.get_c(), 5);
         }
         0x6A => {
             //println!("/!\\ BIT 5 D operation occurred");
-            bit(cpu, cpu.get_d(), 5);
+            bit_old(cpu, cpu.get_d(), 5);
         }
         0x6B => {
             //println!("/!\\ BIT 5 E operation occurred");
-            bit(cpu, cpu.get_e(), 5);
+            bit_old(cpu, cpu.get_e(), 5);
         }
         0x6C => {
             //println!("/!\\ BIT 5 H operation occurred");
-            bit(cpu, cpu.get_h(), 5);
+            bit_old(cpu, cpu.get_h(), 5);
         }
         0x6D => {
             //println!("/!\\ BIT 5 L operation occurred");
-            bit(cpu, cpu.get_l(), 5);
+            bit_old(cpu, cpu.get_l(), 5);
         }
         0x6E => {
             //TODO Timing
             //println!("/!\\ BIT 5 (HL) operation occurred");
-            cpu.set_ticks(8); //16bits register, take more time
-            bit(cpu, ram[cpu.get_hl() as usize], 5);
+            cpu.add_ticks(8); //16bits register, take more time
+            bit_old(cpu, ram[cpu.get_hl() as usize], 5);
         }
         0x6F => {
             //println!("/!\\ BIT 5 A operation occurred");
-            bit(cpu, cpu.get_a(), 5);
+            bit_old(cpu, cpu.get_a(), 5);
         }
         0x70 => {
             //println!("/!\\ BIT 6 B operation occurred");
-            bit(cpu, cpu.get_b(), 6);
+            bit_old(cpu, cpu.get_b(), 6);
         }
         0x71 => {
             //println!("/!\\ BIT 6 C operation occurred");
-            bit(cpu, cpu.get_c(), 6);
+            bit_old(cpu, cpu.get_c(), 6);
         }
         0x72 => {
             //println!("/!\\ BIT 6 D operation occurred");
-            bit(cpu, cpu.get_d(), 6);
+            bit_old(cpu, cpu.get_d(), 6);
         }
         0x73 => {
             //println!("/!\\ BIT 6 E operation occurred");
-            bit(cpu, cpu.get_e(), 6);
+            bit_old(cpu, cpu.get_e(), 6);
         }
         0x74 => {
             //println!("/!\\ BIT 6 H operation occurred");
-            bit(cpu, cpu.get_h(), 6);
+            bit_old(cpu, cpu.get_h(), 6);
         }
         0x75 => {
             //println!("/!\\ BIT 6 L operation occurred");
-            bit(cpu, cpu.get_l(), 6);
+            bit_old(cpu, cpu.get_l(), 6);
         }
         0x76 => {
             ////println!("/!\\ BIT 6 (HL) operation occurred");
-            bit(cpu, ram[cpu.get_hl() as usize], 6);
-            cpu.set_ticks(8); //16bits register, take more time
+            bit_old(cpu, ram[cpu.get_hl() as usize], 6);
+            cpu.add_ticks(8); //16bits register, take more time
         }
         0x77 => {
             //println!("/!\\ BIT 6 A operation occurred");
-            bit(cpu, cpu.get_a(), 6);
+            bit_old(cpu, cpu.get_a(), 6);
         }
         0x78 => {
             //println!("/!\\ BIT 7 B operation occurred");
-            bit(cpu, cpu.get_b(), 7);
+            bit_old(cpu, cpu.get_b(), 7);
         }
         0x79 => {
             //println!("/!\\ BIT 7 C operation occurred");
-            bit(cpu, cpu.get_c(), 7);
+            bit_old(cpu, cpu.get_c(), 7);
         }
         0x7A => {
             //println!("/!\\ BIT 7 D operation occurred");
-            bit(cpu, cpu.get_d(), 7);
+            bit_old(cpu, cpu.get_d(), 7);
         }
         0x7B => {
             //println!("/!\\ BIT 7 E operation occurred");
-            bit(cpu, cpu.get_e(), 7);
+            bit_old(cpu, cpu.get_e(), 7);
         }
         0x7C => {
             //println!("/!\\ BIT 7 H operation occurred");
-            bit(cpu, cpu.get_h(), 7);
+            bit_old(cpu, cpu.get_h(), 7);
         }
         0x7D => {
             //println!("/!\\ BIT 7 L operation occurred");
-            bit(cpu, cpu.get_l(), 7);
+            bit_old(cpu, cpu.get_l(), 7);
         }
         0x7E => {
             //println!("/!\\ BIT 7 (HL) operation occurred");
-            cpu.set_ticks(8); //16bits register, take more time
-            bit(cpu, ram[cpu.get_hl() as usize], 7);
+            cpu.add_ticks(8); //16bits register, take more time
+            bit_old(cpu, ram[cpu.get_hl() as usize], 7);
         }
         0x7F => {
             //println!("/!\\ BIT 7 L operation occurred");
-            bit(cpu, cpu.get_a(), 7);
+            bit_old(cpu, cpu.get_a(), 7);
         }
         0x86 => {
             //println!("/!\\ Res 0 (HL) operation occurred");
-            cpu.set_ticks(8); // takes more time
+            cpu.add_ticks(8); // takes more time
             cpu.write(ram, ram[cpu.get_hl() as usize] & 0xfe, cpu.get_hl());
         }
         0x87 => {
@@ -1552,12 +1985,12 @@ pub fn prefix(cpu: &mut Cpu, n: u8, ram: &mut [u8; 0x10000]) {
         }
         0x9e => {
             //println!("/!\\ Res 3 (HL) operation occurred");
-            cpu.set_ticks(8); //takes more tile hl is 16bit
+            cpu.add_ticks(8); //takes more tile hl is 16bit
             cpu.write(ram, ram[cpu.get_hl() as usize] & 0b1111_0111, cpu.get_hl());
         }
         0xBE => {
             //println!("/!\\ Res 7 (hl) operation occurred");
-            cpu.set_ticks(8); //16bit
+            cpu.add_ticks(8); //16bit
             cpu.write(ram, ram[cpu.get_hl() as usize] & 0xef, cpu.get_hl());
         }
         0xD8 => {
@@ -1566,7 +1999,7 @@ pub fn prefix(cpu: &mut Cpu, n: u8, ram: &mut [u8; 0x10000]) {
         }
         0xDE => {
             //println!("/!\\ SET 3 (HL) operation occurred");
-            cpu.set_ticks(8); //16bit more time
+            cpu.add_ticks(8); //16bit more time
             cpu.write(ram, ram[cpu.get_hl() as usize] | 0b1000, cpu.get_hl());
         }
         0xF8 => {
@@ -1575,7 +2008,7 @@ pub fn prefix(cpu: &mut Cpu, n: u8, ram: &mut [u8; 0x10000]) {
         }
         0xFE => {
             //println!("/!\\ SET 7 (HL) operation occurred");
-            cpu.set_ticks(8); //16 bit
+            cpu.add_ticks(8); //16 bit
             cpu.write(ram, ram[cpu.get_hl() as usize] | 0b1000_0000, cpu.get_hl());
         }
         _ => {
@@ -1585,7 +2018,7 @@ pub fn prefix(cpu: &mut Cpu, n: u8, ram: &mut [u8; 0x10000]) {
     }
 }
 
-fn bit(cpu: &mut Cpu, n: u8, bit: u8) {
+fn bit_old(cpu: &mut Cpu, n: u8, bit: u8) {
     cpu.set_flag(H);
     cpu.clear_flag(N);
     if n & (1 << bit) == 0 {
@@ -1678,12 +2111,8 @@ pub fn add_hlp(cpu: &mut Cpu, ram: &mut [u8; 0x10000]) {
 //0xC6
 pub fn add_u8(cpu: &mut Cpu, n: u8) {
     match cpu.get_a().checked_add(n) {
-        None => {
-            cpu.set_flag(C);
-        }
-        Some(_) => {
-            cpu.clear_flag(C);
-        }
+        None => cpu.set_flag(C),
+        Some(_) => cpu.clear_flag(C),
     }
     if (cpu.get_a() & 0x0f) + (n & 0x0f) > 0x0f {
         cpu.set_flag(H);
@@ -1703,12 +2132,8 @@ pub fn add_u8(cpu: &mut Cpu, n: u8) {
 //Add_u16
 fn add_hl_u16(cpu: &mut Cpu, n: u16) {
     match cpu.get_hl().checked_add(n) {
-        None => {
-            cpu.set_flag(C);
-        }
-        Some(_) => {
-            cpu.clear_flag(C);
-        }
+        None => cpu.set_flag(C),
+        Some(_) => cpu.clear_flag(C),
     }
     if cpu.get_h() & 0x0f + ((n >> 8) as u8 & 0x0f) > 0x0f {
         cpu.set_flag(H);
@@ -1746,12 +2171,8 @@ pub fn wait() {
 //0xD6
 pub fn sub_u8(cpu: &mut Cpu, n: u8) {
     match cpu.get_a().checked_sub(n) {
-        None => {
-            cpu.set_flag(C);
-        }
-        Some(_) => {
-            cpu.clear_flag(C);
-        }
+        None => cpu.set_flag(C),
+        Some(_) => cpu.clear_flag(C),
     }
     if cpu.get_a() & 0x0f < n & 0x0f {
         cpu.set_flag(H);
@@ -1815,7 +2236,7 @@ pub fn rlca(cpu: &mut Cpu) {
 }
 //0xCE
 pub fn adc_u8(cpu: &mut Cpu, n: u8) {
-    if cpu.get_flags().c {
+    if cpu.get_flag(C) {
         add_u8(cpu, n.wrapping_add(1));
     } else {
         add_u8(cpu, n);
@@ -1856,7 +2277,7 @@ pub fn adc_hlp(cpu: &mut Cpu, ram: &mut [u8; 0x10000]) {
 
 //0xDE
 pub fn sbc_u8(cpu: &mut Cpu, n: u8) {
-    if cpu.get_flags().c {
+    if cpu.get_flag(C) {
         sub_u8(cpu, n.wrapping_add(1));
     } else {
         sub_u8(cpu, n);

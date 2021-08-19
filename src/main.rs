@@ -107,6 +107,7 @@ fn main() {
         sp: 0,     //0xfffe, // default value
         pc: 0x100, //default valueS
         mie: true,
+        pending_mie: None,
         pending_ticks: 0,
     };
 

@@ -1,23 +1,66 @@
+
 use serde::{Deserialize, Serialize};
+use std::fmt;
 
 const BG: u8 = 1;
 const SPRITE: u8 = 3;
 const WINDOW: u8 = 2;
 
-pub enum Op {
-    No(fn(&mut Cpu)),
-    U8(fn(&mut Cpu, u8)),
-    U16(fn(&mut Cpu, u8, u8)), //High, low
-    Ram(fn(&mut Cpu, &mut [u8; 0x10000])),
-    RamU8(fn(&mut Cpu, u8, &mut [u8; 0x10000])),
-    RamU16(fn(&mut Cpu, u8, u8, &mut [u8; 0x10000])), //High, low, ram
+pub enum RegU8 {
+    A,
+    B,
+    C,
+    D,
+    E,
+    H,
+    L,
+    U8,
+    RamU8(Box<RegU8>),
+    RamU16(RegU16),
 }
 
-pub struct Flags {
-    pub z: bool,
-    pub n: bool,
-    pub h: bool,
-    pub c: bool,
+#[derive(PartialEq)]
+pub enum RegU16 {
+    AF,
+    BC,
+    DE,
+    HL,
+    SP,
+    U16,
+    I8,
+    RamU16(Box<RegU16>),
+}
+
+impl fmt::Display for RegU8 {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match self {
+            RegU8::A => write!(f, "A"),
+            RegU8::B => write!(f, "B"),
+            RegU8::C => write!(f, "C"),
+            RegU8::D => write!(f, "D"),
+            RegU8::E => write!(f, "E"),
+            RegU8::H => write!(f, "H"),
+            RegU8::L => write!(f, "L"),
+            RegU8::U8 => write!(f, "n"),
+            RegU8::RamU8(reg_u8) => write!(f, "({})", reg_u8),
+            RegU8::RamU16(reg_u16) => write!(f, "({})", reg_u16),
+        }
+    }
+}
+
+impl fmt::Display for RegU16 {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match self {
+            RegU16::AF => write!(f, "AF"),
+            RegU16::BC => write!(f, "BC"),
+            RegU16::DE => write!(f, "DE"),
+            RegU16::HL => write!(f, "HL"),
+            RegU16::SP => write!(f, "SP"),
+            RegU16::U16 => write!(f, "nn"),
+            RegU16::I8 => write!(f, "i8"),
+            RegU16::RamU16(reg_u16) => write!(f, "({})", reg_u16),
+        }
+    }
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -33,10 +76,45 @@ pub struct Cpu {
     pub sp: u16,
     pub pc: u16,
     pub mie: bool,
+    pub pending_mie: Option<bool>,
     pub pending_ticks: u8,
 }
 
 impl Cpu {
+    pub fn get_reg_u8(&mut self, ram: &[u8; 0x10000], reg: &RegU8) -> u8 {
+        match reg {
+            RegU8::A => self.a,
+            RegU8::B => self.b,
+            RegU8::C => self.c,
+            RegU8::D => self.d,
+            RegU8::E => self.e,
+            RegU8::H => self.h,
+            RegU8::L => self.l,
+            RegU8::U8 => self.get_op(ram),
+            RegU8::RamU8(reg_u8) => ram[0xff00 + self.get_reg_u8(ram, reg_u8) as usize],
+            RegU8::RamU16(reg_u16) => ram[self.get_reg_u16(ram, reg_u16) as usize],
+        }
+    }
+
+    pub fn get_reg_u16(&mut self, ram: &[u8; 0x10000], reg: &RegU16) -> u16 {
+        match reg {
+            RegU16::AF => Cpu::get_u16(self.a, self.f),
+            RegU16::BC => Cpu::get_u16(self.b, self.c),
+            RegU16::DE => Cpu::get_u16(self.d, self.e),
+            RegU16::HL => Cpu::get_u16(self.h, self.l),
+            RegU16::SP => self.sp,
+            RegU16::U16 => {
+                let low = self.get_op(ram) as u16;
+                ((self.get_op(ram) as u16) << 8) + low
+            },
+            // A cast from u8 to i8 keeps the bits the way they are
+            // A cast from i8 to u16 just works (the msb is duplicated to fill the whole upper byte)
+            // Note that directly casting from u8 to u16 wouldn't work, as it would always have a null upper byte
+            RegU16::I8 => (self.get_op(ram) as i8) as u16,
+            RegU16::RamU16(_) => panic!("This enum variant should only be used with set_reg_u16()"),
+        }
+    }
+
     //getter u8
     pub fn get_a(&self) -> u8 {
         self.a
@@ -87,6 +165,51 @@ impl Cpu {
 
     pub(crate) fn get_u16(h: u8, l: u8) -> u16 {
         ((h as u16) << 8) | l as u16
+    }
+
+    pub fn set_reg_u8(&mut self, ram: &mut [u8; 0x10000], reg: &RegU8, n: u8) {
+        match reg {
+            RegU8::A => self.a = n,
+            RegU8::B => self.b = n,
+            RegU8::C => self.c = n,
+            RegU8::D => self.d = n,
+            RegU8::E => self.e = n,
+            RegU8::H => self.h = n,
+            RegU8::L => self.l = n,
+            RegU8::U8 => panic!("This enum variant should only be used with get_reg_u8()"),
+            RegU8::RamU8(reg_u8) => {
+                let addr_low = self.get_reg_u8(ram, reg_u8);
+                self.write(ram, n, 0xff00 + addr_low as u16);
+            },
+            RegU8::RamU16(reg_u16) => {
+                let addr = self.get_reg_u16(ram, reg_u16);
+                self.write(ram, n, addr);
+            },
+        }
+    }
+
+    pub fn set_reg_u16(&mut self, ram: &mut [u8; 0x10000], reg: &RegU16, nn: u16) {
+        match reg {
+            RegU16::AF => Cpu::set_u16(&mut self.a, &mut self.f, nn),
+            RegU16::BC => Cpu::set_u16(&mut self.b, &mut self.c, nn),
+            RegU16::DE => Cpu::set_u16(&mut self.d, &mut self.e, nn),
+            RegU16::HL => Cpu::set_u16(&mut self.h, &mut self.l, nn),
+            RegU16::SP => self.sp = nn,
+            RegU16::U16 => panic!("This enum variant should only be used with get_reg_u16()"),
+            RegU16::I8 => panic!("This enum variant should only be used with get_reg_u16()"),
+            RegU16::RamU16(reg_u16) => {
+                let addr = self.get_reg_u16(ram, reg_u16);
+                self.write(ram, nn as u8, addr); // Low
+                self.write(ram, (nn >> 8) as u8, addr.wrapping_add(1)); // High
+            }
+        }
+    }
+
+    pub fn update_interrupt_status(&mut self) {
+        if let Some(new_status) = self.pending_mie {
+            self.mie = new_status;
+            self.pending_mie = None;
+        }
     }
 
     //setter u8
@@ -143,15 +266,13 @@ impl Cpu {
         self.mie = b;
     }
 
-    pub fn get_flags(&self) -> Flags {
-        let temp = self.f >> 4;
-        let output: Flags = Flags {
-            z: temp & 0b1000 > 0, //get upper
-            n: temp & 0b0100 > 0,
-            h: temp & 0b0010 > 0,
-            c: temp & 0b0001 > 0,
-        };
-        return output;
+    pub fn get_flag(&self, flag: Flag) -> bool {
+        match flag {
+            Flag::Z => self.f & 0b1000_0000 > 0,
+            Flag::N => self.f & 0b0100_0000 > 0,
+            Flag::H => self.f & 0b0010_0000 > 0,
+            Flag::C => self.f & 0b0001_0000 > 0,
+        }
     }
 
     //Flags
@@ -172,39 +293,26 @@ impl Cpu {
         }
     }
 
-    pub fn exec(&mut self, operands: Op, ram: &mut [u8; 0x10000]) {
-        match operands {
-            Op::No(instruct) => instruct(self),
-            Op::U8(instruct) => instruct(self, ram[(self.pc + 1) as usize]),
-            Op::U16(instruct) => instruct(
-                self,
-                ram[(self.pc + 2) as usize],
-                ram[(self.pc + 1) as usize],
-            ),
-            Op::Ram(instruct) => instruct(self, ram),
-            Op::RamU8(instruct) => instruct(self, ram[(self.pc + 1) as usize], ram),
-            Op::RamU16(instruct) => instruct(
-                self,
-                ram[(self.pc + 2) as usize],
-                ram[(self.pc + 1) as usize],
-                ram,
-            ),
-        }
+    fn get_op(&mut self, ram: &[u8; 0x10000]) -> u8 {
+        let n = ram[self.pc as usize];
+        self.pc = self.pc.wrapping_add(1);
+        
+        n
     }
 
-    pub fn write(&mut self, ram: &mut [u8; 0x10000], n: u8, adr: u16) {
-        match adr {
+    pub fn write(&mut self, ram: &mut [u8; 0x10000], n: u8, addr: u16) {
+        match addr {
             0x0000..=0x7FFF => {}
             0xff04 => {
                 ram[0xff04] = 0;
             }
             _ => {
-                ram[adr as usize] = n;
+                ram[addr as usize] = n;
             }
         }
     }
 
-    //memory manipulation
+    // Memory manipulation
 
     pub fn write_u16_to_stack(&mut self, n: u16, ram: &mut [u8; 0x10000]) {
         self.set_sp(self.get_sp().wrapping_sub(2));
@@ -216,19 +324,19 @@ impl Cpu {
         let h: u8 = ram[(self.get_sp() + 1) as usize];
         let l: u8 = ram[self.get_sp() as usize];
         let value: u16 = ((h as u16) << 8) | l as u16;
+        
         self.set_sp(self.get_sp().wrapping_add(2));
-        return value;
+        value
     }
 
     //ticks voodoo magic
 
-    pub fn set_ticks(&mut self, ticks: u8) {
+    pub fn add_ticks(&mut self, ticks: u8) {
         self.pending_ticks = self.pending_ticks.wrapping_add(ticks);
     }
 
     pub fn get_ticks(&self) -> u8 {
-        let temp: u8 = self.pending_ticks;
-        return temp;
+        self.pending_ticks
     }
 
     pub fn clear_ticks(&mut self) {
@@ -236,11 +344,23 @@ impl Cpu {
     }
 }
 
+#[derive(Clone, Copy)]
 pub enum Flag {
     Z,
     N,
     H,
     C,
+}
+
+impl fmt::Display for Flag {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match self {
+            Flag::Z => write!(f, "Z"),
+            Flag::N => write!(f, "N"),
+            Flag::H => write!(f, "H"),
+            Flag::C => write!(f, "C"),
+        }
+    }
 }
 
 pub struct Gpu {

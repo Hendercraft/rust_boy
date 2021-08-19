@@ -20,59 +20,40 @@ impl Master {
     pub fn step(
         &mut self,
         cpu: &mut hardware::Cpu,
-        gpu: &mut hardware::Gpu,
         timer: &mut timer::Timer,
         controls: &mut controls::Controls,
         ram: &mut [u8; 0x10000],
     ) {
-        self.nb_steps += 1;
-        if self.nb_steps % 10_000 == 0 {
-            println!("{}", self.nb_steps);
-        }
-        //Check for interrupts, if none juste add 1 to PC
-        //if cpu.get_pc() == 0x2000 { self.step_by_step = true;self.log=true;}
         interrupts::interrupt_check(cpu, ram);
         cpu.clear_ticks();
-        let instruct = instructions::Instruct::fetch(ram[cpu.get_pc() as usize]);
-        let argc: u8 = instruct.argc;
 
-        if instruct.name.contains("/!\\")
-            && (ram[cpu.get_pc() as usize] != 0xcb && ram[cpu.get_pc() as usize + 1] != 0x37)
-            || self.step_by_step
-        {
+        let instruct = instructions::Instruct::fetch(cpu, ram[cpu.get_pc() as usize], ram[cpu.get_pc().wrapping_add(1) as usize]);
+        cpu.set_pc(cpu.get_pc().wrapping_add(1));
+
+        // println!("Step: {:#08}, PC: {:#06x}, OPCODE:{:#04x} => {:#04x} | {:#04x} | {:#04x} ({})", self.nb_steps, cpu.pc, instruct.opcode, 
+        //     ram[(cpu.get_pc() + 0) as usize], ram[(cpu.get_pc() + 1) as usize], ram[(cpu.get_pc() + 2) as usize], instruct.inst,
+        // );
+
+        if self.step_by_step {
             self.log = true;
             self.maxi_debug_print(&cpu, &timer, &ram, &controls, &instruct);
             wait();
         }
-        //println!("Pc: {:#06x}", cpu.get_pc());
-        //self.log = true;
-
-        //self.maxi_debug_print(&cpu, &timer, &ram, &controls, &instruct);
+        
         self.tick = self.tick.wrapping_add(instruct.ticks as u64);
         self.tick = self.tick.wrapping_add((cpu.get_ticks()) as u64);
 
         timer.update(instruct.ticks, ram);
 
         controls.update_ram(ram);
+        
+        cpu.update_interrupt_status(); // If instruction from last step wants to change MIE
 
-        cpu.exec(instruct.exec, ram);
+        instruct.inst.exec(cpu, ram);
 
         //adding temporary ticks from the cpu
 
-        let mut delay = false;
-        //Ie delay
-        if ram[cpu.get_pc() as usize] == 0xFB {
-            delay = true;
-        }
-
-        cpu.set_pc(cpu.get_pc().wrapping_add((argc as u16) + 1));
-
         dma::update_dma(ram);
-
-        if delay {
-            self.step(cpu, gpu, timer, controls, ram);
-            cpu.mie = true;
-        }
     }
 
     pub fn screen(
@@ -97,7 +78,7 @@ impl Master {
                 //println!("Line: {}",i);
                 //println!("Mode: {}",self.mode);
                 //println!(" ");
-                self.step(cpu, gpu, timer, controls, ram);
+                self.step(cpu, timer, controls, ram);
                 self.lcd_stat(i, ram);
                 if self.step_by_step {
                     wait();
@@ -123,7 +104,7 @@ impl Master {
                 //println!("State: V-Blank");
                 //println!("Mode: {}",self.mode);
                 //println!(" ");
-                self.step(cpu, gpu, timer, controls, ram);
+                self.step(cpu, timer, controls, ram);
                 self.lcd_stat(254, ram);
                 if self.step_by_step {
                     wait();
@@ -152,6 +133,7 @@ impl Master {
         if self.log {
             println!("Pc: {:#06x}", cpu.get_pc());
             println!("OPERATION____________________________________");
+            println!("NB steps:{}", self.nb_steps);
             println!("Count:{}", self.tick);
             println!("Pc: {:#06x}", cpu.get_pc());
             println!(
@@ -160,7 +142,8 @@ impl Master {
                 ram[(cpu.get_pc() + 1) as usize],
                 ram[(cpu.get_pc() + 2) as usize]
             );
-            println!("Name:{}", &instruct.name);
+            println!("Opcode:{:#04x}", &instruct.opcode);
+            println!("Name:{}", &instruct.inst);
             println!("Instruction: {}", &instruct.desc);
             println!("Ticks: {}", &instruct.ticks);
             println!();
@@ -174,16 +157,21 @@ impl Master {
             println!("h:{} / {:#04x}", cpu.get_h(), cpu.get_h());
             println!("l:{} / {:#04x}", cpu.get_l(), cpu.get_l());
             println!("sp:{:#04x}", cpu.get_sp());
+            println!(
+                "Stack values: {:#04x} {:#04x} {:#04x}",
+                ram[cpu.get_sp() as usize],
+                ram[(cpu.get_sp() + 1) as usize],
+                ram[(cpu.get_sp() + 2) as usize]
+            );
             println!("mie: {}", cpu.get_mie());
             println!("0xFFFF: {:#010b}", ram[0xFFFF]);
             println!("0xFF0F: {:#010b}", ram[0xFF0F]);
             println!();
             println!("FLAGS STATE__________________________________");
-            let flags = cpu.get_flags();
-            println!("Z:{}", flags.z);
-            println!("N:{}", flags.n);
-            println!("H:{}", flags.h);
-            println!("C:{}", flags.c);
+            println!("Z:{}", cpu.get_flag(hardware::Flag::Z));
+            println!("N:{}", cpu.get_flag(hardware::Flag::N));
+            println!("H:{}", cpu.get_flag(hardware::Flag::H));
+            println!("C:{}", cpu.get_flag(hardware::Flag::C));
             println!();
             println!("TIMER STATE__________________________________");
             println!("Divider:{:#04x}", ram[0xff04]);
