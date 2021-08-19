@@ -30,16 +30,6 @@ pub fn pop(cpu: &mut Cpu, ram: &mut [u8; 0x10000], dest: &RegU16) {
     cpu.set_reg_u16(ram, dest, value);
 }
 
-macro_rules! check_zero {
-    ($cpu:ident, $n: expr) => {
-        if $n == 0 {
-            $cpu.set_flag(Z);
-        } else {
-            $cpu.clear_flag(Z);
-        }
-    };
-}
-
 pub fn add(cpu: &mut Cpu, ram: &mut [u8; 0x10000], src: &RegU8, carry: bool) {
     let lhs = cpu.get_reg_u8(ram, &RegU8::A);
     let mut rhs = cpu.get_reg_u8(ram, src);
@@ -47,25 +37,16 @@ pub fn add(cpu: &mut Cpu, ram: &mut [u8; 0x10000], src: &RegU8, carry: bool) {
     if carry & cpu.get_flag(C) {
         rhs = rhs.wrapping_add(1);
     }
-    
-    match lhs.checked_add(rhs) {
-        None => cpu.set_flag(C),
-        Some(_) => cpu.clear_flag(C),
-    }
 
-    if (lhs & 0x0f) + (rhs & 0x0f) > 0x0f {
-        cpu.set_flag(H);
-    } else {
-        cpu.clear_flag(H);
-    }
+    cpu.flag(C, lhs.checked_add(rhs).is_none());
+    cpu.flag(H, (lhs & 0x0f) + (rhs & 0x0f) > 0x0f);
 
     // Compute addition
     let result = lhs.wrapping_add(rhs);
     cpu.set_reg_u8(ram, &RegU8::A, result);
     
-    check_zero!(cpu, result);
-
-    cpu.clear_flag(N);
+    cpu.flag(Z, result == 0);
+    cpu.flag(N, false);
 }
 
 pub fn sub(cpu: &mut Cpu, ram: &mut [u8; 0x10000], src: &RegU8, carry: bool) {
@@ -74,39 +55,39 @@ pub fn sub(cpu: &mut Cpu, ram: &mut [u8; 0x10000], src: &RegU8, carry: bool) {
 }
 
 pub fn and(cpu: &mut Cpu, ram: &mut [u8; 0x10000], src: &RegU8) {
-    cpu.clear_flag(N);
-    cpu.set_flag(H);
-    cpu.clear_flag(C);
+    cpu.flag(N, false);
+    cpu.flag(H, true);
+    cpu.flag(C, false);
 
     // Compute AND
     let result = cpu.get_reg_u8(ram, &RegU8::A) & cpu.get_reg_u8(ram, src);
     cpu.set_reg_u8(ram, &RegU8::A, result);
 
-    check_zero!(cpu, result);
+    cpu.flag(Z, result == 0);
 }
 
 pub fn or(cpu: &mut Cpu, ram: &mut [u8; 0x10000], src: &RegU8) {
-    cpu.clear_flag(N);
-    cpu.clear_flag(H);
-    cpu.clear_flag(C);
+    cpu.flag(N, false);
+    cpu.flag(H, false);
+    cpu.flag(C, false);
 
     // Compute OR
     let result = cpu.get_reg_u8(ram, &RegU8::A) | cpu.get_reg_u8(ram, src);
     cpu.set_reg_u8(ram, &RegU8::A, result);
     
-    check_zero!(cpu, result);
+    cpu.flag(Z, result == 0);
 }
 
 pub fn xor(cpu: &mut Cpu, ram: &mut [u8; 0x10000], src: &RegU8) {
-    cpu.clear_flag(N);
-    cpu.clear_flag(H);
-    cpu.clear_flag(C);
+    cpu.flag(N, false);
+    cpu.flag(H, false);
+    cpu.flag(C, false);
 
     // Compute OR
     let result = cpu.get_reg_u8(ram, &RegU8::A) ^ cpu.get_reg_u8(ram, src);
     cpu.set_reg_u8(ram, &RegU8::A, result);
 
-    check_zero!(cpu, result);
+    cpu.flag(Z, result == 0);
 }
 
 // Returns A - RegU8 (carry is used by sub())
@@ -118,105 +99,69 @@ pub fn cmp(cpu: &mut Cpu, ram: &mut [u8; 0x10000], src: &RegU8, carry: bool) -> 
         rhs = rhs.wrapping_add(1);
     }
 
-    if lhs < rhs {
-        cpu.set_flag(C);
-    } else {
-        cpu.clear_flag(C);
-    }
-
-    if lhs & 0x0f < rhs & 0x0f {
-        cpu.set_flag(H);
-    } else {
-        cpu.clear_flag(H);
-    }
+    cpu.flag(C, lhs < rhs);
+    cpu.flag(H, lhs & 0x0f < rhs & 0x0f);
 
     // Compute substraction
     let result = lhs.wrapping_sub(rhs);
 
-    check_zero!(cpu, result);
-
-    cpu.set_flag(N);
+    cpu.flag(Z, result == 0);
+    cpu.flag(N, true);
     result
 }
 
 pub fn inc(cpu: &mut Cpu, ram: &mut [u8; 0x10000], reg: &RegU8) {
     let reg_val = cpu.get_reg_u8(ram, reg);
     
-    if reg_val & 0x0f == 0x0f {
-        cpu.set_flag(H);
-    } else {
-        cpu.clear_flag(H)
-    }
+    cpu.flag(H, reg_val & 0x0f == 0x0f);
 
     // Compute increment
     let result = reg_val.wrapping_add(1);
     cpu.set_reg_u8(ram, reg, result);
 
-    check_zero!(cpu, result);
-
-    cpu.clear_flag(N);
+    cpu.flag(Z, result == 0);
+    cpu.flag(N, false);
 }
 
 pub fn dec(cpu: &mut Cpu, ram: &mut [u8; 0x10000], reg: &RegU8) {
     let reg_val = cpu.get_reg_u8(ram, reg);
     
-    if reg_val & 0x0f == 0x00 {
-        cpu.set_flag(H);
-        // We have no bits in the lower nibble
-        // We have to "borrow" some bits of the lower nibble:
-        // I.e 0xf0 - 0x01 = 0xef
-    } else {
-        cpu.clear_flag(H);
-    }
+    // We have no bits in the lower nibble
+    // We have to "borrow" some bits of the lower nibble:
+    // I.e 0xf0 - 0x01 = 0xef
+    cpu.flag(H, reg_val & 0x0f == 0x00);
 
     // Compute decrement
     let result = reg_val.wrapping_sub(1);
     cpu.set_reg_u8(ram, reg, result);
 
-    check_zero!(cpu, result);
-
-    cpu.set_flag(N);
+    cpu.flag(Z, result == 0);
+    cpu.flag(N, true);
 }
 
 pub fn add_u16(cpu: &mut Cpu, ram: &mut [u8; 0x10000], src: &RegU16) {
     let lhs = cpu.get_reg_u16(ram, &RegU16::HL);
     let rhs = cpu.get_reg_u16(ram, src);
 
-    match lhs.checked_add(rhs) {
-        None => cpu.set_flag(C),
-        Some(_) => cpu.clear_flag(C),
-    }
-
-    if (lhs & 0x0fff) + (rhs & 0x0fff) > 0x0fff {
-        cpu.set_flag(H);
-    } else {
-        cpu.clear_flag(H);
-    }
+    cpu.flag(C, lhs.checked_add(rhs).is_none());
+    cpu.flag(H, (lhs & 0x0fff) + (rhs & 0x0fff) > 0x0fff);
 
     cpu.set_reg_u16(ram, &RegU16::HL, lhs.wrapping_add(rhs));
 
-    cpu.clear_flag(N);
+    cpu.flag(N, false);
 }
 
 pub fn add_u16_i8(cpu: &mut Cpu, ram: &mut [u8; 0x10000], dest: &RegU16, offset: &RegU16) {
     let lhs = cpu.get_reg_u16(ram, dest);
     let rhs = cpu.get_reg_u16(ram, offset);
 
-    match lhs.checked_add(rhs) {
-        None => cpu.set_flag(C),
-        Some(_) => cpu.clear_flag(C),
-    }
-
-    if (lhs & 0x000f) + (rhs & 0x000f) > 0x000f {
-        cpu.set_flag(H);
-    } else {
-        cpu.clear_flag(H);
-    }
+    cpu.flag(C, lhs.checked_add(rhs).is_none());
+    cpu.flag(H, (lhs & 0x000f) + (rhs & 0x000f) > 0x000f);
     
     cpu.set_reg_u16(ram, dest, lhs.wrapping_add(rhs));
 
-    cpu.clear_flag(Z);
-    cpu.clear_flag(N);
+    cpu.flag(Z, false);
+    cpu.flag(N, false);
 }
 
 pub fn inc_u16(cpu: &mut Cpu, ram: &mut [u8; 0x10000], reg: &RegU16) {
@@ -236,7 +181,7 @@ pub fn daa(cpu: &mut Cpu, ram: &mut [u8; 0x10000]) {
     
     if cpu.get_flag(C) || (!n_flag && value > 0x99) {
         correction |= 0x60;
-        cpu.set_flag(C);
+        cpu.flag(C, true);
     }
 
     if cpu.get_flag(H) || (!n_flag && (value & 0x0f > 0x09)) {
@@ -249,27 +194,22 @@ pub fn daa(cpu: &mut Cpu, ram: &mut [u8; 0x10000]) {
     };
     cpu.set_reg_u8(ram, &RegU8::A, result);
 
-    check_zero!(cpu, result);
-
-    cpu.clear_flag(H);
+    cpu.flag(Z, result == 0);
+    cpu.flag(H, false);
 }
 
 pub fn cpl(cpu: &mut Cpu, ram: &mut [u8; 0x10000]) {
-    cpu.set_flag(H);
-    cpu.set_flag(N);
+    cpu.flag(H, true);
+    cpu.flag(N, true);
 
     let value = cpu.get_reg_u8(ram, &RegU8::A);
     cpu.set_reg_u8(ram, &RegU8::A, !value);
 }
 
 pub fn set_carry(cpu: &mut Cpu, _ram: &mut [u8; 0x10000], flip: bool) {
-    cpu.clear_flag(H);
-    cpu.clear_flag(N);
-    if cpu.get_flag(C) && flip {
-        cpu.clear_flag(C);
-    } else {
-        cpu.set_flag(C);
-    }
+    cpu.flag(H, false);
+    cpu.flag(N, false);
+    cpu.flag(C, !(cpu.get_flag(C) && flip));
 }
 
 pub fn change_mie(cpu: &mut Cpu, _ram: &mut [u8; 0x10000], enable: bool) {
@@ -292,8 +232,8 @@ pub fn rotate(
         false => 0b0,
     };
     
-    cpu.clear_flag(H);
-    cpu.clear_flag(N);
+    cpu.flag(H, false);
+    cpu.flag(N, false);
 
     let (new_carry, result) = match left {
         true => {
@@ -330,19 +270,11 @@ pub fn rotate(
         },
     };
 
-    if new_carry == 0b0 {
-        cpu.clear_flag(C);
-    } else {
-        cpu.set_flag(C);
-    }
+    cpu.flag(C, new_carry != 0b0);
 
     cpu.set_reg_u8(ram, reg, result);
 
-    if update_z {
-        check_zero!(cpu, result);
-    } else {
-        cpu.clear_flag(Z);
-    }
+    cpu.flag(Z, update_z && result == 0);
 }
 
 pub fn swap(cpu: &mut Cpu, ram: &mut [u8; 0x10000], reg: &RegU8) {
@@ -352,18 +284,18 @@ pub fn swap(cpu: &mut Cpu, ram: &mut [u8; 0x10000], reg: &RegU8) {
 
     cpu.set_reg_u8(ram, reg, result);
 
-    cpu.clear_flag(N);
-    cpu.clear_flag(H);
-    cpu.clear_flag(C);
-    check_zero!(cpu, result);
+    cpu.flag(N, false);
+    cpu.flag(H, false);
+    cpu.flag(C, false);
+    cpu.flag(Z, result == 0);
 }
 
 pub fn bit(cpu: &mut Cpu, ram: &mut [u8; 0x10000], reg: &RegU8, bit_pos: u8) {
-    cpu.clear_flag(N);
-    cpu.set_flag(H);
+    cpu.flag(N, false);
+    cpu.flag(H, true);
 
     let value = cpu.get_reg_u8(ram, reg);
-    check_zero!(cpu, (value & 0b1 << bit_pos));
+    cpu.flag(Z, (value & 0b1 << bit_pos) == 0);
 }
 
 pub fn set_bit(cpu: &mut Cpu, ram: &mut [u8; 0x10000], reg: &RegU8, bit_pos: u8) {

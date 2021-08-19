@@ -168,7 +168,8 @@ impl Cpu {
             self.pending_mie = None;
         }
     }
-
+    
+    //Flags
     pub fn get_flag(&self, flag: Flag) -> bool {
         match flag {
             Flag::Z => self.f & 0b1000_0000 > 0,
@@ -178,21 +179,17 @@ impl Cpu {
         }
     }
 
-    //Flags
-    pub fn set_flag(&mut self, flag: Flag) {
-        match flag {
-            Flag::Z => self.f |= 0b10000000,
-            Flag::N => self.f |= 0b01000000,
-            Flag::H => self.f |= 0b00100000,
-            Flag::C => self.f |= 0b00010000,
-        }
-    }
-    pub fn clear_flag(&mut self, flag: Flag) {
-        match flag {
-            Flag::N => self.f &= 0b10111111,
-            Flag::Z => self.f &= 0b01111111,
-            Flag::H => self.f &= 0b11011111,
-            Flag::C => self.f &= 0b11101111,
+    pub fn flag(&mut self, flag: Flag, state: bool) {
+        let bit = match flag {
+            Flag::Z => 0b10000000,
+            Flag::N => 0b01000000,
+            Flag::H => 0b00100000,
+            Flag::C => 0b00010000,
+        };
+
+        match state {
+            true => self.f |= bit,   // SET
+            false => self.f &= !bit, // RESET
         }
     }
 
