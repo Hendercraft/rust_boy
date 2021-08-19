@@ -81,6 +81,15 @@ pub struct Cpu {
 }
 
 impl Cpu {
+    fn get_u16(high: u8, low: u8) -> u16 {
+        ((high as u16) << 8) | low as u16
+    }
+    
+    fn set_u16(high: &mut u8, low: &mut u8, nn: u16) {
+        *high = (nn >> 8) as u8;
+        *low = nn as u8;
+    }
+    
     pub fn get_reg_u8(&mut self, ram: &[u8; 0x10000], reg: &RegU8) -> u8 {
         match reg {
             RegU8::A => self.a,
@@ -113,58 +122,6 @@ impl Cpu {
             RegU16::I8 => (self.get_op(ram) as i8) as u16,
             RegU16::RamU16(_) => panic!("This enum variant should only be used with set_reg_u16()"),
         }
-    }
-
-    //getter u8
-    pub fn get_a(&self) -> u8 {
-        self.a
-    }
-    pub fn get_f(&self) -> u8 {
-        self.f
-    }
-    pub fn get_b(&self) -> u8 {
-        self.b
-    }
-    pub fn get_c(&self) -> u8 {
-        self.c
-    }
-    pub fn get_d(&self) -> u8 {
-        self.d
-    }
-    pub fn get_e(&self) -> u8 {
-        self.e
-    }
-    pub fn get_h(&self) -> u8 {
-        self.h
-    }
-    pub fn get_l(&self) -> u8 {
-        self.l
-    }
-    //getter u16
-    pub fn get_af(&self) -> u16 {
-        Cpu::get_u16(self.a, self.f)
-    }
-    pub fn get_bc(&self) -> u16 {
-        Cpu::get_u16(self.b, self.c)
-    }
-    pub fn get_de(&self) -> u16 {
-        Cpu::get_u16(self.d, self.e)
-    }
-    pub fn get_hl(&self) -> u16 {
-        Cpu::get_u16(self.h, self.l)
-    }
-    pub fn get_sp(&self) -> u16 {
-        self.sp
-    }
-    pub fn get_pc(&self) -> u16 {
-        self.pc
-    }
-    pub fn get_mie(&self) -> bool {
-        self.mie
-    }
-
-    pub(crate) fn get_u16(h: u8, l: u8) -> u16 {
-        ((h as u16) << 8) | l as u16
     }
 
     pub fn set_reg_u8(&mut self, ram: &mut [u8; 0x10000], reg: &RegU8, n: u8) {
@@ -212,60 +169,6 @@ impl Cpu {
         }
     }
 
-    //setter u8
-    pub fn set_a(&mut self, n: u8) {
-        self.a = n;
-    }
-    pub fn set_f(&mut self, n: u8) {
-        self.f = n;
-    }
-    pub fn set_b(&mut self, n: u8) {
-        self.b = n;
-    }
-    pub fn set_c(&mut self, n: u8) {
-        self.c = n;
-    }
-    pub fn set_d(&mut self, n: u8) {
-        self.d = n;
-    }
-    pub fn set_e(&mut self, n: u8) {
-        self.e = n;
-    }
-    pub fn set_h(&mut self, n: u8) {
-        self.h = n;
-    }
-    pub fn set_l(&mut self, n: u8) {
-        self.l = n;
-    }
-
-    //setter u16
-    pub fn set_af(&mut self, n: u16) {
-        Cpu::set_u16(&mut self.a, &mut self.f, n);
-    }
-    pub fn set_bc(&mut self, n: u16) {
-        Cpu::set_u16(&mut self.b, &mut self.c, n);
-    }
-    pub fn set_de(&mut self, n: u16) {
-        Cpu::set_u16(&mut self.d, &mut self.e, n);
-    }
-    pub fn set_hl(&mut self, n: u16) {
-        Cpu::set_u16(&mut self.h, &mut self.l, n);
-    }
-    pub fn set_sp(&mut self, n: u16) {
-        self.sp = n;
-    }
-    pub fn set_pc(&mut self, n: u16) {
-        self.pc = n;
-    }
-
-    fn set_u16(h: &mut u8, l: &mut u8, n: u16) {
-        *h = (n >> 8) as u8;
-        *l = n as u8;
-    }
-    pub fn set_mie(&mut self, b: bool) {
-        self.mie = b;
-    }
-
     pub fn get_flag(&self, flag: Flag) -> bool {
         match flag {
             Flag::Z => self.f & 0b1000_0000 > 0,
@@ -276,20 +179,20 @@ impl Cpu {
     }
 
     //Flags
-    pub fn set_flag(&mut self, f: Flag) {
-        match f {
-            Flag::Z => self.set_f(self.get_f() | 0b10000000),
-            Flag::N => self.set_f(self.get_f() | 0b01000000),
-            Flag::H => self.set_f(self.get_f() | 0b00100000),
-            Flag::C => self.set_f(self.get_f() | 0b00010000),
+    pub fn set_flag(&mut self, flag: Flag) {
+        match flag {
+            Flag::Z => self.f |= 0b10000000,
+            Flag::N => self.f |= 0b01000000,
+            Flag::H => self.f |= 0b00100000,
+            Flag::C => self.f |= 0b00010000,
         }
     }
-    pub fn clear_flag(&mut self, f: Flag) {
-        match f {
-            Flag::Z => self.set_f(self.get_f() & 0b01111111),
-            Flag::N => self.set_f(self.get_f() & 0b10111111),
-            Flag::H => self.set_f(self.get_f() & 0b11011111),
-            Flag::C => self.set_f(self.get_f() & 0b11101111),
+    pub fn clear_flag(&mut self, flag: Flag) {
+        match flag {
+            Flag::N => self.f &= 0b10111111,
+            Flag::Z => self.f &= 0b01111111,
+            Flag::H => self.f &= 0b11011111,
+            Flag::C => self.f &= 0b11101111,
         }
     }
 
@@ -315,17 +218,17 @@ impl Cpu {
     // Memory manipulation
 
     pub fn write_u16_to_stack(&mut self, n: u16, ram: &mut [u8; 0x10000]) {
-        self.set_sp(self.get_sp().wrapping_sub(2));
-        ram[self.get_sp() as usize] = n as u8;
-        ram[(self.get_sp() + 1) as usize] = (n >> 8) as u8;
+        self.sp = self.sp.wrapping_sub(2);
+        ram[self.sp as usize] = n as u8;
+        ram[(self.sp + 1) as usize] = (n >> 8) as u8;
     }
 
     pub fn read_u16_from_stack(&mut self, ram: &[u8; 0x10000]) -> u16 {
-        let h: u8 = ram[(self.get_sp() + 1) as usize];
-        let l: u8 = ram[self.get_sp() as usize];
+        let h: u8 = ram[(self.sp + 1) as usize];
+        let l: u8 = ram[self.sp as usize];
         let value: u16 = ((h as u16) << 8) | l as u16;
         
-        self.set_sp(self.get_sp().wrapping_add(2));
+        self.sp = self.sp.wrapping_add(2);
         value
     }
 

@@ -391,8 +391,8 @@ impl Instruct {
             0x17 => inst!(Rotate(RegU8::A, true, true, false, false, false), 4, "Rotate A left through C flag (no Z)"),
             0x0F => inst!(Rotate(RegU8::A, false, false, false, false, false), 4, "Rotate A right (no Z)"),
             0x1F => inst!(Rotate(RegU8::A, false, true, false, false, false), 4, "Rotate A right through C flag (no Z)"),
-            //Prefixed
-            0xCB => { cpu.set_pc(cpu.get_pc().wrapping_add(1)); match followup_byte {
+            //Prefixed, increment PC to account for extra opcode
+            0xCB => { cpu.pc = cpu.pc.wrapping_add(1); match followup_byte {
                 //SWAP
                 0x37 => inst!(Swap(RegU8::A), 8,"Swap upper and lower nibble of A"),
                 0x30 => inst!(Swap(RegU8::B), 8,"Swap upper and lower nibble of B"),

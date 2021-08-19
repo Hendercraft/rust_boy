@@ -27,8 +27,8 @@ impl Master {
         interrupts::interrupt_check(cpu, ram);
         cpu.clear_ticks();
 
-        let instruct = instructions::Instruct::fetch(cpu, ram[cpu.get_pc() as usize], ram[cpu.get_pc().wrapping_add(1) as usize]);
-        cpu.set_pc(cpu.get_pc().wrapping_add(1));
+        let instruct = instructions::Instruct::fetch(cpu, ram[cpu.pc as usize], ram[cpu.pc.wrapping_add(1) as usize]);
+        cpu.pc = cpu.pc.wrapping_add(1);
 
         // println!("Step: {:#08}, PC: {:#06x}, OPCODE:{:#04x} => {:#04x} | {:#04x} | {:#04x} ({})", self.nb_steps, cpu.pc, instruct.opcode, 
         //     ram[(cpu.get_pc() + 0) as usize], ram[(cpu.get_pc() + 1) as usize], ram[(cpu.get_pc() + 2) as usize], instruct.inst,
@@ -131,39 +131,38 @@ impl Master {
         instruct: &instructions::Instruct,
     ) {
         if self.log {
-            println!("Pc: {:#06x}", cpu.get_pc());
+            println!("Pc: {:#06x}", cpu.pc);
             println!("OPERATION____________________________________");
             println!("NB steps:{}", self.nb_steps);
             println!("Count:{}", self.tick);
-            println!("Pc: {:#06x}", cpu.get_pc());
+            println!("Pc: {:#06x}", cpu.pc);
             println!(
                 "Ram values: {:#04x} {:#04x} {:#04x}",
-                ram[cpu.get_pc() as usize],
-                ram[(cpu.get_pc() + 1) as usize],
-                ram[(cpu.get_pc() + 2) as usize]
+                ram[cpu.pc as usize],
+                ram[(cpu.pc + 1) as usize],
+                ram[(cpu.pc + 2) as usize]
             );
             println!("Opcode:{:#04x}", &instruct.opcode);
             println!("Name:{}", &instruct.inst);
             println!("Instruction: {}", &instruct.desc);
             println!("Ticks: {}", &instruct.ticks);
             println!();
-            println!("CPU STATE____________________________________");
-            println!("a:{} / {:#04x}", cpu.get_a(), cpu.get_a());
-            println!("f:{} / {:#04x}", cpu.get_f(), cpu.get_f());
-            println!("b:{} / {:#04x}", cpu.get_b(), cpu.get_b());
-            println!("c:{} / {:#04x}", cpu.get_c(), cpu.get_c());
-            println!("d:{} / {:#04x}", cpu.get_d(), cpu.get_d());
-            println!("e:{} / {:#04x}", cpu.get_e(), cpu.get_e());
-            println!("h:{} / {:#04x}", cpu.get_h(), cpu.get_h());
-            println!("l:{} / {:#04x}", cpu.get_l(), cpu.get_l());
-            println!("sp:{:#04x}", cpu.get_sp());
+            println!("a:{} / {:#04x}", cpu.a, cpu.a);
+            println!("f:{} / {:#04x}", cpu.f, cpu.f);
+            println!("b:{} / {:#04x}", cpu.b, cpu.b);
+            println!("c:{} / {:#04x}", cpu.c, cpu.c);
+            println!("d:{} / {:#04x}", cpu.d, cpu.d);
+            println!("e:{} / {:#04x}", cpu.e, cpu.e);
+            println!("h:{} / {:#04x}", cpu.h, cpu.h);
+            println!("l:{} / {:#04x}", cpu.l, cpu.l);
+            println!("sp:{:#04x}", cpu.sp);
             println!(
                 "Stack values: {:#04x} {:#04x} {:#04x}",
-                ram[cpu.get_sp() as usize],
-                ram[(cpu.get_sp() + 1) as usize],
-                ram[(cpu.get_sp() + 2) as usize]
+                ram[cpu.sp as usize],
+                ram[(cpu.sp + 1) as usize],
+                ram[(cpu.sp + 2) as usize]
             );
-            println!("mie: {}", cpu.get_mie());
+            println!("mie: {}", cpu.mie);
             println!("0xFFFF: {:#010b}", ram[0xFFFF]);
             println!("0xFF0F: {:#010b}", ram[0xFF0F]);
             println!();
