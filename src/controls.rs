@@ -1,5 +1,6 @@
 use crate::gui::Gui;
 use crate::hardware::Cpu;
+use crate::memory::Memory;
 use crate::Config;
 use sdl2::keyboard::*;
 
@@ -19,7 +20,7 @@ impl Controls {
         &mut self,
         config: &Config,
         cpu: &mut Cpu,
-        ram: &mut [u8; 0x10000],
+        mem: &mut Memory,
         gui: &mut Gui,
     ) {
         self.up = 1;
@@ -66,18 +67,18 @@ impl Controls {
                     self.select = 0;
                 }
                 Scancode::F2 => {
-                    crate::file_io::create_savestate(config, cpu, ram);
+                    crate::file_io::create_savestate(config, cpu, &mem.ram);
                 }
                 Scancode::F3 => {
-                    crate::file_io::load_savestate(config, cpu, ram);
+                    crate::file_io::load_savestate(config, cpu, &mut mem.ram);
                 }
                 _ => {}
             }
         }
     }
 
-    pub fn update_ram(&self, ram: &mut [u8; 0x10000]) {
-        let mut n = ram[0xff00];
+    pub fn update_ram(&self, mem: &mut Memory) {
+        let mut n = mem.read(0xff00);
         if n & 0b00100000 > 0 {
             //cross
             n = 0b11100000 | (self.down << 3) | (self.up << 2) | (self.left << 1) | (self.right);
@@ -85,6 +86,6 @@ impl Controls {
             //buttons
             n = 0b11010000 | (self.start << 3) | (self.select << 2) | (self.b << 1) | (self.a);
         }
-        ram[0xff00] = n;
+        mem.write(0xff00, n);
     }
 }

@@ -7,6 +7,7 @@ mod instructions;
 mod interrupts;
 mod master;
 mod timer;
+mod memory;
 const PX_TRANSFER: u8 = 2;
 
 use sdl2::gfx::framerate::FPSManager;
@@ -66,9 +67,12 @@ fn main() {
         println!("Debug mode enabled, level: {}", config.debug);
     }
 
-    // Initialize both ROM and RAM
-    let rom = file_io::load_rom(&config);
-    let mut ram = file_io::init_ram(&rom);
+    // Initialize both cartridge and RAM
+    let mut mem = memory::Memory::new(&config);
+    if config.debug >= 1 {
+        println!("Cartridge kind: {}", mem.cartridge.kind);
+        println!("Number of banks: {}", mem.cartridge.banks.len());
+    }
 
     let mut controls: controls::Controls = controls::Controls {
         up: 0,
@@ -143,13 +147,13 @@ fn main() {
 
     while window.update() {
         window.clear();
-        controls.get_keyboard(&config, &mut cpu, &mut ram, &mut window);
-        controls.update_ram(&mut ram);
+        controls.get_keyboard(&config, &mut cpu, &mut mem, &mut window);
+        controls.update_ram(&mut mem);
         window.push_matrix(&gpu.screen, &mut texture);
-        master.screen(&mut cpu, &mut gpu, &mut timer, &mut controls, &mut ram);
-        gpu.build_bg(&ram);
-        gpu.build_window(&ram);
-        gpu.build_sprite(&ram);
+        master.screen(&mut cpu, &mut gpu, &mut timer, &mut controls, &mut mem);
+        gpu.build_bg(&mem);
+        gpu.build_window(&mem);
+        gpu.build_sprite(&mem);
         if config.framerate > 0 {
             frm.delay();
         }

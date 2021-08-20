@@ -1,3 +1,5 @@
+use crate::memory::Memory;
+
 pub struct Timer {
     pub divider_ticks: u16, //update every 256
     pub division: u16,
@@ -6,18 +8,19 @@ pub struct Timer {
 }
 
 impl Timer {
-    pub fn update(&mut self, ticks: u8, ram: &mut [u8; 0x10000]) {
+    pub fn update(&mut self, ticks: u8, mem: &mut Memory) {
         self.divider_ticks += ticks as u16;
 
         //Up divider
         if self.divider_ticks > 255 {
             //println!("/!\\ DIVIDER OVERFLOW");
             self.divider_ticks = 0;
-            ram[0xff04] = ram[0xff04].wrapping_add(1);
+            // Doing this without going through the mem.write() function is essential, as it would reset to 0
+            mem.ram[0x7f04] = mem.ram[0x7f04].wrapping_add(1);
         }
 
         //update division value
-        let bits: u8 = ram[0xff07] & 0b00000011;
+        let bits: u8 = mem.read(0xff07) & 0b00000011;
         match bits {
             0b00 => self.division = 1024,
             0b01 => self.division = 16,
@@ -27,7 +30,7 @@ impl Timer {
         }
 
         //update enable value
-        if (ram[0xff07] & 0b00000100) > 0 {
+        if (mem.read(0xff07) & 0b00000100) > 0 {
             self.timer_enb = true;
         } else {
             self.timer_enb = false;
@@ -37,12 +40,12 @@ impl Timer {
         if self.timer_enb {
             self.timer_ticks += ticks as u16;
             if self.timer_ticks > self.division {
-                if ram[0xff05] == 255 {
+                if mem.read(0xff05) == 255 {
                     //println!("/!\\ TIMER OVERFLOW");
-                    ram[0xff05] = ram[0xff06];
-                    ram[0xff0f] = ram[0xff0f] | 0b00000100;
+                    mem.write(0xff05, mem.read(0xff06));
+                    mem.write(0xff0f, mem.read(0xff0f) | 0b00000100);
                 } else {
-                    ram[0xff05] += 1;
+                    mem.write(0xff05, mem.read(0xff05) + 1);
                 }
                 self.timer_ticks = 0;
             }

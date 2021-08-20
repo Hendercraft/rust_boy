@@ -1,4 +1,5 @@
-use crate::{controls, dma, hardware, instructions, interrupts, timer};
+use crate::{controls, dma, hardware, instructions, interrupts, timer, memory};
+use memory::Memory;
 use std::io::{stdin, stdout, Read, Write};
 
 const H_BLANK: u8 = 0;
@@ -22,40 +23,40 @@ impl Master {
         cpu: &mut hardware::Cpu,
         timer: &mut timer::Timer,
         controls: &mut controls::Controls,
-        ram: &mut [u8; 0x10000],
+        mem: &mut Memory,
     ) {
         self.nb_steps += 1;
 
-        interrupts::interrupt_check(cpu, ram);
+        interrupts::interrupt_check(cpu, mem);
         cpu.clear_ticks();
 
-        let instruct = instructions::Instruct::fetch(cpu, ram[cpu.pc as usize], ram[cpu.pc.wrapping_add(1) as usize]);
+        let instruct = instructions::Instruct::fetch(cpu, mem.read(cpu.pc), mem.read(cpu.pc.wrapping_add(1)));
         cpu.pc = cpu.pc.wrapping_add(1);
 
         // println!("Step: {:#08}, PC: {:#06x}, OPCODE:{:#04x} => {:#04x} | {:#04x} | {:#04x} ({})", self.nb_steps, cpu.pc, instruct.opcode, 
-        //     ram[(cpu.pc + 0) as usize], ram[(cpu.pc + 1) as usize], ram[(cpu.pc + 2) as usize], instruct.inst,
+        //     mem[(cpu.pc + 0) as usize], mem[(cpu.pc + 1) as usize], mem[(cpu.pc + 2) as usize], instruct.inst,
         // );
 
         if self.step_by_step {
             self.log = true;
-            self.maxi_debug_print(&cpu, &timer, &ram, &controls, &instruct);
+            self.maxi_debug_print(&cpu, &timer, &mem, &controls, &instruct);
             wait();
         }
         
         self.tick = self.tick.wrapping_add(instruct.ticks as u64);
         self.tick = self.tick.wrapping_add((cpu.get_ticks()) as u64);
 
-        timer.update(instruct.ticks, ram);
+        timer.update(instruct.ticks, mem);
 
-        controls.update_ram(ram);
+        controls.update_ram(mem);
         
         cpu.update_interrupt_status(); // If instruction from last step wants to change MIE
 
-        instruct.inst.exec(cpu, ram);
+        instruct.inst.exec(cpu, mem);
 
         //adding temporary ticks from the cpu
 
-        dma::update_dma(ram);
+        dma::update_dma(mem);
     }
 
     pub fn screen(
@@ -64,9 +65,9 @@ impl Master {
         gpu: &mut hardware::Gpu,
         timer: &mut timer::Timer,
         controls: &mut controls::Controls,
-        ram: &mut [u8; 0x10000],
+        mem: &mut Memory,
     ) {
-        ram[0xFF44] = 0;
+        mem.write(0xFF44, 0);
         for i in 0..144 {
             while self.tick < 114 {
                 if self.tick > 63 {
@@ -80,23 +81,23 @@ impl Master {
                 //println!("Line: {}",i);
                 //println!("Mode: {}",self.mode);
                 //println!(" ");
-                self.step(cpu, timer, controls, ram);
-                self.lcd_stat(i, ram);
+                self.step(cpu, timer, controls, mem);
+                self.lcd_stat(i, mem);
                 if self.step_by_step {
                     wait();
                 }
             }
             self.tick = 0;
-            gpu.push_line(ram);
+            gpu.push_line(mem);
 
             if self.line_by_line {
                 wait();
             }
 
-            ram[0xff44] += 1;
+            mem.write(0xff44, mem.read(0xff44) + 1);
         }
 
-        ram[0xFF0F] = ram[0xFF0F] | 0b1;
+        mem.write(0xFF0F, mem.read(0xFF0F) | 0b1);
         self.mode = V_BLANK;
 
         for _j in 0..10 {
@@ -106,8 +107,8 @@ impl Master {
                 //println!("State: V-Blank");
                 //println!("Mode: {}",self.mode);
                 //println!(" ");
-                self.step(cpu, timer, controls, ram);
-                self.lcd_stat(254, ram);
+                self.step(cpu, timer, controls, mem);
+                self.lcd_stat(254, mem);
                 if self.step_by_step {
                     wait();
                 }
@@ -116,7 +117,7 @@ impl Master {
             if self.line_by_line {
                 wait();
             }
-            ram[0xff44] += 1;
+            mem.write(0xff44, mem.read(0xff44) + 1);
         }
 
         if self.screen_by_screen {
@@ -128,7 +129,7 @@ impl Master {
         &self,
         cpu: &hardware::Cpu,
         timer: &timer::Timer,
-        ram: &[u8; 0x10000],
+        mem: &Memory,
         controls: &controls::Controls,
         instruct: &instructions::Instruct,
     ) {
@@ -140,9 +141,9 @@ impl Master {
             println!("Pc: {:#06x}", cpu.pc);
             println!(
                 "Ram values: {:#04x} {:#04x} {:#04x}",
-                ram[cpu.pc as usize],
-                ram[(cpu.pc + 1) as usize],
-                ram[(cpu.pc + 2) as usize]
+                mem.read(cpu.pc),
+                mem.read(cpu.pc + 1),
+                mem.read(cpu.pc + 2)
             );
             println!("Opcode:{:#04x}", &instruct.opcode);
             println!("Name:{}", &instruct.inst);
@@ -160,13 +161,13 @@ impl Master {
             println!("sp:{:#04x}", cpu.sp);
             println!(
                 "Stack values: {:#04x} {:#04x} {:#04x}",
-                ram[cpu.sp as usize],
-                ram[(cpu.sp + 1) as usize],
-                ram[(cpu.sp + 2) as usize]
+                mem.read(cpu.sp),
+                mem.read(cpu.sp + 1),
+                mem.read(cpu.sp + 2)
             );
             println!("mie: {}", cpu.mie);
-            println!("0xFFFF: {:#010b}", ram[0xFFFF]);
-            println!("0xFF0F: {:#010b}", ram[0xFF0F]);
+            println!("0xFFFF: {:#010b}", mem.read(0xFFFF));
+            println!("0xFF0F: {:#010b}", mem.read(0xFF0F));
             println!();
             println!("FLAGS STATE__________________________________");
             println!("Z:{}", cpu.get_flag(hardware::Flag::Z));
@@ -175,11 +176,11 @@ impl Master {
             println!("C:{}", cpu.get_flag(hardware::Flag::C));
             println!();
             println!("TIMER STATE__________________________________");
-            println!("Divider:{:#04x}", ram[0xff04]);
+            println!("Divider:{:#04x}", mem.read(0xff04));
             println!("Divider ticks:{}", timer.divider_ticks);
             println!("Timer enable:{}", timer.timer_enb);
             println!("Timer division:{}", timer.division);
-            println!("Timer:{:#04x}", ram[0xff05]);
+            println!("Timer:{:#04x}", mem.read(0xff05));
             println!("Timer ticks:{}", timer.timer_ticks);
             println!();
             println!("INPUT STATE__________________________________");
@@ -194,33 +195,33 @@ impl Master {
                 controls.select,
                 controls.start
             );
-            println!("0XFF00: {:#010b}", ram[0xFF00]);
+            println!("0XFF00: {:#010b}", mem.read(0xFF00));
             println!();
             println!("WARNING______________________________________");
         }
     }
 
-    pub fn lcd_stat(&mut self, line: u8, ram: &mut [u8; 0x10000]) {
-        if ram[0xFF41] & 0b0100000 > 0 && line == ram[0xFF45] && self.previous_mode == H_BLANK {
-            ram[0xFF0F] = ram[0xFF0F] | 0b00000010;
+    pub fn lcd_stat(&mut self, line: u8, mem: &mut Memory) {
+        if mem.read(0xFF41) & 0b0100000 > 0 && line == mem.read(0xFF45) && self.previous_mode == H_BLANK {
+            mem.write(0xFF0F, mem.read(0xFF0F) | 0b00000010);
             //if self.log {println!("/!\\ STAT interrupt trigerred: LY=LYC");}
             self.previous_mode = self.mode;
         }
-        if ram[0xFF41] & 0b00001000 > 0 && self.mode == H_BLANK && self.mode != self.previous_mode {
-            ram[0xFF0F] = ram[0xFF0F] | 0b00000010;
+        if mem.read(0xFF41) & 0b00001000 > 0 && self.mode == H_BLANK && self.mode != self.previous_mode {
+            mem.write(0xFF0F, mem.read(0xFF0F) | 0b00000010);
             //if self.log {println!("/!\\ STAT interrupt trigerred: H_BLANK");}
             self.previous_mode = self.mode;
         }
-        if ram[0xFF41] & 0b00010000 > 0 && self.mode == V_BLANK && self.mode != self.previous_mode {
-            ram[0xFF0F] = ram[0xFF0F] | 0b00000010;
+        if mem.read(0xFF41) & 0b00010000 > 0 && self.mode == V_BLANK && self.mode != self.previous_mode {
+            mem.write(0xFF0F, mem.read(0xFF0F) | 0b00000010);
             //if self.log {println!("/!\\ STAT interrupt trigerred: V_BLANK");}
             self.previous_mode = self.mode;
         }
-        if ram[0xFF41] & 0b0010000 > 0
+        if mem.read(0xFF41) & 0b0010000 > 0
             && self.mode == PX_TRANSFER
             && self.mode != self.previous_mode
         {
-            ram[0xFF0F] = ram[0xFF0F] | 0b00000010;
+            mem.write(0xFF0F, mem.read(0xFF0F) | 0b00000010);
             //if self.log {println!("/!\\ STAT interrupt trigerred: PX_TRANSFER");}
             self.previous_mode = self.mode;
         }

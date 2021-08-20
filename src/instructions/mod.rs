@@ -1,5 +1,5 @@
-use crate::hardware;
-use hardware::{Flag, RegU8, RegU16, Cpu};
+use crate::hardware::{Flag, RegU8, RegU16, Cpu};
+use crate::memory::Memory;
 use std::fmt;
 
 mod instruct_fn;
@@ -47,39 +47,39 @@ pub enum InstructType {
 use InstructType::*;
 
 impl InstructType {
-    pub fn exec(&self, cpu: &mut Cpu, ram: &mut [u8; 0x10000]) {
+    pub fn exec(&self, cpu: &mut Cpu, mem: &mut Memory) {
         match self {
-            Load(src, dest) => instruct_fn::load(cpu, ram, src, dest),
-            LoadPlus(src, dest, inc) => instruct_fn::load_plus(cpu, ram, src, dest, *inc),
-            LoadU16(src, dest) => instruct_fn::load_u16(cpu, ram, src, dest),
-            Push(src) => instruct_fn::push(cpu, ram, src),
-            Pop(dest) => instruct_fn::pop(cpu, ram, dest),
-            Add(src, carry) => instruct_fn::add(cpu, ram, src, *carry),
-            Sub(src, carry) => instruct_fn::sub(cpu, ram, src, *carry),
-            And(src) => instruct_fn::and(cpu, ram, src),
-            Or(src) => instruct_fn::or(cpu, ram, src),
-            Xor(src) => instruct_fn::xor(cpu, ram, src),
-            Cmp(src) => { instruct_fn::cmp(cpu, ram, src, false); },
-            Inc(reg) => instruct_fn::inc(cpu, ram, reg),
-            Dec(reg) => instruct_fn::dec(cpu, ram, reg),
-            AddU16(src) => instruct_fn::add_u16(cpu, ram, src),
-            AddU16I8(dest, offset) => instruct_fn::add_u16_i8(cpu, ram, dest, offset),
-            IncU16(reg) => instruct_fn::inc_u16(cpu, ram, reg),
-            DecU16(reg) => instruct_fn::dec_u16(cpu, ram, reg),
-            Daa => instruct_fn::daa(cpu, ram),
-            Cpl => instruct_fn::cpl(cpu, ram),
-            SetCarry(flip) => instruct_fn::set_carry(cpu, ram, *flip),
+            Load(src, dest) => instruct_fn::load(cpu, mem, src, dest),
+            LoadPlus(src, dest, inc) => instruct_fn::load_plus(cpu, mem, src, dest, *inc),
+            LoadU16(src, dest) => instruct_fn::load_u16(cpu, mem, src, dest),
+            Push(src) => instruct_fn::push(cpu, mem, src),
+            Pop(dest) => instruct_fn::pop(cpu, mem, dest),
+            Add(src, carry) => instruct_fn::add(cpu, mem, src, *carry),
+            Sub(src, carry) => instruct_fn::sub(cpu, mem, src, *carry),
+            And(src) => instruct_fn::and(cpu, mem, src),
+            Or(src) => instruct_fn::or(cpu, mem, src),
+            Xor(src) => instruct_fn::xor(cpu, mem, src),
+            Cmp(src) => { instruct_fn::cmp(cpu, mem, src, false); },
+            Inc(reg) => instruct_fn::inc(cpu, mem, reg),
+            Dec(reg) => instruct_fn::dec(cpu, mem, reg),
+            AddU16(src) => instruct_fn::add_u16(cpu, mem, src),
+            AddU16I8(dest, offset) => instruct_fn::add_u16_i8(cpu, mem, dest, offset),
+            IncU16(reg) => instruct_fn::inc_u16(cpu, mem, reg),
+            DecU16(reg) => instruct_fn::dec_u16(cpu, mem, reg),
+            Daa => instruct_fn::daa(cpu, mem),
+            Cpl => instruct_fn::cpl(cpu, mem),
+            SetCarry(flip) => instruct_fn::set_carry(cpu, mem, *flip),
             Nop => {},
-            ChangeMie(enable) => instruct_fn::change_mie(cpu, ram, *enable),
+            ChangeMie(enable) => instruct_fn::change_mie(cpu, mem, *enable),
             Rotate(reg, left, through_carry, update_z, shift, keep_msb) => 
-                instruct_fn::rotate(cpu, ram, reg, *left, *through_carry, *update_z, *shift, *keep_msb),
-            Swap(reg) => instruct_fn::swap(cpu, ram, reg),
-            Bit(reg, bit_pos) => instruct_fn::bit(cpu, ram, reg, *bit_pos),
-            SetBit(reg, bit_pos) => instruct_fn::set_bit(cpu, ram, reg, *bit_pos),
-            ResetBit(reg, bit_pos) => instruct_fn::reset_bit(cpu, ram, reg, *bit_pos),
-            Jump(addr, is_call, flag, is_set) => instruct_fn::jump(cpu, ram, addr, *is_call, flag.as_ref(), *is_set),
-            Reset(nth_byte) => instruct_fn::reset(cpu, ram, *nth_byte),
-            Ret(flag, is_set, i_enable) => instruct_fn::ret(cpu, ram, flag.as_ref(), *is_set, *i_enable),
+                instruct_fn::rotate(cpu, mem, reg, *left, *through_carry, *update_z, *shift, *keep_msb),
+            Swap(reg) => instruct_fn::swap(cpu, mem, reg),
+            Bit(reg, bit_pos) => instruct_fn::bit(cpu, mem, reg, *bit_pos),
+            SetBit(reg, bit_pos) => instruct_fn::set_bit(cpu, mem, reg, *bit_pos),
+            ResetBit(reg, bit_pos) => instruct_fn::reset_bit(cpu, mem, reg, *bit_pos),
+            Jump(addr, is_call, flag, is_set) => instruct_fn::jump(cpu, mem, addr, *is_call, flag.as_ref(), *is_set),
+            Reset(nth_byte) => instruct_fn::reset(cpu, mem, *nth_byte),
+            Ret(flag, is_set, i_enable) => instruct_fn::ret(cpu, mem, flag.as_ref(), *is_set, *i_enable),
         }
     }
 }

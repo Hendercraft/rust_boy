@@ -1,4 +1,5 @@
 use crate::hardware::Cpu;
+use crate::memory::Memory;
 
 const INTERRUPTS_VBLANK: u8 = 1 << 0;
 const INTERRUPTS_LCDSTAT: u8 = 1 << 1;
@@ -6,38 +7,38 @@ const INTERRUPTS_TIMER: u8 = 1 << 2;
 const INTERRUPTS_SERIAL: u8 = 1 << 3;
 const INTERRUPTS_JOYPAD: u8 = 1 << 4;
 
-pub fn interrupt_check(cpu: &mut Cpu, ram: &mut [u8; 0x10000]) -> bool {
+pub fn interrupt_check(cpu: &mut Cpu, mem: &mut Memory) -> bool {
     if cpu.mie {
-        if ram[0xFFFF as usize] & ram[0xFF0F as usize] > 0 {
-            let mask: u8 = ram[0xFFFF as usize] & ram[0xFF0F as usize];
+        if mem.read(0xFFFF) & mem.read(0xFF0F) > 0 {
+            let mask: u8 = mem.read(0xFFFF) & mem.read(0xFF0F);
 
             if mask & INTERRUPTS_VBLANK > 0 {
-                ram[0xFF0F as usize] &= !INTERRUPTS_VBLANK;
-                vblank(cpu, ram);
+                mem.write(0xFF0F, mem.read(0xFF0F) & !INTERRUPTS_VBLANK);
+                vblank(cpu, mem);
                 return true;
             }
 
             if mask & INTERRUPTS_LCDSTAT > 0 {
-                ram[0xFF0F as usize] &= !INTERRUPTS_LCDSTAT;
-                lcd_stat(cpu, ram);
+                mem.write(0xFF0F, mem.read(0xFF0F) & !INTERRUPTS_LCDSTAT);
+                lcd_stat(cpu, mem);
                 return true;
             }
 
             if mask & INTERRUPTS_TIMER > 0 {
-                ram[0xFF0F as usize] &= !INTERRUPTS_TIMER;
-                timer(cpu, ram);
+                mem.write(0xFF0F, mem.read(0xFF0F) & !INTERRUPTS_TIMER);
+                timer(cpu, mem);
                 return true;
             }
 
             if mask & INTERRUPTS_SERIAL > 0 {
-                ram[0xFF0F as usize] &= !INTERRUPTS_SERIAL;
-                serial(cpu, ram);
+                mem.write(0xFF0F, mem.read(0xFF0F) & !INTERRUPTS_SERIAL);
+                serial(cpu, mem);
                 return true;
             }
 
             if mask & INTERRUPTS_JOYPAD > 0 {
-                ram[0xFF0F as usize] &= !INTERRUPTS_JOYPAD;
-                joypad(cpu, ram);
+                mem.write(0xFF0F, mem.read(0xFF0F) & !INTERRUPTS_JOYPAD);
+                joypad(cpu, mem);
                 return true;
             }
         }
@@ -45,32 +46,32 @@ pub fn interrupt_check(cpu: &mut Cpu, ram: &mut [u8; 0x10000]) -> bool {
     return false;
 }
 
-pub fn vblank(cpu: &mut Cpu, ram: &mut [u8; 0x10000]) {
+pub fn vblank(cpu: &mut Cpu, mem: &mut Memory) {
     cpu.mie = false;
-    cpu.write_u16_to_stack(cpu.pc, ram);
+    cpu.write_u16_to_stack(cpu.pc, mem);
     cpu.pc = 0x40; // +12 ticks
 }
 
-pub fn lcd_stat(cpu: &mut Cpu, ram: &mut [u8; 0x10000]) {
+pub fn lcd_stat(cpu: &mut Cpu, mem: &mut Memory) {
     cpu.mie = false;
-    cpu.write_u16_to_stack(cpu.pc, ram);
+    cpu.write_u16_to_stack(cpu.pc, mem);
     cpu.pc = 0x48; // +12 ticks
 }
 
-pub fn timer(cpu: &mut Cpu, ram: &mut [u8; 0x10000]) {
+pub fn timer(cpu: &mut Cpu, mem: &mut Memory) {
     cpu.mie = false;
-    cpu.write_u16_to_stack(cpu.pc, ram);
+    cpu.write_u16_to_stack(cpu.pc, mem);
     cpu.pc = 0x50; // +12 ticks
 }
 
-pub fn serial(cpu: &mut Cpu, ram: &mut [u8; 0x10000]) {
+pub fn serial(cpu: &mut Cpu, mem: &mut Memory) {
     cpu.mie = false;
-    cpu.write_u16_to_stack(cpu.pc, ram);
+    cpu.write_u16_to_stack(cpu.pc, mem);
     cpu.pc = 0x58; // +12 ticks
 }
 
-pub fn joypad(cpu: &mut Cpu, ram: &mut [u8; 0x10000]) {
+pub fn joypad(cpu: &mut Cpu, mem: &mut Memory) {
     cpu.mie = false;
-    cpu.write_u16_to_stack(cpu.pc, ram);
+    cpu.write_u16_to_stack(cpu.pc, mem);
     cpu.pc = 0x60; // +12 ticks
 }
