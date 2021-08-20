@@ -8,8 +8,8 @@ const INTERRUPTS_SERIAL: u8 = 1 << 3;
 const INTERRUPTS_JOYPAD: u8 = 1 << 4;
 
 pub fn interrupt_check(cpu: &mut Cpu, mem: &mut Memory) -> bool {
-    if cpu.mie {
-        if mem.read(0xFFFF) & mem.read(0xFF0F) > 0 {
+    if mem.read(0xFFFF) & mem.read(0xFF0F) > 0 {
+        if cpu.mie {
             let mask: u8 = mem.read(0xFFFF) & mem.read(0xFF0F);
 
             if mask & INTERRUPTS_VBLANK > 0 {
@@ -42,8 +42,10 @@ pub fn interrupt_check(cpu: &mut Cpu, mem: &mut Memory) -> bool {
                 return true;
             }
         }
+        true
+    } else {
+        false
     }
-    return false;
 }
 
 pub fn vblank(cpu: &mut Cpu, mem: &mut Memory) {

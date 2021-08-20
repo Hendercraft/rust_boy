@@ -113,6 +113,7 @@ fn main() {
         mie: true,
         pending_mie: None,
         pending_ticks: 0,
+        is_halted: false,
     };
 
     let mut timer: timer::Timer = timer::Timer {

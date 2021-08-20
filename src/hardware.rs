@@ -98,6 +98,7 @@ pub struct Cpu {
     pub mie: bool,
     pub pending_mie: Option<bool>,
     pub pending_ticks: u8,
+    pub is_halted: bool,
 }
 
 impl Cpu {

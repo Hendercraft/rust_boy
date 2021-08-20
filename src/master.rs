@@ -27,14 +27,26 @@ impl Master {
     ) {
         self.nb_steps += 1;
 
-        interrupts::interrupt_check(cpu, mem);
+        let interrupt_occured = interrupts::interrupt_check(cpu, mem);
+
+        if interrupt_occured {
+            cpu.is_halted = false;
+        }
+        
+        if cpu.is_halted {
+            // Is this correct ? I have no idea, but it work
+            self.tick = self.tick.wrapping_add(4);
+
+            return
+        }
+        
         cpu.clear_ticks();
 
         let instruct = instructions::Instruct::fetch(cpu, mem.read(cpu.pc), mem.read(cpu.pc.wrapping_add(1)));
         cpu.pc = cpu.pc.wrapping_add(1);
 
         // println!("Step: {:#08}, PC: {:#06x}, OPCODE:{:#04x} => {:#04x} | {:#04x} | {:#04x} ({})", self.nb_steps, cpu.pc, instruct.opcode, 
-        //     mem[(cpu.pc + 0) as usize], mem[(cpu.pc + 1) as usize], mem[(cpu.pc + 2) as usize], instruct.inst,
+        //     mem.read(cpu.pc + 0), mem.read(cpu.pc + 1), mem.read(cpu.pc + 2), instruct.inst,
         // );
 
         if self.step_by_step {

@@ -145,7 +145,7 @@ impl Memory {
     pub fn write(&mut self, addr: u16, data: u8) {
         match addr {
             // RAM enable
-            0x0000..=0x1FFF => todo!("RAM enable"),
+            0x0000..=0x1FFF => if self.cartridge.kind.ram { todo!("RAM enable") },
             // Select lower 5 bits of the bank number
             0x2000..=0x3FFF => if let Some(mbc) = &self.cartridge.kind.mbc {
                 match mbc {

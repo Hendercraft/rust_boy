@@ -33,6 +33,7 @@ pub enum InstructType {
     Cpl, // (register is A)
     SetCarry(bool), // Flip flag (true) / set flag (false)
     Nop,
+    Halt,
     ChangeMie(bool), // enable interrupts (true) / disable interrupts (false)
     Rotate(RegU8, bool, bool, bool, bool, bool), // Register, left/right, through carry, update_z, shift/rotate, keep_msb
     Swap(RegU8), // Register
@@ -70,6 +71,7 @@ impl InstructType {
             Cpl => instruct_fn::cpl(cpu, mem),
             SetCarry(flip) => instruct_fn::set_carry(cpu, mem, *flip),
             Nop => {},
+            Halt => { cpu.is_halted = true },
             ChangeMie(enable) => instruct_fn::change_mie(cpu, mem, *enable),
             Rotate(reg, left, through_carry, update_z, shift, keep_msb) => 
                 instruct_fn::rotate(cpu, mem, reg, *left, *through_carry, *update_z, *shift, *keep_msb),
@@ -108,6 +110,7 @@ impl fmt::Display for InstructType {
             Cpl => write!(f, "CPL"),
             SetCarry(flip) => write!(f, "{}", if *flip { "CCF" } else { "SCF" }),
             Nop => write!(f, "NOP"),
+            Halt => write!(f, "HALT"),
             ChangeMie(enable) => write!(f, "{}", if *enable { "EI" } else { "DI" }),
             Rotate(reg, left, through_carry, update_z, shift, keep_msb) => write!(f, "{}{}{}{}{}",
                 if *shift { "S" } else { "R" }, if *left { "L" } else { "R" },
@@ -296,7 +299,7 @@ impl Instruct {
             0x37 => inst!(SetCarry(false), 4, "Set C flag, reset N and H"),
             0x00 => inst!(Nop, 4, "Aussi inutile que les cours de GE00"),
             #[allow(unreachable_code)]
-            0x76 => inst!(todo!(), 4, "/!\\ Stop CPU until interrupt is received"),
+            0x76 => inst!(Halt, 4, "Stop CPU until interrupt is received"),
             #[allow(unreachable_code)]
             0x10 => inst!(todo!(), 4, "/!\\ Stop CPU and LCD until button pressed"),
             0xF3 => inst!(ChangeMie(false), 4, "Disable interrupts"),
