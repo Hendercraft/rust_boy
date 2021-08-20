@@ -105,12 +105,12 @@ impl Cpu {
     fn get_u16(high: u8, low: u8) -> u16 {
         ((high as u16) << 8) | low as u16
     }
-    
+
     fn set_u16(high: &mut u8, low: &mut u8, nn: u16) {
         *high = (nn >> 8) as u8;
         *low = nn as u8;
     }
-    
+
     pub fn get_reg_u8(&mut self, mem: &Memory, reg: &RegU8) -> u8 {
         match reg {
             RegU8::A => self.a,
@@ -136,7 +136,7 @@ impl Cpu {
             RegU16::U16 => {
                 let low = self.get_op(mem) as u16;
                 ((self.get_op(mem) as u16) << 8) + low
-            },
+            }
             // A cast from u8 to i8 keeps the bits the way they are
             // A cast from i8 to u16 just works (the msb is duplicated to fill the whole upper byte)
             // Note that directly casting from u8 to u16 wouldn't work, as it would always have a null upper byte
@@ -158,11 +158,11 @@ impl Cpu {
             RegU8::RamU8(reg_u8) => {
                 let addr_low = self.get_reg_u8(mem, reg_u8);
                 mem.write(0xff00 + addr_low as u16, n);
-            },
+            }
             RegU8::RamU16(reg_u16) => {
                 let addr = self.get_reg_u16(mem, reg_u16);
                 mem.write(addr, n);
-            },
+            }
         }
     }
 
@@ -189,7 +189,7 @@ impl Cpu {
             self.pending_mie = None;
         }
     }
-    
+
     //Flags
     pub fn get_flag(&self, flag: Flag) -> bool {
         match flag {
@@ -217,7 +217,7 @@ impl Cpu {
     fn get_op(&mut self, mem: &Memory) -> u8 {
         let n = mem.read(self.pc);
         self.pc = self.pc.wrapping_add(1);
-        
+
         n
     }
 
@@ -233,7 +233,7 @@ impl Cpu {
         let h: u8 = mem.read(self.sp + 1);
         let l: u8 = mem.read(self.sp);
         let value: u16 = ((h as u16) << 8) | l as u16;
-        
+
         self.sp = self.sp.wrapping_add(2);
         value
     }

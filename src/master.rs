@@ -1,4 +1,4 @@
-use crate::{controls, dma, hardware, instructions, interrupts, timer, memory};
+use crate::{controls, dma, hardware, instructions, interrupts, memory, timer};
 use memory::Memory;
 use std::io::{stdin, stdout, Read, Write};
 
@@ -32,20 +32,21 @@ impl Master {
         if interrupt_occured {
             cpu.is_halted = false;
         }
-        
+
         if cpu.is_halted {
             // Is this correct ? I have no idea, but it work
             self.tick = self.tick.wrapping_add(4);
 
-            return
+            return;
         }
-        
+
         cpu.clear_ticks();
 
-        let instruct = instructions::Instruct::fetch(cpu, mem.read(cpu.pc), mem.read(cpu.pc.wrapping_add(1)));
+        let instruct =
+            instructions::Instruct::fetch(cpu, mem.read(cpu.pc), mem.read(cpu.pc.wrapping_add(1)));
         cpu.pc = cpu.pc.wrapping_add(1);
 
-        // println!("Step: {:#08}, PC: {:#06x}, OPCODE:{:#04x} => {:#04x} | {:#04x} | {:#04x} ({})", self.nb_steps, cpu.pc, instruct.opcode, 
+        // println!("Step: {:#08}, PC: {:#06x}, OPCODE:{:#04x} => {:#04x} | {:#04x} | {:#04x} ({})", self.nb_steps, cpu.pc, instruct.opcode,
         //     mem.read(cpu.pc + 0), mem.read(cpu.pc + 1), mem.read(cpu.pc + 2), instruct.inst,
         // );
 
@@ -54,14 +55,14 @@ impl Master {
             self.maxi_debug_print(&cpu, &timer, &mem, &controls, &instruct);
             wait();
         }
-        
+
         self.tick = self.tick.wrapping_add(instruct.ticks as u64);
         self.tick = self.tick.wrapping_add((cpu.get_ticks()) as u64);
 
         timer.update(instruct.ticks, mem);
 
         controls.update_ram(mem);
-        
+
         cpu.update_interrupt_status(); // If instruction from last step wants to change MIE
 
         instruct.inst.exec(cpu, mem);
@@ -214,17 +215,26 @@ impl Master {
     }
 
     pub fn lcd_stat(&mut self, line: u8, mem: &mut Memory) {
-        if mem.read(0xFF41) & 0b0100000 > 0 && line == mem.read(0xFF45) && self.previous_mode == H_BLANK {
+        if mem.read(0xFF41) & 0b0100000 > 0
+            && line == mem.read(0xFF45)
+            && self.previous_mode == H_BLANK
+        {
             mem.write(0xFF0F, mem.read(0xFF0F) | 0b00000010);
             //if self.log {println!("/!\\ STAT interrupt trigerred: LY=LYC");}
             self.previous_mode = self.mode;
         }
-        if mem.read(0xFF41) & 0b00001000 > 0 && self.mode == H_BLANK && self.mode != self.previous_mode {
+        if mem.read(0xFF41) & 0b00001000 > 0
+            && self.mode == H_BLANK
+            && self.mode != self.previous_mode
+        {
             mem.write(0xFF0F, mem.read(0xFF0F) | 0b00000010);
             //if self.log {println!("/!\\ STAT interrupt trigerred: H_BLANK");}
             self.previous_mode = self.mode;
         }
-        if mem.read(0xFF41) & 0b00010000 > 0 && self.mode == V_BLANK && self.mode != self.previous_mode {
+        if mem.read(0xFF41) & 0b00010000 > 0
+            && self.mode == V_BLANK
+            && self.mode != self.previous_mode
+        {
             mem.write(0xFF0F, mem.read(0xFF0F) | 0b00000010);
             //if self.log {println!("/!\\ STAT interrupt trigerred: V_BLANK");}
             self.previous_mode = self.mode;

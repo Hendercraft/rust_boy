@@ -6,8 +6,8 @@ mod hardware;
 mod instructions;
 mod interrupts;
 mod master;
-mod timer;
 mod memory;
+mod timer;
 const PX_TRANSFER: u8 = 2;
 
 use sdl2::gfx::framerate::FPSManager;

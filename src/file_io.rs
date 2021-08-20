@@ -1,6 +1,6 @@
+use std::convert::TryInto;
 use std::fs;
 use std::io;
-use std::convert::TryInto;
 
 use crate::{hardware::Cpu, Config};
 
@@ -9,7 +9,7 @@ pub fn load_rom(config: &Config) -> Vec<[u8; 0x4000]> {
     let nb_banks = contents.len() / 0x4000;
     let mut banks: Vec<[u8; 0x4000]> = Vec::new();
     for i in 0..nb_banks {
-        let bank = contents[i*0x4000..(i+1)*0x4000].try_into().unwrap();
+        let bank = contents[i * 0x4000..(i + 1) * 0x4000].try_into().unwrap();
         banks.push(bank);
     }
 

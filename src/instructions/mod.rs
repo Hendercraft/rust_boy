@@ -1,4 +1,4 @@
-use crate::hardware::{Flag, RegU8, RegU16, Cpu};
+use crate::hardware::{Cpu, Flag, RegU16, RegU8};
 use crate::memory::Memory;
 use std::fmt;
 
@@ -12,37 +12,37 @@ pub struct Instruct {
 }
 
 pub enum InstructType {
-    Load(RegU8, RegU8), // Source, destination
+    Load(RegU8, RegU8),           // Source, destination
     LoadPlus(RegU8, RegU8, bool), // Source, destination, increase (true) / decrease (false)
-    LoadU16(RegU16, RegU16), // Source, destination
-    Push(RegU16), // Source (dest is STACK)
-    Pop(RegU16), // Destintation (source is STACK)
-    Add(RegU8, bool), // Source, with carry (true) / without carry (false)
-    Sub(RegU8, bool), // Source, with carry (true) / without carry (false)
-    And(RegU8), // Source (dest is A)
-    Or(RegU8), // Source (dest is A)
-    Xor(RegU8), // Source (dest is A)
-    Cmp(RegU8), // Source (dest is A)
-    Inc(RegU8), // Register
-    Dec(RegU8), // Register
-    AddU16(RegU16), // Source (dest is HL)
-    AddU16I8(RegU16, RegU16), // Destination, immediate signed offset (source is SP)
-    IncU16(RegU16), // Register
-    DecU16(RegU16), // Register
-    Daa, // (register is A)
-    Cpl, // (register is A)
-    SetCarry(bool), // Flip flag (true) / set flag (false)
+    LoadU16(RegU16, RegU16),      // Source, destination
+    Push(RegU16),                 // Source (dest is STACK)
+    Pop(RegU16),                  // Destintation (source is STACK)
+    Add(RegU8, bool),             // Source, with carry (true) / without carry (false)
+    Sub(RegU8, bool),             // Source, with carry (true) / without carry (false)
+    And(RegU8),                   // Source (dest is A)
+    Or(RegU8),                    // Source (dest is A)
+    Xor(RegU8),                   // Source (dest is A)
+    Cmp(RegU8),                   // Source (dest is A)
+    Inc(RegU8),                   // Register
+    Dec(RegU8),                   // Register
+    AddU16(RegU16),               // Source (dest is HL)
+    AddU16I8(RegU16, RegU16),     // Destination, immediate signed offset (source is SP)
+    IncU16(RegU16),               // Register
+    DecU16(RegU16),               // Register
+    Daa,                          // (register is A)
+    Cpl,                          // (register is A)
+    SetCarry(bool),               // Flip flag (true) / set flag (false)
     Nop,
     Halt,
-    ChangeMie(bool), // enable interrupts (true) / disable interrupts (false)
+    ChangeMie(bool),                             // Enable interrupts (true) / disable interrupts (false)
     Rotate(RegU8, bool, bool, bool, bool, bool), // Register, left/right, through carry, update_z, shift/rotate, keep_msb
-    Swap(RegU8), // Register
-    Bit(RegU8, u8), // Register, bit position (0-7)
-    SetBit(RegU8, u8), // Register, bit position (0-7)
-    ResetBit(RegU8, u8), // Register, bit position (0-7)
-    Jump(RegU16, bool, Option<Flag>, bool), // Address, call / jump, unconditionnal / flag dependant, jump if set / if reset
-    Reset(u16), // N-th byte of the first page to jump to (i.e. 2 = 0x0010)
-    Ret(Option<Flag>, bool, bool), // Unconditionnal / flag dependant, jump if set / if reset, enable interrupts / do nothing
+    Swap(RegU8),                                 // Register
+    Bit(RegU8, u8),                              // Register, bit position (0-7)
+    SetBit(RegU8, u8),                           // Register, bit position (0-7)
+    ResetBit(RegU8, u8),                         // Register, bit position (0-7)
+    Jump(RegU16, bool, Option<Flag>, bool),      // Address, call / jump, unconditionnal / flag dependant, jump if set / if reset
+    Reset(u16),                                  // N-th byte of the first page to jump to (i.e. 2 = 0x0010)
+    Ret(Option<Flag>, bool, bool),               // Unconditionnal / flag dependant, jump if set / if reset, enable interrupts / do nothing
 }
 
 use InstructType::*;
@@ -70,18 +70,23 @@ impl InstructType {
             Daa => instruct_fn::daa(cpu, mem),
             Cpl => instruct_fn::cpl(cpu, mem),
             SetCarry(flip) => instruct_fn::set_carry(cpu, mem, *flip),
-            Nop => {},
-            Halt => { cpu.is_halted = true },
+            Nop => {}
+            Halt => cpu.is_halted = true,
             ChangeMie(enable) => instruct_fn::change_mie(cpu, mem, *enable),
-            Rotate(reg, left, through_carry, update_z, shift, keep_msb) => 
-                instruct_fn::rotate(cpu, mem, reg, *left, *through_carry, *update_z, *shift, *keep_msb),
+            Rotate(reg, left, through_carry, update_z, shift, keep_msb) => {
+                instruct_fn::rotate(cpu, mem, reg, *left, *through_carry, *update_z, *shift, *keep_msb)
+            }
             Swap(reg) => instruct_fn::swap(cpu, mem, reg),
             Bit(reg, bit_pos) => instruct_fn::bit(cpu, mem, reg, *bit_pos),
             SetBit(reg, bit_pos) => instruct_fn::set_bit(cpu, mem, reg, *bit_pos),
             ResetBit(reg, bit_pos) => instruct_fn::reset_bit(cpu, mem, reg, *bit_pos),
-            Jump(addr, is_call, flag, is_set) => instruct_fn::jump(cpu, mem, addr, *is_call, flag.as_ref(), *is_set),
+            Jump(addr, is_call, flag, is_set) => {
+                instruct_fn::jump(cpu, mem, addr, *is_call, flag.as_ref(), *is_set)
+            }
             Reset(nth_byte) => instruct_fn::reset(cpu, mem, *nth_byte),
-            Ret(flag, is_set, i_enable) => instruct_fn::ret(cpu, mem, flag.as_ref(), *is_set, *i_enable),
+            Ret(flag, is_set, i_enable) => {
+                instruct_fn::ret(cpu, mem, flag.as_ref(), *is_set, *i_enable)
+            }
         }
     }
 }
@@ -113,20 +118,41 @@ impl fmt::Display for InstructType {
             Halt => write!(f, "HALT"),
             ChangeMie(enable) => write!(f, "{}", if *enable { "EI" } else { "DI" }),
             Rotate(reg, left, through_carry, update_z, shift, keep_msb) => write!(f, "{}{}{}{}{}",
-                if *shift { "S" } else { "R" }, if *left { "L" } else { "R" },
-                if *shift { if !*left && !*keep_msb { "L" } else { "A" } } else { if *through_carry { "" } else { "C" } },
-                if *update_z { " " } else { "" }, reg
+                if *shift { "S" } else { "R" },
+                if *left { "L" } else { "R" },
+                if *shift {
+                    if !*left && !*keep_msb { "L" } else { "A" }
+                } else {
+                    if *through_carry { "" } else { "C" }
+                },
+                if *update_z { " " } else { "" },
+                reg
             ),
             Swap(reg) => write!(f, "SWAP {}", reg),
             Bit(reg, bit_pos) => write!(f, "BIT {} {}", bit_pos, reg),
             SetBit(reg, bit_pos) => write!(f, "SET {} {}", bit_pos, reg),
             ResetBit(reg, bit_pos) => write!(f, "RES {} {}", bit_pos, reg),
-            Jump(addr, is_call, flag, is_set) => write!(f, "{} {}{}", if *is_call { "CALL" } else { if addr == &RegU16::I8 { "JR" } else { "JP" } },
-                if let Some(flag) = flag { format!("{}{} ", if *is_set { "" } else { "N" }, flag) } else { "".to_string() }, addr
+            Jump(addr, is_call, flag, is_set) => write!(f, "{} {}{}",
+                if *is_call {
+                    "CALL"
+                } else {
+                    if addr == &RegU16::I8 { "JR" } else { "JP" }
+                },
+                if let Some(flag) = flag {
+                    format!("{}{} ", if *is_set { "" } else { "N" }, flag)
+                } else {
+                    "".to_string()
+                },
+                addr
             ),
             Reset(nth_byte) => write!(f, "RST {:02x}", nth_byte * 8),
-            Ret(flag, is_set, i_enable) => write!(f, "RET{}{}", if *i_enable { "I" } else { "" },
-                if let Some(flag) = flag { format!(" {}{}", if *is_set { "" } else { "N" }, flag) } else { "".to_string() }
+            Ret(flag, is_set, i_enable) => write!(f, "RET{}{}",
+                if *i_enable { "I" } else { "" },
+                if let Some(flag) = flag {
+                    format!(" {}{}", if *is_set { "" } else { "N" }, flag)
+                } else {
+                    "".to_string()
+                }
             ),
         }
     }
@@ -385,7 +411,9 @@ impl Instruct {
             0xD8 => inst!(Ret(Some(Flag::C), true, false), 8, "Return from subroutine if C is set"),
             0xD9 => inst!(Ret(None, false, true), 16, "Return from subroutine and enable interrupts"),
             //Undefined
-            0xD3 | 0xE3 | 0xE4 | 0xF4 | 0xDB | 0xEB | 0xEC | 0xFC | 0xDD | 0xED | 0xFD => inst!(Nop, 4, "Undefined NOP"),
+            0xD3 | 0xE3 | 0xE4 | 0xF4 | 0xDB | 0xEB | 0xEC | 0xFC | 0xDD | 0xED | 0xFD => {
+                inst!(Nop, 4, "Undefined NOP")
+            }
         }
     }
 }

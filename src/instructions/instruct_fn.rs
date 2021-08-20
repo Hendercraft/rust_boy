@@ -1,6 +1,9 @@
-use crate::hardware::{Cpu, Flag::{self, *}};
+use super::{RegU16, RegU8};
+use crate::hardware::{
+    Cpu,
+    Flag::{self, *},
+};
 use crate::memory::Memory;
-use super::{RegU8, RegU16};
 
 pub fn load(cpu: &mut Cpu, mem: &mut Memory, src: &RegU8, dest: &RegU8) {
     let value = cpu.get_reg_u8(mem, src);
@@ -33,7 +36,7 @@ pub fn pop(cpu: &mut Cpu, mem: &mut Memory, dest: &RegU16) {
 pub fn add(cpu: &mut Cpu, mem: &mut Memory, src: &RegU8, carry: bool) {
     let lhs = cpu.get_reg_u8(mem, &RegU8::A);
     let mut rhs = cpu.get_reg_u8(mem, src);
-    
+
     if carry & cpu.get_flag(C) {
         rhs = rhs.wrapping_add(1);
     }
@@ -44,7 +47,7 @@ pub fn add(cpu: &mut Cpu, mem: &mut Memory, src: &RegU8, carry: bool) {
     // Compute addition
     let result = lhs.wrapping_add(rhs);
     cpu.set_reg_u8(mem, &RegU8::A, result);
-    
+
     cpu.flag(Z, result == 0);
     cpu.flag(N, false);
 }
@@ -74,7 +77,7 @@ pub fn or(cpu: &mut Cpu, mem: &mut Memory, src: &RegU8) {
     // Compute OR
     let result = cpu.get_reg_u8(mem, &RegU8::A) | cpu.get_reg_u8(mem, src);
     cpu.set_reg_u8(mem, &RegU8::A, result);
-    
+
     cpu.flag(Z, result == 0);
 }
 
@@ -112,7 +115,7 @@ pub fn cmp(cpu: &mut Cpu, mem: &mut Memory, src: &RegU8, carry: bool) -> u8 {
 
 pub fn inc(cpu: &mut Cpu, mem: &mut Memory, reg: &RegU8) {
     let reg_val = cpu.get_reg_u8(mem, reg);
-    
+
     cpu.flag(H, reg_val & 0x0f == 0x0f);
 
     // Compute increment
@@ -125,7 +128,7 @@ pub fn inc(cpu: &mut Cpu, mem: &mut Memory, reg: &RegU8) {
 
 pub fn dec(cpu: &mut Cpu, mem: &mut Memory, reg: &RegU8) {
     let reg_val = cpu.get_reg_u8(mem, reg);
-    
+
     // We have no bits in the lower nibble
     // We have to "borrow" some bits of the lower nibble:
     // I.e 0xf0 - 0x01 = 0xef
@@ -157,7 +160,7 @@ pub fn add_u16_i8(cpu: &mut Cpu, mem: &mut Memory, dest: &RegU16, offset: &RegU1
 
     cpu.flag(C, lhs.checked_add(rhs).is_none());
     cpu.flag(H, (lhs & 0x000f) + (rhs & 0x000f) > 0x000f);
-    
+
     cpu.set_reg_u16(mem, dest, lhs.wrapping_add(rhs));
 
     cpu.flag(Z, false);
@@ -178,7 +181,7 @@ pub fn daa(cpu: &mut Cpu, mem: &mut Memory) {
     let value = cpu.get_reg_u8(mem, &RegU8::A);
     let n_flag = cpu.get_flag(N);
     let mut correction = 0x00;
-    
+
     if cpu.get_flag(C) || (!n_flag && value > 0x99) {
         correction |= 0x60;
         cpu.flag(C, true);
@@ -217,11 +220,11 @@ pub fn change_mie(cpu: &mut Cpu, _mem: &mut Memory, enable: bool) {
 }
 
 pub fn rotate(
-    cpu: &mut Cpu, 
-    mem: &mut Memory, 
+    cpu: &mut Cpu,
+    mem: &mut Memory,
     reg: &RegU8,
     left: bool,
-    through_carry: bool, 
+    through_carry: bool,
     update_z: bool,
     shift: bool,
     keep_msb: bool,
@@ -231,14 +234,14 @@ pub fn rotate(
         true => 0b1,
         false => 0b0,
     };
-    
+
     cpu.flag(H, false);
     cpu.flag(N, false);
 
     let (new_carry, result) = match left {
         true => {
             let new_carry = value >> 7;
-            
+
             let mut result = match shift {
                 true => value << 1,
                 false => value.rotate_left(1),
@@ -249,7 +252,7 @@ pub fn rotate(
             }
 
             (new_carry, result)
-        },
+        }
         false => {
             let new_carry = value & 0b0000_0001;
 
@@ -267,7 +270,7 @@ pub fn rotate(
             }
 
             (new_carry, result)
-        },
+        }
     };
 
     cpu.flag(C, new_carry != 0b0);
@@ -310,9 +313,16 @@ pub fn reset_bit(cpu: &mut Cpu, mem: &mut Memory, reg: &RegU8, bit_pos: u8) {
     cpu.set_reg_u8(mem, reg, result);
 }
 
-pub fn jump(cpu: &mut Cpu, mem: &mut Memory, addr: &RegU16, is_call: bool, flag: Option<&Flag>, is_set: bool) {
+pub fn jump(
+    cpu: &mut Cpu,
+    mem: &mut Memory,
+    addr: &RegU16,
+    is_call: bool,
+    flag: Option<&Flag>,
+    is_set: bool,
+) {
     let mut jump = true;
-    
+
     if let Some(flag) = flag {
         if cpu.get_flag(*flag) != is_set {
             jump = false;
@@ -348,7 +358,7 @@ pub fn reset(cpu: &mut Cpu, mem: &mut Memory, nth_byte: u16) {
 
 pub fn ret(cpu: &mut Cpu, mem: &mut Memory, flag: Option<&Flag>, is_set: bool, i_enable: bool) {
     let mut jump = true;
-    
+
     if let Some(flag) = flag {
         if cpu.get_flag(*flag) != is_set {
             jump = false;
