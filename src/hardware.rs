@@ -1,23 +1,86 @@
 use serde::{Deserialize, Serialize};
+use std::fmt;
+
+use crate::memory::Memory;
 
 const BG: u8 = 1;
 const SPRITE: u8 = 3;
 const WINDOW: u8 = 2;
 
-pub enum Op {
-    No(fn(&mut Cpu)),
-    U8(fn(&mut Cpu, u8)),
-    U16(fn(&mut Cpu, u8, u8)), //High, low
-    Ram(fn(&mut Cpu, &mut [u8; 0x10000])),
-    RamU8(fn(&mut Cpu, u8, &mut [u8; 0x10000])),
-    RamU16(fn(&mut Cpu, u8, u8, &mut [u8; 0x10000])), //High, low, ram
+pub enum RegU8 {
+    A,
+    B,
+    C,
+    D,
+    E,
+    H,
+    L,
+    U8,
+    RamU8(Box<RegU8>),
+    RamU16(RegU16),
 }
 
-pub struct Flags {
-    pub z: bool,
-    pub n: bool,
-    pub h: bool,
-    pub c: bool,
+#[derive(PartialEq)]
+pub enum RegU16 {
+    AF,
+    BC,
+    DE,
+    HL,
+    SP,
+    U16,
+    I8,
+    RamU16(Box<RegU16>),
+}
+
+impl fmt::Display for RegU8 {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match self {
+            RegU8::A => write!(f, "A"),
+            RegU8::B => write!(f, "B"),
+            RegU8::C => write!(f, "C"),
+            RegU8::D => write!(f, "D"),
+            RegU8::E => write!(f, "E"),
+            RegU8::H => write!(f, "H"),
+            RegU8::L => write!(f, "L"),
+            RegU8::U8 => write!(f, "n"),
+            RegU8::RamU8(reg_u8) => write!(f, "({})", reg_u8),
+            RegU8::RamU16(reg_u16) => write!(f, "({})", reg_u16),
+        }
+    }
+}
+
+impl fmt::Display for RegU16 {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match self {
+            RegU16::AF => write!(f, "AF"),
+            RegU16::BC => write!(f, "BC"),
+            RegU16::DE => write!(f, "DE"),
+            RegU16::HL => write!(f, "HL"),
+            RegU16::SP => write!(f, "SP"),
+            RegU16::U16 => write!(f, "nn"),
+            RegU16::I8 => write!(f, "i8"),
+            RegU16::RamU16(reg_u16) => write!(f, "({})", reg_u16),
+        }
+    }
+}
+
+#[derive(Clone, Copy)]
+pub enum Flag {
+    Z,
+    N,
+    H,
+    C,
+}
+
+impl fmt::Display for Flag {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match self {
+            Flag::Z => write!(f, "Z"),
+            Flag::N => write!(f, "N"),
+            Flag::H => write!(f, "H"),
+            Flag::C => write!(f, "C"),
+        }
+    }
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -33,214 +96,161 @@ pub struct Cpu {
     pub sp: u16,
     pub pc: u16,
     pub mie: bool,
+    pub pending_mie: Option<bool>,
     pub pending_ticks: u8,
+    pub is_halted: bool,
 }
 
 impl Cpu {
-    //getter u8
-    pub fn get_a(&self) -> u8 {
-        self.a
-    }
-    pub fn get_f(&self) -> u8 {
-        self.f
-    }
-    pub fn get_b(&self) -> u8 {
-        self.b
-    }
-    pub fn get_c(&self) -> u8 {
-        self.c
-    }
-    pub fn get_d(&self) -> u8 {
-        self.d
-    }
-    pub fn get_e(&self) -> u8 {
-        self.e
-    }
-    pub fn get_h(&self) -> u8 {
-        self.h
-    }
-    pub fn get_l(&self) -> u8 {
-        self.l
-    }
-    //getter u16
-    pub fn get_af(&self) -> u16 {
-        Cpu::get_u16(self.a, self.f)
-    }
-    pub fn get_bc(&self) -> u16 {
-        Cpu::get_u16(self.b, self.c)
-    }
-    pub fn get_de(&self) -> u16 {
-        Cpu::get_u16(self.d, self.e)
-    }
-    pub fn get_hl(&self) -> u16 {
-        Cpu::get_u16(self.h, self.l)
-    }
-    pub fn get_sp(&self) -> u16 {
-        self.sp
-    }
-    pub fn get_pc(&self) -> u16 {
-        self.pc
-    }
-    pub fn get_mie(&self) -> bool {
-        self.mie
+    fn get_u16(high: u8, low: u8) -> u16 {
+        ((high as u16) << 8) | low as u16
     }
 
-    pub(crate) fn get_u16(h: u8, l: u8) -> u16 {
-        ((h as u16) << 8) | l as u16
+    fn set_u16(high: &mut u8, low: &mut u8, nn: u16) {
+        *high = (nn >> 8) as u8;
+        *low = nn as u8;
     }
 
-    //setter u8
-    pub fn set_a(&mut self, n: u8) {
-        self.a = n;
-    }
-    pub fn set_f(&mut self, n: u8) {
-        self.f = n;
-    }
-    pub fn set_b(&mut self, n: u8) {
-        self.b = n;
-    }
-    pub fn set_c(&mut self, n: u8) {
-        self.c = n;
-    }
-    pub fn set_d(&mut self, n: u8) {
-        self.d = n;
-    }
-    pub fn set_e(&mut self, n: u8) {
-        self.e = n;
-    }
-    pub fn set_h(&mut self, n: u8) {
-        self.h = n;
-    }
-    pub fn set_l(&mut self, n: u8) {
-        self.l = n;
+    pub fn get_reg_u8(&mut self, mem: &Memory, reg: &RegU8) -> u8 {
+        match reg {
+            RegU8::A => self.a,
+            RegU8::B => self.b,
+            RegU8::C => self.c,
+            RegU8::D => self.d,
+            RegU8::E => self.e,
+            RegU8::H => self.h,
+            RegU8::L => self.l,
+            RegU8::U8 => self.get_op(mem),
+            RegU8::RamU8(reg_u8) => mem.read(0xff00 + (self.get_reg_u8(mem, reg_u8) as u16)),
+            RegU8::RamU16(reg_u16) => mem.read(self.get_reg_u16(mem, reg_u16)),
+        }
     }
 
-    //setter u16
-    pub fn set_af(&mut self, n: u16) {
-        Cpu::set_u16(&mut self.a, &mut self.f, n);
-    }
-    pub fn set_bc(&mut self, n: u16) {
-        Cpu::set_u16(&mut self.b, &mut self.c, n);
-    }
-    pub fn set_de(&mut self, n: u16) {
-        Cpu::set_u16(&mut self.d, &mut self.e, n);
-    }
-    pub fn set_hl(&mut self, n: u16) {
-        Cpu::set_u16(&mut self.h, &mut self.l, n);
-    }
-    pub fn set_sp(&mut self, n: u16) {
-        self.sp = n;
-    }
-    pub fn set_pc(&mut self, n: u16) {
-        self.pc = n;
-    }
-
-    fn set_u16(h: &mut u8, l: &mut u8, n: u16) {
-        *h = (n >> 8) as u8;
-        *l = n as u8;
-    }
-    pub fn set_mie(&mut self, b: bool) {
-        self.mie = b;
+    pub fn get_reg_u16(&mut self, mem: &Memory, reg: &RegU16) -> u16 {
+        match reg {
+            RegU16::AF => Cpu::get_u16(self.a, self.f),
+            RegU16::BC => Cpu::get_u16(self.b, self.c),
+            RegU16::DE => Cpu::get_u16(self.d, self.e),
+            RegU16::HL => Cpu::get_u16(self.h, self.l),
+            RegU16::SP => self.sp,
+            RegU16::U16 => {
+                let low = self.get_op(mem) as u16;
+                ((self.get_op(mem) as u16) << 8) + low
+            }
+            // A cast from u8 to i8 keeps the bits the way they are
+            // A cast from i8 to u16 just works (the msb is duplicated to fill the whole upper byte)
+            // Note that directly casting from u8 to u16 wouldn't work, as it would always have a null upper byte
+            RegU16::I8 => (self.get_op(mem) as i8) as u16,
+            RegU16::RamU16(_) => panic!("This enum variant should only be used with set_reg_u16()"),
+        }
     }
 
-    pub fn get_flags(&self) -> Flags {
-        let temp = self.f >> 4;
-        let output: Flags = Flags {
-            z: temp & 0b1000 > 0, //get upper
-            n: temp & 0b0100 > 0,
-            h: temp & 0b0010 > 0,
-            c: temp & 0b0001 > 0,
-        };
-        return output;
+    pub fn set_reg_u8(&mut self, mem: &mut Memory, reg: &RegU8, n: u8) {
+        match reg {
+            RegU8::A => self.a = n,
+            RegU8::B => self.b = n,
+            RegU8::C => self.c = n,
+            RegU8::D => self.d = n,
+            RegU8::E => self.e = n,
+            RegU8::H => self.h = n,
+            RegU8::L => self.l = n,
+            RegU8::U8 => panic!("This enum variant should only be used with get_reg_u8()"),
+            RegU8::RamU8(reg_u8) => {
+                let addr_low = self.get_reg_u8(mem, reg_u8);
+                mem.write(0xff00 + addr_low as u16, n);
+            }
+            RegU8::RamU16(reg_u16) => {
+                let addr = self.get_reg_u16(mem, reg_u16);
+                mem.write(addr, n);
+            }
+        }
+    }
+
+    pub fn set_reg_u16(&mut self, mem: &mut Memory, reg: &RegU16, nn: u16) {
+        match reg {
+            RegU16::AF => Cpu::set_u16(&mut self.a, &mut self.f, nn),
+            RegU16::BC => Cpu::set_u16(&mut self.b, &mut self.c, nn),
+            RegU16::DE => Cpu::set_u16(&mut self.d, &mut self.e, nn),
+            RegU16::HL => Cpu::set_u16(&mut self.h, &mut self.l, nn),
+            RegU16::SP => self.sp = nn,
+            RegU16::U16 => panic!("This enum variant should only be used with get_reg_u16()"),
+            RegU16::I8 => panic!("This enum variant should only be used with get_reg_u16()"),
+            RegU16::RamU16(reg_u16) => {
+                let addr = self.get_reg_u16(mem, reg_u16);
+                mem.write(addr, nn as u8); // Low
+                mem.write(addr.wrapping_add(1), (nn >> 8) as u8); // High
+            }
+        }
+    }
+
+    pub fn update_interrupt_status(&mut self) {
+        if let Some(new_status) = self.pending_mie {
+            self.mie = new_status;
+            self.pending_mie = None;
+        }
     }
 
     //Flags
-    pub fn set_flag(&mut self, f: Flag) {
-        match f {
-            Flag::Z => self.set_f(self.get_f() | 0b10000000),
-            Flag::N => self.set_f(self.get_f() | 0b01000000),
-            Flag::H => self.set_f(self.get_f() | 0b00100000),
-            Flag::C => self.set_f(self.get_f() | 0b00010000),
-        }
-    }
-    pub fn clear_flag(&mut self, f: Flag) {
-        match f {
-            Flag::Z => self.set_f(self.get_f() & 0b01111111),
-            Flag::N => self.set_f(self.get_f() & 0b10111111),
-            Flag::H => self.set_f(self.get_f() & 0b11011111),
-            Flag::C => self.set_f(self.get_f() & 0b11101111),
+    pub fn get_flag(&self, flag: Flag) -> bool {
+        match flag {
+            Flag::Z => self.f & 0b1000_0000 > 0,
+            Flag::N => self.f & 0b0100_0000 > 0,
+            Flag::H => self.f & 0b0010_0000 > 0,
+            Flag::C => self.f & 0b0001_0000 > 0,
         }
     }
 
-    pub fn exec(&mut self, operands: Op, ram: &mut [u8; 0x10000]) {
-        match operands {
-            Op::No(instruct) => instruct(self),
-            Op::U8(instruct) => instruct(self, ram[(self.pc + 1) as usize]),
-            Op::U16(instruct) => instruct(
-                self,
-                ram[(self.pc + 2) as usize],
-                ram[(self.pc + 1) as usize],
-            ),
-            Op::Ram(instruct) => instruct(self, ram),
-            Op::RamU8(instruct) => instruct(self, ram[(self.pc + 1) as usize], ram),
-            Op::RamU16(instruct) => instruct(
-                self,
-                ram[(self.pc + 2) as usize],
-                ram[(self.pc + 1) as usize],
-                ram,
-            ),
+    pub fn flag(&mut self, flag: Flag, state: bool) {
+        let bit = match flag {
+            Flag::Z => 0b10000000,
+            Flag::N => 0b01000000,
+            Flag::H => 0b00100000,
+            Flag::C => 0b00010000,
+        };
+
+        match state {
+            true => self.f |= bit,   // SET
+            false => self.f &= !bit, // RESET
         }
     }
 
-    pub fn write(&mut self, ram: &mut [u8; 0x10000], n: u8, adr: u16) {
-        match adr {
-            0x0000..=0x7FFF => {}
-            0xff04 => {
-                ram[0xff04] = 0;
-            }
-            _ => {
-                ram[adr as usize] = n;
-            }
-        }
+    fn get_op(&mut self, mem: &Memory) -> u8 {
+        let n = mem.read(self.pc);
+        self.pc = self.pc.wrapping_add(1);
+
+        n
     }
 
-    //memory manipulation
+    // Memory manipulation
 
-    pub fn write_u16_to_stack(&mut self, n: u16, ram: &mut [u8; 0x10000]) {
-        self.set_sp(self.get_sp().wrapping_sub(2));
-        ram[self.get_sp() as usize] = n as u8;
-        ram[(self.get_sp() + 1) as usize] = (n >> 8) as u8;
+    pub fn write_u16_to_stack(&mut self, nn: u16, mem: &mut Memory) {
+        self.sp = self.sp.wrapping_sub(2);
+        mem.write(self.sp, nn as u8);
+        mem.write(self.sp + 1, (nn >> 8) as u8);
     }
 
-    pub fn read_u16_from_stack(&mut self, ram: &[u8; 0x10000]) -> u16 {
-        let h: u8 = ram[(self.get_sp() + 1) as usize];
-        let l: u8 = ram[self.get_sp() as usize];
+    pub fn read_u16_from_stack(&mut self, mem: &Memory) -> u16 {
+        let h: u8 = mem.read(self.sp + 1);
+        let l: u8 = mem.read(self.sp);
         let value: u16 = ((h as u16) << 8) | l as u16;
-        self.set_sp(self.get_sp().wrapping_add(2));
-        return value;
+
+        self.sp = self.sp.wrapping_add(2);
+        value
     }
 
     //ticks voodoo magic
 
-    pub fn set_ticks(&mut self, ticks: u8) {
+    pub fn add_ticks(&mut self, ticks: u8) {
         self.pending_ticks = self.pending_ticks.wrapping_add(ticks);
     }
 
     pub fn get_ticks(&self) -> u8 {
-        let temp: u8 = self.pending_ticks;
-        return temp;
+        self.pending_ticks
     }
 
     pub fn clear_ticks(&mut self) {
         self.pending_ticks = 0;
     }
-}
-
-pub enum Flag {
-    Z,
-    N,
-    H,
-    C,
 }
 
 pub struct Gpu {
@@ -252,8 +262,8 @@ pub struct Gpu {
 }
 
 impl Gpu {
-    fn get_tile_method(&self, ram: &[u8; 0x10000]) -> u16 {
-        if ram[0xff40] & 0b00010000 > 0 {
+    fn get_tile_method(&self, mem: &Memory) -> u16 {
+        if mem.read(0xff40) & 0b00010000 > 0 {
             //println!("0x8000");
             return 0x8000;
         } else {
@@ -262,8 +272,8 @@ impl Gpu {
         }
     }
 
-    fn get_bg_map_index(&self, ram: &[u8; 0x10000]) -> u16 {
-        if ram[0xff40] & 0b00001000 > 0 {
+    fn get_bg_map_index(&self, mem: &Memory) -> u16 {
+        if mem.read(0xff40) & 0b00001000 > 0 {
             //println!("0x9c00");
             return 0x9c00;
         } else {
@@ -272,8 +282,8 @@ impl Gpu {
         }
     }
 
-    fn get_window_map_index(&self, ram: &[u8; 0x10000]) -> u16 {
-        if ram[0xff40] & 0b01000000 > 0 {
+    fn get_window_map_index(&self, mem: &Memory) -> u16 {
+        if mem.read(0xff40) & 0b01000000 > 0 {
             //println!("0x9c00");
             return 0x9c00;
         } else {
@@ -282,7 +292,7 @@ impl Gpu {
         }
     }
 
-    fn get_tile(&self, method: u16, mut index: u8, _ram: &[u8; 0x10000]) -> u16 {
+    fn get_tile(&self, method: u16, mut index: u8, _mem: &Memory) -> u16 {
         if method == 0x8000 {
             return 0x8000 + (index as u16) * 16;
         } else {
@@ -295,7 +305,7 @@ impl Gpu {
         }
     }
 
-    fn display_tile(&mut self, dest: u8, x: u8, y: u8, location: u16, ram: &[u8; 0x10000]) {
+    fn display_tile(&mut self, dest: u8, x: u8, y: u8, location: u16, mem: &Memory) {
         let &mut mat;
         if dest == WINDOW {
             mat = &mut self.window_matrix;
@@ -308,21 +318,21 @@ impl Gpu {
             let mut value: u8 = 0b10000000;
             for j in 0..7 {
                 mat[(x.wrapping_add(j)) as usize][(y.wrapping_add(i)) as usize] =
-                    (ram[(location + 2 * (i as u16)) as usize] & value) >> 7 - j
-                        | (ram[(location + 2 * (i as u16) + 1) as usize] & value) >> 6 - j;
+                    (mem.read(location + 2 * (i as u16)) & value) >> 7 - j
+                        | (mem.read(location + 2 * (i as u16) + 1) & value) >> 6 - j;
                 value = value >> 1;
             }
             mat[(x.wrapping_add(7)) as usize][(y.wrapping_add(i)) as usize] =
-                (ram[(location + 2 * (i as u16)) as usize] & value)
-                    | (ram[(location + 2 * (i as u16) + 1) as usize] & value) << 1;
+                (mem.read(location + 2 * (i as u16)) & value)
+                    | (mem.read(location + 2 * (i as u16) + 1) & value) << 1;
         }
     }
 
-    pub fn build_bg(&mut self, ram: &[u8; 0x10000]) {
+    pub fn build_bg(&mut self, mem: &Memory) {
         let mut n: u16 = 0;
 
-        let index = self.get_bg_map_index(&ram);
-        let method: u16 = self.get_tile_method(&ram);
+        let index = self.get_bg_map_index(&mem);
+        let method: u16 = self.get_tile_method(&mem);
 
         for i in 0..32 {
             for j in 0..32 {
@@ -330,19 +340,19 @@ impl Gpu {
                     BG,
                     j * 8 as u8,
                     i * 8 as u8,
-                    self.get_tile(method, ram[(index + n) as usize], &ram),
-                    &ram,
+                    self.get_tile(method, mem.read(index + n), &mem),
+                    &mem,
                 );
                 n += 1;
             }
         }
     }
 
-    pub fn build_window(&mut self, ram: &[u8; 0x10000]) {
+    pub fn build_window(&mut self, mem: &Memory) {
         let mut n: u16 = 0;
 
-        let index = self.get_window_map_index(&ram);
-        let method: u16 = self.get_tile_method(&ram);
+        let index = self.get_window_map_index(&mem);
+        let method: u16 = self.get_tile_method(&mem);
 
         for i in 0..32 {
             for j in 0..32 {
@@ -351,15 +361,15 @@ impl Gpu {
                     WINDOW,
                     (j * 8) as u8,
                     (i * 8) as u8,
-                    self.get_tile(method, ram[(index + n) as usize], &ram),
-                    &ram,
+                    self.get_tile(method, mem.read(index + n), &mem),
+                    &mem,
                 );
                 n += 1;
             }
         }
     }
 
-    pub fn build_sprite(&mut self, ram: &[u8; 0x10000]) {
+    pub fn build_sprite(&mut self, mem: &Memory) {
         for i in 0..255 {
             for j in 0..255 {
                 self.sprite_matrix[i][j] = 0;
@@ -374,20 +384,20 @@ impl Gpu {
 
         for i in 0..40 {
             sprite_index = (0xFE00 + (4 * i)) as u16;
-            x = ram[(sprite_index + 1) as usize].wrapping_sub(8);
-            y = ram[(sprite_index) as usize].wrapping_sub(16);
-            index = ram[(sprite_index + 2) as usize];
-            self.display_tile(SPRITE, x, y, self.get_tile(method, index, &ram), &ram);
+            x = mem.read(sprite_index + 1).wrapping_sub(8);
+            y = mem.read(sprite_index).wrapping_sub(16);
+            index = mem.read(sprite_index + 2);
+            self.display_tile(SPRITE, x, y, self.get_tile(method, index, &mem), &mem);
         }
     }
 
-    pub fn push_line(&mut self, ram: &[u8; 0x10000]) {
-        let scroll_x: u8 = ram[0xff43];
-        let scroll_y: u8 = ram[0xff42];
-        let win_x: u8 = ram[0xff4b].wrapping_sub(7);
-        let win_y: u8 = ram[0xff4a];
+    pub fn push_line(&mut self, mem: &Memory) {
+        let scroll_x: u8 = mem.read(0xff43);
+        let scroll_y: u8 = mem.read(0xff42);
+        let win_x: u8 = mem.read(0xff4b).wrapping_sub(7);
+        let win_y: u8 = mem.read(0xff4a);
 
-        if ram[0xff40] & 0b10000000 > 0 {
+        if mem.read(0xff40) & 0b10000000 > 0 {
             for i in 0..160 {
                 if win_x <= i && win_y <= self.line && false {
                     // && false{

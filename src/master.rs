@@ -1,4 +1,5 @@
-use crate::{controls, dma, hardware, instructions, interrupts, timer};
+use crate::{controls, dma, hardware, instructions, interrupts, memory, timer};
+use memory::Memory;
 use std::io::{stdin, stdout, Read, Write};
 
 const H_BLANK: u8 = 0;
@@ -6,6 +7,7 @@ const V_BLANK: u8 = 1;
 const PX_TRANSFER: u8 = 2;
 
 pub struct Master {
+    pub nb_steps: u64,
     pub tick: u64,
     pub mode: u8,
     pub previous_mode: u8,
@@ -19,55 +21,55 @@ impl Master {
     pub fn step(
         &mut self,
         cpu: &mut hardware::Cpu,
-        gpu: &mut hardware::Gpu,
         timer: &mut timer::Timer,
         controls: &mut controls::Controls,
-        ram: &mut [u8; 0x10000],
+        mem: &mut Memory,
     ) {
-        //Check for interrupts, if none juste add 1 to PC
-        //if cpu.get_pc() == 0x2000 { self.step_by_step = true;self.log=true;}
-        interrupts::interrupt_check(cpu, ram);
-        cpu.clear_ticks();
-        let instruct = instructions::Instruct::fetch(ram[cpu.get_pc() as usize]);
-        let argc: u8 = instruct.argc;
+        self.nb_steps += 1;
 
-        if instruct.name.contains("/!\\")
-            && (ram[cpu.get_pc() as usize] != 0xcb && ram[cpu.get_pc() as usize + 1] != 0x37)
-            || self.step_by_step
-        {
+        let interrupt_occured = interrupts::interrupt_check(cpu, mem);
+
+        if interrupt_occured {
+            cpu.is_halted = false;
+        }
+
+        if cpu.is_halted {
+            // Is this correct ? I have no idea, but it work
+            self.tick = self.tick.wrapping_add(4);
+
+            return;
+        }
+
+        cpu.clear_ticks();
+
+        let instruct =
+            instructions::Instruct::fetch(cpu, mem.read(cpu.pc), mem.read(cpu.pc.wrapping_add(1)));
+        cpu.pc = cpu.pc.wrapping_add(1);
+
+        // println!("Step: {:#08}, PC: {:#06x}, OPCODE:{:#04x} => {:#04x} | {:#04x} | {:#04x} ({})", self.nb_steps, cpu.pc, instruct.opcode,
+        //     mem.read(cpu.pc + 0), mem.read(cpu.pc + 1), mem.read(cpu.pc + 2), instruct.inst,
+        // );
+
+        if self.step_by_step {
             self.log = true;
-            self.maxi_debug_print(&cpu, &timer, &ram, &controls, &instruct);
+            self.maxi_debug_print(&cpu, &timer, &mem, &controls, &instruct);
             wait();
         }
-        //println!("Pc: {:#06x}", cpu.get_pc());
-        //self.log = true;
 
-        //self.maxi_debug_print(&cpu, &timer, &ram, &controls, &instruct);
         self.tick = self.tick.wrapping_add(instruct.ticks as u64);
         self.tick = self.tick.wrapping_add((cpu.get_ticks()) as u64);
 
-        timer.update(instruct.ticks, ram);
+        timer.update(instruct.ticks, mem);
 
-        controls.update_ram(ram);
+        controls.update_ram(mem);
 
-        cpu.exec(instruct.exec, ram);
+        cpu.update_interrupt_status(); // If instruction from last step wants to change MIE
+
+        instruct.inst.exec(cpu, mem);
 
         //adding temporary ticks from the cpu
 
-        let mut delay = false;
-        //Ie delay
-        if ram[cpu.get_pc() as usize] == 0xFB {
-            delay = true;
-        }
-
-        cpu.set_pc(cpu.get_pc().wrapping_add((argc as u16) + 1));
-
-        dma::update_dma(ram);
-
-        if delay {
-            self.step(cpu, gpu, timer, controls, ram);
-            cpu.mie = true;
-        }
+        dma::update_dma(mem);
     }
 
     pub fn screen(
@@ -76,9 +78,9 @@ impl Master {
         gpu: &mut hardware::Gpu,
         timer: &mut timer::Timer,
         controls: &mut controls::Controls,
-        ram: &mut [u8; 0x10000],
+        mem: &mut Memory,
     ) {
-        ram[0xFF44] = 0;
+        mem.write(0xFF44, 0);
         for i in 0..144 {
             while self.tick < 114 {
                 if self.tick > 63 {
@@ -92,23 +94,23 @@ impl Master {
                 //println!("Line: {}",i);
                 //println!("Mode: {}",self.mode);
                 //println!(" ");
-                self.step(cpu, gpu, timer, controls, ram);
-                self.lcd_stat(i, ram);
+                self.step(cpu, timer, controls, mem);
+                self.lcd_stat(i, mem);
                 if self.step_by_step {
                     wait();
                 }
             }
             self.tick = 0;
-            gpu.push_line(ram);
+            gpu.push_line(mem);
 
             if self.line_by_line {
                 wait();
             }
 
-            ram[0xff44] += 1;
+            mem.write(0xff44, mem.read(0xff44) + 1);
         }
 
-        ram[0xFF0F] = ram[0xFF0F] | 0b1;
+        mem.write(0xFF0F, mem.read(0xFF0F) | 0b1);
         self.mode = V_BLANK;
 
         for _j in 0..10 {
@@ -118,8 +120,8 @@ impl Master {
                 //println!("State: V-Blank");
                 //println!("Mode: {}",self.mode);
                 //println!(" ");
-                self.step(cpu, gpu, timer, controls, ram);
-                self.lcd_stat(254, ram);
+                self.step(cpu, timer, controls, mem);
+                self.lcd_stat(254, mem);
                 if self.step_by_step {
                     wait();
                 }
@@ -128,7 +130,7 @@ impl Master {
             if self.line_by_line {
                 wait();
             }
-            ram[0xff44] += 1;
+            mem.write(0xff44, mem.read(0xff44) + 1);
         }
 
         if self.screen_by_screen {
@@ -140,52 +142,58 @@ impl Master {
         &self,
         cpu: &hardware::Cpu,
         timer: &timer::Timer,
-        ram: &[u8; 0x10000],
+        mem: &Memory,
         controls: &controls::Controls,
         instruct: &instructions::Instruct,
     ) {
         if self.log {
-            println!("Pc: {:#06x}", cpu.get_pc());
+            println!("Pc: {:#06x}", cpu.pc);
             println!("OPERATION____________________________________");
+            println!("NB steps:{}", self.nb_steps);
             println!("Count:{}", self.tick);
-            println!("Pc: {:#06x}", cpu.get_pc());
+            println!("Pc: {:#06x}", cpu.pc);
             println!(
                 "Ram values: {:#04x} {:#04x} {:#04x}",
-                ram[cpu.get_pc() as usize],
-                ram[(cpu.get_pc() + 1) as usize],
-                ram[(cpu.get_pc() + 2) as usize]
+                mem.read(cpu.pc),
+                mem.read(cpu.pc + 1),
+                mem.read(cpu.pc + 2)
             );
-            println!("Name:{}", &instruct.name);
+            println!("Opcode:{:#04x}", &instruct.opcode);
+            println!("Name:{}", &instruct.inst);
             println!("Instruction: {}", &instruct.desc);
             println!("Ticks: {}", &instruct.ticks);
             println!();
-            println!("CPU STATE____________________________________");
-            println!("a:{} / {:#04x}", cpu.get_a(), cpu.get_a());
-            println!("f:{} / {:#04x}", cpu.get_f(), cpu.get_f());
-            println!("b:{} / {:#04x}", cpu.get_b(), cpu.get_b());
-            println!("c:{} / {:#04x}", cpu.get_c(), cpu.get_c());
-            println!("d:{} / {:#04x}", cpu.get_d(), cpu.get_d());
-            println!("e:{} / {:#04x}", cpu.get_e(), cpu.get_e());
-            println!("h:{} / {:#04x}", cpu.get_h(), cpu.get_h());
-            println!("l:{} / {:#04x}", cpu.get_l(), cpu.get_l());
-            println!("sp:{:#04x}", cpu.get_sp());
-            println!("mie: {}", cpu.get_mie());
-            println!("0xFFFF: {:#010b}", ram[0xFFFF]);
-            println!("0xFF0F: {:#010b}", ram[0xFF0F]);
+            println!("a:{} / {:#04x}", cpu.a, cpu.a);
+            println!("f:{} / {:#04x}", cpu.f, cpu.f);
+            println!("b:{} / {:#04x}", cpu.b, cpu.b);
+            println!("c:{} / {:#04x}", cpu.c, cpu.c);
+            println!("d:{} / {:#04x}", cpu.d, cpu.d);
+            println!("e:{} / {:#04x}", cpu.e, cpu.e);
+            println!("h:{} / {:#04x}", cpu.h, cpu.h);
+            println!("l:{} / {:#04x}", cpu.l, cpu.l);
+            println!("sp:{:#04x}", cpu.sp);
+            println!(
+                "Stack values: {:#04x} {:#04x} {:#04x}",
+                mem.read(cpu.sp),
+                mem.read(cpu.sp + 1),
+                mem.read(cpu.sp + 2)
+            );
+            println!("mie: {}", cpu.mie);
+            println!("0xFFFF: {:#010b}", mem.read(0xFFFF));
+            println!("0xFF0F: {:#010b}", mem.read(0xFF0F));
             println!();
             println!("FLAGS STATE__________________________________");
-            let flags = cpu.get_flags();
-            println!("Z:{}", flags.z);
-            println!("N:{}", flags.n);
-            println!("H:{}", flags.h);
-            println!("C:{}", flags.c);
+            println!("Z:{}", cpu.get_flag(hardware::Flag::Z));
+            println!("N:{}", cpu.get_flag(hardware::Flag::N));
+            println!("H:{}", cpu.get_flag(hardware::Flag::H));
+            println!("C:{}", cpu.get_flag(hardware::Flag::C));
             println!();
             println!("TIMER STATE__________________________________");
-            println!("Divider:{:#04x}", ram[0xff04]);
+            println!("Divider:{:#04x}", mem.read(0xff04));
             println!("Divider ticks:{}", timer.divider_ticks);
             println!("Timer enable:{}", timer.timer_enb);
             println!("Timer division:{}", timer.division);
-            println!("Timer:{:#04x}", ram[0xff05]);
+            println!("Timer:{:#04x}", mem.read(0xff05));
             println!("Timer ticks:{}", timer.timer_ticks);
             println!();
             println!("INPUT STATE__________________________________");
@@ -200,33 +208,42 @@ impl Master {
                 controls.select,
                 controls.start
             );
-            println!("0XFF00: {:#010b}", ram[0xFF00]);
+            println!("0XFF00: {:#010b}", mem.read(0xFF00));
             println!();
             println!("WARNING______________________________________");
         }
     }
 
-    pub fn lcd_stat(&mut self, line: u8, ram: &mut [u8; 0x10000]) {
-        if ram[0xFF41] & 0b0100000 > 0 && line == ram[0xFF45] && self.previous_mode == H_BLANK {
-            ram[0xFF0F] = ram[0xFF0F] | 0b00000010;
+    pub fn lcd_stat(&mut self, line: u8, mem: &mut Memory) {
+        if mem.read(0xFF41) & 0b0100000 > 0
+            && line == mem.read(0xFF45)
+            && self.previous_mode == H_BLANK
+        {
+            mem.write(0xFF0F, mem.read(0xFF0F) | 0b00000010);
             //if self.log {println!("/!\\ STAT interrupt trigerred: LY=LYC");}
             self.previous_mode = self.mode;
         }
-        if ram[0xFF41] & 0b00001000 > 0 && self.mode == H_BLANK && self.mode != self.previous_mode {
-            ram[0xFF0F] = ram[0xFF0F] | 0b00000010;
+        if mem.read(0xFF41) & 0b00001000 > 0
+            && self.mode == H_BLANK
+            && self.mode != self.previous_mode
+        {
+            mem.write(0xFF0F, mem.read(0xFF0F) | 0b00000010);
             //if self.log {println!("/!\\ STAT interrupt trigerred: H_BLANK");}
             self.previous_mode = self.mode;
         }
-        if ram[0xFF41] & 0b00010000 > 0 && self.mode == V_BLANK && self.mode != self.previous_mode {
-            ram[0xFF0F] = ram[0xFF0F] | 0b00000010;
+        if mem.read(0xFF41) & 0b00010000 > 0
+            && self.mode == V_BLANK
+            && self.mode != self.previous_mode
+        {
+            mem.write(0xFF0F, mem.read(0xFF0F) | 0b00000010);
             //if self.log {println!("/!\\ STAT interrupt trigerred: V_BLANK");}
             self.previous_mode = self.mode;
         }
-        if ram[0xFF41] & 0b0010000 > 0
+        if mem.read(0xFF41) & 0b0010000 > 0
             && self.mode == PX_TRANSFER
             && self.mode != self.previous_mode
         {
-            ram[0xFF0F] = ram[0xFF0F] | 0b00000010;
+            mem.write(0xFF0F, mem.read(0xFF0F) | 0b00000010);
             //if self.log {println!("/!\\ STAT interrupt trigerred: PX_TRANSFER");}
             self.previous_mode = self.mode;
         }
