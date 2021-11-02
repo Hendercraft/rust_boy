@@ -35,8 +35,9 @@ impl Master {
 
         if cpu.is_halted {
             // Is this correct ? I have no idea, but it work
-            self.tick = self.tick.wrapping_add(4);
-
+            self.tick = self.tick.wrapping_add(1);
+            timer.update(4, mem);
+            controls.update_ram(mem);
             return;
         }
 
@@ -56,7 +57,7 @@ impl Master {
             wait();
         }
 
-        self.tick = self.tick.wrapping_add(instruct.ticks as u64);
+        self.tick = self.tick.wrapping_add((instruct.ticks as u64)/4);//Stupid solution to a stupid problem
         self.tick = self.tick.wrapping_add((cpu.get_ticks()) as u64);
 
         timer.update(instruct.ticks, mem);
@@ -82,6 +83,7 @@ impl Master {
     ) {
         mem.write(0xFF44, 0);
         for i in 0..144 {
+            mem.write(0xff44, mem.read(0xff44) + 1);
             while self.tick < 114 {
                 if self.tick > 63 {
                     self.mode = H_BLANK;
@@ -107,7 +109,7 @@ impl Master {
                 wait();
             }
 
-            mem.write(0xff44, mem.read(0xff44) + 1);
+
         }
 
         mem.write(0xFF0F, mem.read(0xFF0F) | 0b1);
@@ -215,13 +217,13 @@ impl Master {
     }
 
     pub fn lcd_stat(&mut self, line: u8, mem: &mut Memory) {
-        if mem.read(0xFF41) & 0b0100000 > 0
-            && line == mem.read(0xFF45)
-            && self.previous_mode == H_BLANK
+
+        if  mem.read(0xFF41) & 0b01000000 > 0
+            && line == mem.read(0xFF45) + 1 //Another stupid solution to an unknown problem
+            //&& self.previous_mode == H_BLANK
         {
             mem.write(0xFF0F, mem.read(0xFF0F) | 0b00000010);
             //if self.log {println!("/!\\ STAT interrupt trigerred: LY=LYC");}
-            self.previous_mode = self.mode;
         }
         if mem.read(0xFF41) & 0b00001000 > 0
             && self.mode == H_BLANK
@@ -239,11 +241,11 @@ impl Master {
             //if self.log {println!("/!\\ STAT interrupt trigerred: V_BLANK");}
             self.previous_mode = self.mode;
         }
-        if mem.read(0xFF41) & 0b0010000 > 0
+        if mem.read(0xFF41) & 0b00100000 > 0
             && self.mode == PX_TRANSFER
             && self.mode != self.previous_mode
         {
-            mem.write(0xFF0F, mem.read(0xFF0F) | 0b00000010);
+            //mem.write(0xFF0F, mem.read(0xFF0F) | 0b00000010);
             //if self.log {println!("/!\\ STAT interrupt trigerred: PX_TRANSFER");}
             self.previous_mode = self.mode;
         }

@@ -305,8 +305,11 @@ impl Gpu {
         }
     }
 
-    fn display_tile(&mut self, dest: u8, x: u8, y: u8, location: u16, mem: &Memory) {
+    fn display_tile(&mut self, dest: u8, x: u8, y: u8, location: u16, mem: &Memory, flip_x: bool, flip_y: bool) {
         let &mut mat;
+        let mut new_i;
+        let mut new_j;
+
         if dest == WINDOW {
             mat = &mut self.window_matrix;
         } else if dest == SPRITE {
@@ -316,13 +319,28 @@ impl Gpu {
         }
         for i in 0..8 {
             let mut value: u8 = 0b10000000;
+            if flip_y {
+                new_i = 7-i;
+            }else{
+                new_i = i;
+            }
             for j in 0..7 {
-                mat[(x.wrapping_add(j)) as usize][(y.wrapping_add(i)) as usize] =
+                if flip_x {
+                    new_j = 6-j;
+                }else{
+                    new_j = j;
+                }
+                mat[(x.wrapping_add(new_j)) as usize][(y.wrapping_add(new_i)) as usize] =
                     (mem.read(location + 2 * (i as u16)) & value) >> 7 - j
                         | (mem.read(location + 2 * (i as u16) + 1) & value) >> 6 - j;
                 value = value >> 1;
             }
-            mat[(x.wrapping_add(7)) as usize][(y.wrapping_add(i)) as usize] =
+            if flip_x {
+                new_j = 0;
+            }else{
+                new_j = 8;
+            }
+            mat[(x.wrapping_add(new_j-1)) as usize][(y.wrapping_add(new_i)) as usize] =
                 (mem.read(location + 2 * (i as u16)) & value)
                     | (mem.read(location + 2 * (i as u16) + 1) & value) << 1;
         }
@@ -342,6 +360,8 @@ impl Gpu {
                     i * 8 as u8,
                     self.get_tile(method, mem.read(index + n), &mem),
                     &mem,
+                    false,
+                    false,
                 );
                 n += 1;
             }
@@ -363,6 +383,8 @@ impl Gpu {
                     (i * 8) as u8,
                     self.get_tile(method, mem.read(index + n), &mem),
                     &mem,
+                    false,
+                    false,
                 );
                 n += 1;
             }
@@ -380,6 +402,8 @@ impl Gpu {
         let mut sprite_index: u16;
         let mut x: u8;
         let mut y: u8;
+        let mut flip_x: bool;
+        let mut flip_y: bool;
         let mut index: u8;
 
         for i in 0..40 {
@@ -387,7 +411,9 @@ impl Gpu {
             x = mem.read(sprite_index + 1).wrapping_sub(8);
             y = mem.read(sprite_index).wrapping_sub(16);
             index = mem.read(sprite_index + 2);
-            self.display_tile(SPRITE, x, y, self.get_tile(method, index, &mem), &mem);
+            flip_x = (mem.read(sprite_index + 3) & 0b00100000) > 0;
+            flip_y = (mem.read(sprite_index + 3) & 0b01000000) > 0;
+            self.display_tile(SPRITE, x, y, self.get_tile(method, index, &mem), &mem, flip_x, flip_y);
         }
     }
 

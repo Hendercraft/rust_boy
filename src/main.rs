@@ -146,17 +146,19 @@ fn main() {
             .expect("Couldn't set framerate");
     }
 
+
     while window.update() {
         window.clear();
         controls.get_keyboard(&config, &mut cpu, &mut mem, &mut window);
         controls.update_ram(&mut mem);
         window.push_matrix(&gpu.screen, &mut texture);
         master.screen(&mut cpu, &mut gpu, &mut timer, &mut controls, &mut mem);
+        //println!("frame");
         gpu.build_bg(&mem);
         gpu.build_window(&mem);
         gpu.build_sprite(&mem);
-        if config.framerate > 0 {
-            frm.delay();
-        }
+        //if config.framerate > 0 {
+        //    frm.delay();
+        //}
     }
 }

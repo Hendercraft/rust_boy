@@ -29,7 +29,7 @@ impl Gui {
         let mut canvas = window
             .into_canvas()
             .accelerated()
-            //.present_vsync()
+            .present_vsync()
             .build()
             .expect("could not make a canvas");
 

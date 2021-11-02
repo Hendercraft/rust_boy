@@ -7,6 +7,8 @@ const INTERRUPTS_TIMER: u8 = 1 << 2;
 const INTERRUPTS_SERIAL: u8 = 1 << 3;
 const INTERRUPTS_JOYPAD: u8 = 1 << 4;
 
+
+
 pub fn interrupt_check(cpu: &mut Cpu, mem: &mut Memory) -> bool {
     if mem.read(0xFFFF) & mem.read(0xFF0F) > 0 {
         if cpu.mie {
@@ -15,30 +17,35 @@ pub fn interrupt_check(cpu: &mut Cpu, mem: &mut Memory) -> bool {
             if mask & INTERRUPTS_VBLANK > 0 {
                 mem.write(0xFF0F, mem.read(0xFF0F) & !INTERRUPTS_VBLANK);
                 vblank(cpu, mem);
+                //println!("vblank");
                 return true;
             }
 
             if mask & INTERRUPTS_LCDSTAT > 0 {
                 mem.write(0xFF0F, mem.read(0xFF0F) & !INTERRUPTS_LCDSTAT);
                 lcd_stat(cpu, mem);
+                //println!("stat");
                 return true;
             }
 
             if mask & INTERRUPTS_TIMER > 0 {
                 mem.write(0xFF0F, mem.read(0xFF0F) & !INTERRUPTS_TIMER);
                 timer(cpu, mem);
+                //println!("timer");
                 return true;
             }
 
             if mask & INTERRUPTS_SERIAL > 0 {
                 mem.write(0xFF0F, mem.read(0xFF0F) & !INTERRUPTS_SERIAL);
                 serial(cpu, mem);
+                //println!("serial");
                 return true;
             }
 
             if mask & INTERRUPTS_JOYPAD > 0 {
                 mem.write(0xFF0F, mem.read(0xFF0F) & !INTERRUPTS_JOYPAD);
                 joypad(cpu, mem);
+                //println!("joypad");
                 return true;
             }
         }
