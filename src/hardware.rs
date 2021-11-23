@@ -292,6 +292,8 @@ impl Gpu {
         }
     }
 
+
+
     fn get_tile(&self, method: u16, mut index: u8, _mem: &Memory) -> u16 {
         if method == 0x8000 {
             return 0x8000 + (index as u16) * 16;
@@ -305,18 +307,30 @@ impl Gpu {
         }
     }
 
-    fn display_tile(&mut self, dest: u8, x: u8, y: u8, location: u16, mem: &Memory, flip_x: bool, flip_y: bool) {
+    fn display_tile(&mut self, dest: u8, x: u8, y: u8, location: u16, mem: &Memory, flip_x: bool, flip_y: bool, np: u8) {
         let &mut mat;
         let mut new_i;
         let mut new_j;
+        let mut color;
+        let mut array: [u8;4] = [0,0,0,0];
+        let mut palette:u8;
 
         if dest == WINDOW {
             mat = &mut self.window_matrix;
+            palette = mem.read(0xFF47);
+
         } else if dest == SPRITE {
             mat = &mut self.sprite_matrix;
+            palette = mem.read(0xFF48 + (np as u16));
+
         } else {
             mat = &mut self.bg_matrix;
+            palette = mem.read(0xFF47);
         }
+        array[0] = (palette & 0b00000011);
+        array[1] = (palette & 0b00001100) >> 2;
+        array[2] = (palette & 0b00110000) >> 4;
+        array[3] = (palette & 0b11000000) >> 6;
         for i in 0..8 {
             let mut value: u8 = 0b10000000;
             if flip_y {
@@ -330,9 +344,11 @@ impl Gpu {
                 }else{
                     new_j = j;
                 }
-                mat[(x.wrapping_add(new_j)) as usize][(y.wrapping_add(new_i)) as usize] =
-                    (mem.read(location + 2 * (i as u16)) & value) >> 7 - j
-                        | (mem.read(location + 2 * (i as u16) + 1) & value) >> 6 - j;
+                color = (mem.read(location + 2 * (i as u16)) & value) >> 7 - j
+                    | (mem.read(location + 2 * (i as u16) + 1) & value) >> 6 - j;
+                if !(color==0 && dest==SPRITE) {
+                    mat[(x.wrapping_add(new_j)) as usize][(y.wrapping_add(new_i)) as usize] = array[color as usize];
+                }
                 value = value >> 1;
             }
             if flip_x {
@@ -340,9 +356,14 @@ impl Gpu {
             }else{
                 new_j = 8;
             }
-            mat[(x.wrapping_add(new_j-1)) as usize][(y.wrapping_add(new_i)) as usize] =
-                (mem.read(location + 2 * (i as u16)) & value)
-                    | (mem.read(location + 2 * (i as u16) + 1) & value) << 1;
+
+            color = (mem.read(location + 2 * (i as u16)) & value)
+                | (mem.read(location + 2 * (i as u16) + 1) & value) << 1;
+            if !(color==0 && dest==SPRITE){
+                mat[(x.wrapping_add(new_j-1)) as usize][(y.wrapping_add(new_i)) as usize] = array[color as usize];
+            }
+
+
         }
     }
 
@@ -351,6 +372,13 @@ impl Gpu {
 
         let index = self.get_bg_map_index(&mem);
         let method: u16 = self.get_tile_method(&mem);
+
+        for i in 0..255{
+            for j in 0..255{
+                //self.bg
+            }
+        }
+
 
         for i in 0..32 {
             for j in 0..32 {
@@ -362,6 +390,7 @@ impl Gpu {
                     &mem,
                     false,
                     false,
+                    1,
                 );
                 n += 1;
             }
@@ -385,6 +414,7 @@ impl Gpu {
                     &mem,
                     false,
                     false,
+                    1,
                 );
                 n += 1;
             }
@@ -405,6 +435,7 @@ impl Gpu {
         let mut flip_x: bool;
         let mut flip_y: bool;
         let mut index: u8;
+        let mut palette: u8;
 
         for i in 0..40 {
             sprite_index = (0xFE00 + (4 * i)) as u16;
@@ -413,7 +444,8 @@ impl Gpu {
             index = mem.read(sprite_index + 2);
             flip_x = (mem.read(sprite_index + 3) & 0b00100000) > 0;
             flip_y = (mem.read(sprite_index + 3) & 0b01000000) > 0;
-            self.display_tile(SPRITE, x, y, self.get_tile(method, index, &mem), &mem, flip_x, flip_y);
+            palette = (mem.read(sprite_index + 3) & 0b00010000) >> 4;
+            self.display_tile(SPRITE, x, y, self.get_tile(method, index, &mem), &mem, flip_x, flip_y, palette);
         }
     }
 
